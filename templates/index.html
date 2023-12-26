@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block title %}The Right Lang for The Job ― Piotr Klibert's blog{% endblock %}
+
+{% block content %}
+  {% for post in posts %}
+    {{ post|safe }}
+  {% endfor %}
+{% endblock %}

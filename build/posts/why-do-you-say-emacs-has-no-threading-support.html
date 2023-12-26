@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Piotr Klibert" />
+    <meta name="description" content="Exciting new programming Languages and Polyglot programming; also Emacs" />
+
+    <link rel="preload" as="font" href="/statics/fonts/Roboto-Regular.ttf" type="font/ttf" crossorigin="anonymous" />
+    <link rel="preload" as="font" href="/statics/fonts/Roboto-Italic.ttf" type="font/ttf" crossorigin="anonymous" />
+    <link rel="preload" as="font" href="/statics/fonts/Roboto-Black.ttf" type="font/ttf" crossorigin="anonymous" />
+    <link rel="preload" as="font" href="/statics/fonts/Roboto-Black.ttf" type="font/ttf" crossorigin="anonymous" />
+    <link rel="preload" href="/output/base.min.css?cache_busting_cookie=4333" as="style" />
+
+    <link rel="icon" type="image/x-icon" href="/statics/images/favicon.ico" />
+    <link href="/statics/base.min.css?cache_busting_cookie=4287" rel="stylesheet" />
+    <link href="/statics/styles/my-styles.css?cache_busting_cookie=4202" rel="stylesheet" />
+    <link href="/statics/highlight-code.min.css?cache_busting_cookie=4398" rel="stylesheet" />
+    <style type="text/css">.example { color: white; }</style>
+    <title>Why do you say Emacs has no threading support? -- Piotr Klibert's blog</title>
+  </head>
+  <body>
+
+    <header id="blog-header">
+      <div id="blog-title">
+        <h1>The Right Lang for the Job</h1>
+        <div><p>Exploring the abbyss of non-mainstream programming languages</p></div>
+      </div>
+
+      <div id="top-menu-container">
+        <nav>
+          <a href="/">Blog</a>
+          <!-- <a href="/articles/archive.html">Archive</a> -->
+          <!-- <a href="/articles/programming_langs.html">Languages</a> -->
+          <!-- <a href="/articles/about.html">About</a> -->
+          <!-- <a href="/articles/contact.html">Contact</a> -->
+          <!-- <div id="blog-nav-rss"> -->
+          <!-- <a nofolow="1" href="/statics/feed.xml"> -->
+          <!-- <img src="/statics/icons/rss0.png" alt="RSS icon" /> -->
+          <!-- </a> -->
+          <!-- </div> -->
+        </nav>
+      </div>
+    </header>
+
+    <main id="blog-main">
+      <div class="blog-main">
+        
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a class="title-link" id="why-do-you-say-emacs-has-no-threading-support" href="/posts/why-do-you-say-emacs-has-no-threading-support.html" title="Read on separate page">
+          Why do you say Emacs has no threading support?
+        </a>
+        <a href="#why-do-you-say-emacs-has-no-threading-support" class="robaczek" title="Link to this place on current page">¶</a>
+      </h1>
+      
+        <h3 class="subtitle">Concurrency in Emacs doesn&#39;t have to suck</h3>
+      
+      <p class="meta">
+        Created: <time>&lt;2023-12-18 Mon 16:41&gt;</time>
+        
+      </p>
+    </header>
+
+    <nav id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#org9ce8932">1. Intro</a>
+<ul>
+<li><a href="#orgd142c21">1.1. h2</a>
+<ul>
+<li><a href="#org458f725">1.1.1. h3</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#org8851cc7">2. How do threads look in Emacs?</a></li>
+<li><a href="#org78f3967">3. ChatGPT to the rescue</a></li>
+</ul>
+</div>
+</nav>
+<div id="outline-container-org9ce8932" class="outline-2">
+<h2 id="org9ce8932"><span class="section-number-2">1.</span> Intro</h2>
+<div class="outline-text-2" id="text-1">
+<aside id="orgd715ecd">
+<p>
+this is an aside Nam vestibulum accumsan nisl. Nulla facilisis, risus a rhoncus
+fermentum, tellus tellus lacinia purus, et dictum nunc justo sit amet elit.
+Nulla facilisis, risus a rhoncus fermentum, tellus tellus lacinia purus, et
+dictum nunc justo sit amet elit. Donec hendrerit tempor tellus. Praesent
+fermentum tempor tellus.
+</p>
+</aside>
+
+<p>
+The topic comes up every so often: there are no threads in Emacs! Quick, let's
+rewrite it in Scheme before users jump ship to VS Code or NVim!<sup><a id="fnr.1" class="footref" href="#fn.1" role="doc-backlink">1</a></sup>
+</p>
+
+<p>
+Even just a month ago someone <a href="https://www.reddit.com/r/emacs/comments/17zoe3d/is_the_lack_of_multithreading_support_in_emacs_a/?utm_source=share&amp;utm_medium=web2x&amp;context=3">made a poll</a> asking the following question:
+</p>
+
+<ul class="org-ul">
+<li>asda</li>
+<li><p>
+s asd as d
+</p>
+
+<p>
+asdasd
+</p></li>
+</ul>
+
+<blockquote>
+<p>
+Is the lack of multithreading support in emacs a dealbreaker for you?
+</p>
+</blockquote>
+
+<p>
+The problem: Emacs <b><b>does have</b></b> threading primitives implemented and exposed to
+Lisp programs.
+</p>
+
+<p>
+There are of course good reasons for why the perception of "no threads" is so
+pervasive. In this post, I will:
+</p>
+
+<ol class="org-ol">
+<li>Explain why the threads in Emacs are so useless most people are unaware
+they're even there.</li>
+<li>Show that, limited as they are, they are a fine addition to Elisp's hacker
+arsenal.</li>
+</ol>
+
+
+<figure id="org88aac2e">
+<img src="/posts/./data/64/6acb7e-011e-42d1-ad24-92127338dfde/screenshot_2023-11-17_1905.png" alt="screenshot_2023-11-17_1905.png">
+
+</figure>
+
+<summary id="orgba03731">
+<p>
+This is a summary
+</p>
+</summary>
+</div>
+<div id="outline-container-orgd142c21" class="outline-3">
+<h3 id="orgd142c21"><span class="section-number-3">1.1.</span> h2</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+loremNunc porta vulputate tellus.  
+</p>
+</div>
+<div id="outline-container-org458f725" class="outline-4">
+<h4 id="org458f725"><span class="section-number-4">1.1.1.</span> h3</h4>
+<div class="outline-text-4" id="text-1-1-1">
+<p>
+Etiam vel neque nec dui dignissim bibendum.
+</p>
+</div>
+<ol class="org-ol">
+<li><a id="org104509b"></a>h4<br>
+<div class="outline-text-5" id="text-1-1-1-1">
+<p>
+Sed id ligula quis est convallis tempor.
+</p>
+</div>
+<ol class="org-ol">
+<li><a id="org46bad89"></a>h5<br>
+<div class="outline-text-6" id="text-1-1-1-1-1">
+<p>
+Phasellus lacus.
+</p>
+</div>
+</li>
+</ol>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div id="outline-container-org8851cc7" class="outline-2">
+<h2 id="org8851cc7"><span class="section-number-2">2.</span> How do threads look in Emacs?</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+<a href="/posts/./data/64/6acb7e-011e-42d1-ad24-92127338dfde/Evolution of Emacs Lisp.pdf">/posts/./data/64/6acb7e-011e-42d1-ad24-92127338dfde/Evolution of Emacs Lisp.pdf</a>
+</p>
+
+<ul class="org-ul">
+<li>lista</li>
+<li>wy</li>
+<li>punkt</li>
+<li>owana</li>
+</ul>
+
+<a id="tabelka"></a>
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span id="coderef-1" class="coderef-off"><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">let</span> <span style="color: #ff66ff;">(</span><span style="color: #00eff0;">(</span><span style="color: #cae682;">table</span> <span style="color: #ff6b55;">(</span>make-list 4 <span style="color: #efef00;">(</span>-map #'<span style="color: #cae682;">number-to-string</span> <span style="color: #b6a0ff;">(</span>number-sequence 1 10<span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span> <span style="color: #99968b;">;</span> (1)</span>
+  table<span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<p>
+<a href="#coderef-1" class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-1');" onmouseout="CodeHighlightOff(this, 'coderef-1');">1</a> is because&#x2026;
+</p>
+
+<table>
+
+
+<colgroup>
+<col  class="org-right">
+
+<col  class="org-right">
+
+<col  class="org-right">
+
+<col  class="org-right">
+
+<col  class="org-right">
+
+<col  class="org-right">
+
+<col  class="org-right">
+
+<col  class="org-right">
+
+<col  class="org-right">
+
+<col  class="org-right">
+</colgroup>
+<tbody>
+<tr>
+<td class="org-right">1</td>
+<td class="org-right">2</td>
+<td class="org-right">3</td>
+<td class="org-right">4</td>
+<td class="org-right">5</td>
+<td class="org-right">6</td>
+<td class="org-right">7</td>
+<td class="org-right">8</td>
+<td class="org-right">9</td>
+<td class="org-right">10</td>
+</tr>
+
+<tr>
+<td class="org-right">1</td>
+<td class="org-right">2</td>
+<td class="org-right">3</td>
+<td class="org-right">4</td>
+<td class="org-right">5</td>
+<td class="org-right">6</td>
+<td class="org-right">7</td>
+<td class="org-right">8</td>
+<td class="org-right">9</td>
+<td class="org-right">10</td>
+</tr>
+
+<tr>
+<td class="org-right">1</td>
+<td class="org-right">2</td>
+<td class="org-right">3</td>
+<td class="org-right">4</td>
+<td class="org-right">5</td>
+<td class="org-right">6</td>
+<td class="org-right">7</td>
+<td class="org-right">8</td>
+<td class="org-right">9</td>
+<td class="org-right">10</td>
+</tr>
+
+<tr>
+<td class="org-right">1</td>
+<td class="org-right">2</td>
+<td class="org-right">3</td>
+<td class="org-right">4</td>
+<td class="org-right">5</td>
+<td class="org-right">6</td>
+<td class="org-right">7</td>
+<td class="org-right">8</td>
+<td class="org-right">9</td>
+<td class="org-right">10</td>
+</tr>
+</tbody>
+</table>
+
+
+<div class="org-src-container">
+<pre class="src src-sh">xset dpms 0 0 0
+xset s off
+xset dpms force on
+firefox
+sleep 30
+xdotool key Control+l
+sleep 3
+xdotool type <span style="color: #95e454;">'http://shiro/'</span>
+sleep 6
+xdotool key Return
+xdotool key F11
+</pre>
+</div>
+
+<blockquote>
+<p>
+Emacs Lisp is a fundamentally sequential language, and relies heavily on
+side-effects to a global state. Yet, its use in an interactive program has
+inevitably lead to a desire for concurrency to try and improve responsiveness.
+Concurrency appeared very early on: since Emacs 16.56, Emacs has included
+support for asynchronous processes, that is, the execution of separate programs
+whose output was processed by so-called process filters whenever the Emacs Lisp
+execution engine is idly waiting for the next user input.
+</p>
+
+<p>
+While this very limited form of cooperative concurrency was slightly improved in
+1994’s Lucid Emacs 19.9 and 1996’s Emacs 19.31 by adding native support for
+timers (timers had earlier been implemented as an asynchronous process sending
+Emacs output at the requested time), it has been the only form of concurrency
+available for most of Emacs’s life.
+</p>
+
+<p>
+Adding true shared-memory concurrency to Emacs Lisp is problematic because of
+the pervasive reliance on shared state in existing Emacs Lisp code. In some
+cases, shared state is not a problem and concurrency can be mimicked via
+asynchronous programming: When a program waits for an operation (such as an
+external program), instead of blocking, it registers a continuation callback and
+returns control to the main event loop. Yet many Emacs Lisp packages instead
+block, because slicing the execution via callbacks means effectively writing
+code in continuation-passing style which is poorly supported in Emacs Lisp,
+interacts badly with dynamic scoping, and requires significant surgery to
+retro-fit to existing code.
+</p>
+
+<p>
+So, shared-memory concurrency was largely considered as inapplicable to Emacs
+Lisp. Never- theless, in November 2008, Giuseppe Scrivano posted a first naive
+attempt at adding threads to Emacs Lisp. This effort did not go much further,
+but it inspired Tom Tromey to try his own luck. Proc. ACM Program. Lang., Vol.
+4, No. HOPL, Article 74. Publication date: June 2020.74:44 Stefan Monnier and
+Michael Sperber
+</p>
+
+<p>
+In 2010, he started to work on adding shared-memory cooperative concurrency
+primitives like make-thread to Emacs. Interaction with the implementation of
+dynamic scoping, which is based on a global state for speed, required
+experimentation with various approaches. Correctly handling buffer-local and
+frame-local bindings without a complete rewrite was particularly painful and
+most approaches were abandoned simply because it was too difficult to keep them
+up-to-date with the evolving Emacs codebase.
+</p>
+
+<p>
+A working approach was finally released in 2018, as part of Emacs 26.1. Context
+switches still take place only at a few known points where Emacs Lisp is idle
+(or via explicit calls to thread-yield). The current implementation of this
+feature makes context switches take time proportional to the current stack
+depth, because the dynamic bindings of the old thread need to be saved and
+removed, after which the dynamic bindings of the new thread need to be restored.
+Earlier implementation approaches tried to avoid this expensive form of context
+switching by making global variable lookups a bit more expensive instead, but
+these would have required more extensive and delicate changes to existing code.
+Therefore, while this approach may be reconsidered in the future, the current
+implementation favored a simpler and safer approach.
+</p>
+
+<p>
+The inclusion of such a form of shared-state concurrency was hotly debated
+between the main- tainers. They all agreed that Emacs Lisp needs to develop
+concurrency and parallelism in order to take advantage of the increasing number
+of CPU cores available, especially since single-core performance is not
+increasing significantly any more; but there was also a consensus that shared
+memory is a very bad fit to the current Emacs Lisp world. Tom Tromey’s patch was
+finally accepted only because it was non-invasive, and because there was a
+feeling that it was important to do something.
+</p>
+
+<p>
+This is still a fairly experimental feature, and two years after its appearance,
+its use appears to still be limited to experimental patches to a handful of
+packages such as the Gnus MUA. Arguably the main outcome so far has been to
+expose some latent bugs in some packages’s asynchronous processing.
+</p>
+
+<p>
+Over the years, other approaches to concurrency and parallelism have been
+developed as Emacs Lisp packages, most notably the async.el package [Wiegley
+2019] developed in 2012 that runs Emacs Lisp code in parallel in a separate
+Emacs subprocess. Its applicability is limited by the fact that the buffers’s
+contents need to be explicitly sent as needed between the two processes, forcing
+a very coarse grain of parallelism. Moreover, there is no guarantee that the
+configuration of the subprocess is consistent with that of the main processÐthe
+subprocess may even be another version of Emacs in some cases. Still, several
+third party packages make limited use of async.el.
+</p>
+</blockquote>
+
+<blockquote>
+<p>
+Tom Tromey’s patch was finally accepted only because it was non-invasive, and
+because there was a feeling that it was important to do <i>something</i>.
+</p>
+</blockquote>
+
+
+<p>
+&gt; Sadly, multithreading is an afterthought for Emacs
+</p>
+
+
+<p>
+It is, but it's usable. I'm actually amazed that, even after three major
+versions, the built-in threading is not used by the community.
+</p>
+
+
+<p>
+Yes, the threads currently are not usable for number crunching in the
+background. And yes, there are bugs, and trying to do many things from the
+background thread doesn't work, sometimes in unexpected ways. You can still
+block the main thread from the background thread since some things block the
+event loop, no matter where they were started.
+</p>
+
+<p>
+But, the threads do give you independent control flows. Whatever you cannot do
+in the background, you can offload to the main thread with a timer and a queue
+of lambdas.
+</p>
+
+<p>
+The built-in threads are very, very bare-bones - it's around 15 functions, for
+threads, mutexes, and condition variables. They are very limited by their
+"mostly cooperative" nature. However, with a bit of sugar, they are usable for
+at least one thing: async processes and network communication.
+</p>
+
+<p>
+In a background thread, you can "block" to wait for a child process to do
+something. It's natural and requires no macrology (async.el&#x2026;). The same is
+true for network communication. You can block and wait for a response while the
+rest of Emacs does whatever. With just two functions, you can write code without
+blocking as if you used `call-process`. Sequential actions - call this, wait for
+it to finish, call that, wait for it to finish, etc. - can now be coded in a
+sequential way, without having to worry about callbacks, sentinels, and a
+poor-man FSM implementation that invariably appears in Elisp that doesn't use
+threads.
+</p>
+
+<p>
+The threads built into Emacs, currently, are closer to green threads or
+coroutines, functionally, than to OS-level threads. But that's still a huge help
+in a bunch of important and pervasive scenarios. It's really strange that nobody
+seems to realize this.
+</p>
+
+<p>
+With threads (as they are), the Continuation Passing Style compiler macro (in
+generator.el), and dynamic modules (for actual parallelism where needed) Emacs
+now has everything it needs to make it non-blocking by default. Of course, that
+would entail rewriting everything on top of these abstractions, so it's
+unrealistic - but for new code and packages? I think we're just one package
+(along the lines of dash, s, etc.) away from convenient concurrency and
+parallelism in Emacs. The problem, of course, is that someone needs to design
+and code that package&#x2026;
+</p>
+
+
+<p>
+&gt; Anyway, as I see it, the Emacs threads would not help for Affe
+</p>
+
+<p>
+You're right. I misspoke. I was thinking about the performance of sending large
+amounts of data through pipes versus accessing them through shared memory. I
+didn't consider the CPU-bound action of filtering the data. As we don't get
+parallelism with threads, the filtering itself would be most likely slower.
+</p>
+
+<p>
+&gt; The net positive is that one can run multiple blocking IO operations in
+&gt; parallel,
+</p>
+
+<p>
+First of all, you cannot (in Emacs, I mean), run "multiple blocking operations
+in parallel" just because you spawn a new thread. `call-process` and friends
+will block the main thread, and therefore the event loop, no matter which thread
+they were called from. It's far from the only case where a function invoked from
+a background thread will freeze Emacs. :)
+</p>
+
+<p>
+The threads as they currently are in Emacs <b><b>are basically useless</b></b> for running
+"multiple blocking" ops in parallel :D
+</p>
+
+<p>
+There's more: calling certain other functions from the background thread might
+mess up the display. Updating a buffer that's currently displayed in a visible
+window can make the display flicker, some modes toggle off and back on, and even
+search data might get corrupted.
+</p>
+
+<p>
+Add the lack of parallelism to this, along with the most bare-bones API
+provided, and you get threads that are not just "close to useless", but already
+past all redemption :D
+</p>
+
+<p>
+Or at least threads that cannot be used like "normal" threads would be in other
+contexts. But they <b>might be</b> a small part of a layer of library code that would
+make async programming convenient in Emacs.
+</p>
+
+<p>
+&gt; but I think asynchronous, non-blocking IO is widely considered the more
+&gt; efficient alternative, but is probably also more complicated.
+</p>
+
+<p>
+The real problem is that, I think, async and non-blocking programming in Emacs
+is incredibly inconvenient. It's a decade past the point where everyone and
+their cat decided that coroutines are good, and started implementing them. There
+are mature async stacks all around, yet Emacs still asks you to deal with
+filters, sentinels, and pipes!, when you want to do something async in the
+background.
+</p>
+
+<p>
+You end up performing CPS transformation on your code by hand, or you build a
+giant FSM with a `pcase` of all possible states in some entry-point defun.
+</p>
+</div>
+</div>
+<div id="outline-container-org78f3967" class="outline-2">
+<h2 id="org78f3967"><span class="section-number-2">3.</span> ChatGPT to the rescue</h2>
+<div class="outline-text-2" id="text-3">
+<blockquote>
+<p>
+### Create a function that will take a variable number of string arguments. Each
+string will be a shell command. The function needs to execute a command in an
+async background process, wait for the process to finish, and proceed to execute
+the rest of the arguments. The function cannot block.
+</p>
+
+<p>
+Pseudocode:
+</p>
+
+<ol class="org-ol">
+<li>Create the function: (defun my-shell-command-async (&amp;rest commands)</li>
+<li>If the list of commands is empty, return nil.</li>
+<li>Given a command from the list:</li>
+<li>Use start-process-shell-command, providing it with a unique process name, nil for the buffer (we don't need to see output), and the command itself.</li>
+<li>Define a sentinel function. This function:
+a. Takes a process argument and an event string.
+b. The function uses the process to check if it has finished. If it hasn't, return early.
+c. If the command list still contains commands, it recursively calls my-shell-command-async with the rest of the commands.</li>
+<li>Set the sentinel of the process to be this function.</li>
+<li>Return the process object.</li>
+</ol>
+
+<p>
+Emacs Lisp code:
+</p>
+</blockquote>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">defun</span> <span style="color: #cae682;">my-shell-command-async</span> <span style="color: #ff66ff;">(</span><span style="color: #92a65e; font-weight: bold;">&amp;rest</span> <span style="color: #cae682;">commands</span><span style="color: #ff66ff;">)</span>
+  <span style="color: #95e454;">"Execute each command in COMMANDS in a sequential non-blocking</span>
+<span style="color: #95e454;">  manner. Each command runs in a separate background process."</span>
+  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">if</span> <span style="color: #00eff0;">(</span>not commands<span style="color: #00eff0;">)</span>
+      nil <span style="color: #99968b;">; </span><span style="color: #99968b;">Return nil if there are no commands to run</span>
+    <span style="color: #00eff0;">(</span><span style="color: #8ac6f2; font-weight: bold;">let*</span> <span style="color: #ff6b55;">(</span><span style="color: #efef00;">(</span><span style="color: #cae682;">command</span> <span style="color: #b6a0ff;">(</span>car commands<span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span>
+           <span style="color: #efef00;">(</span><span style="color: #cae682;">command-name</span> <span style="color: #b6a0ff;">(</span>format <span style="color: #95e454;">"*my-async-shell-command-%s*"</span> command<span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span>
+           <span style="color: #efef00;">(</span><span style="color: #cae682;">process</span> <span style="color: #b6a0ff;">(</span>start-process-shell-command command-name nil command<span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span>
+      <span style="color: #ff6b55;">(</span>set-process-sentinel
+       process
+       <span style="color: #efef00;">(</span><span style="color: #8ac6f2; font-weight: bold;">lambda</span> <span style="color: #b6a0ff;">(</span><span style="color: #cae682;">process</span> <span style="color: #cae682;">event</span><span style="color: #b6a0ff;">)</span>
+         <span style="color: #b6a0ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">when</span> <span style="color: #5f9ea0;">(</span>string-match-p <span style="color: #95e454;">"finished"</span> event<span style="color: #5f9ea0;">)</span>
+           <span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">if</span> <span style="color: #79a8ff;">(</span>cdr commands<span style="color: #79a8ff;">)</span>
+               <span style="color: #79a8ff;">(</span>apply 'my-shell-command-async <span style="color: #f78fe7;">(</span>cdr commands<span style="color: #f78fe7;">)</span><span style="color: #79a8ff;">)</span>
+             nil<span style="color: #5f9ea0;">)</span><span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span>
+      process<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<blockquote>
+<p>
+This function follows a recursive approach, using the sentinel function to
+trigger the next command once the current one has finished. Notice that "apply"
+is used to pass the rest of the commands to the recursive call. This essentially
+unpacks the list of commands so they remain separate function arguments.
+</p>
+</blockquote>
+
+<blockquote>
+<p>
+### Refine the above solution. The function will take a variable number of
+arguments, as before, but the arguments will be either strings or integers.
+String arguments are handled as before, but when encountering a number, the
+function should wait a specified number of seconds before continuing with the
+next argument.
+</p>
+
+<p>
+Pseudocode:
+</p>
+
+<ol class="org-ol">
+<li>Create the function: (defun my-shell-command-async (&amp;rest commands)</li>
+<li>If the list of commands is empty, return nil.</li>
+<li>Given a command from the list:</li>
+<li>If the command is a string, use start-process-shell-command, providing it with a unique process name, nil for the buffer (we don't need to see output), and the command. Set the sentinel of the process to this function, similar as before.</li>
+<li>If the command is a number, use (run-with-timer) function, providing it with the delay value equals to command and 
+a. Define a timer function that recursively call my-shell-command-async with the rest of the commands.
+b. Pass the lambda function as a timer function to (run-with-timer) function.</li>
+<li>Return the process object.</li>
+</ol>
+
+<p>
+Emacs Lisp code:
+</p>
+</blockquote>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">defun</span> <span style="color: #cae682;">my-shell-command-async</span> <span style="color: #ff66ff;">(</span><span style="color: #92a65e; font-weight: bold;">&amp;rest</span> <span style="color: #cae682;">commands</span><span style="color: #ff66ff;">)</span>
+  <span style="color: #95e454;">"Execute each command in COMMANDS in a sequential non-blocking</span>
+<span style="color: #95e454;">  manner. Each command runs in a separate background process.</span>
+<span style="color: #95e454;">  If command is a number, delay that many seconds before the</span>
+<span style="color: #95e454;">  next command."</span>
+  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">if</span> <span style="color: #00eff0;">(</span>not commands<span style="color: #00eff0;">)</span>
+      nil <span style="color: #99968b;">; </span><span style="color: #99968b;">Return nil if there are no commands to run</span>
+
+    <span style="color: #00eff0;">(</span><span style="color: #8ac6f2; font-weight: bold;">let</span> <span style="color: #ff6b55;">(</span><span style="color: #efef00;">(</span><span style="color: #cae682;">command</span> <span style="color: #b6a0ff;">(</span>car commands<span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span>
+      <span style="color: #ff6b55;">(</span><span style="color: #8ac6f2; font-weight: bold;">cond</span> <span style="color: #efef00;">(</span><span style="color: #b6a0ff;">(</span>stringp command<span style="color: #b6a0ff;">)</span>
+             <span style="color: #b6a0ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">let*</span> <span style="color: #5f9ea0;">(</span><span style="color: #79a8ff;">(</span><span style="color: #cae682;">command-name</span> <span style="color: #f78fe7;">(</span>format <span style="color: #95e454;">"*my-async-shell-command-%s*"</span> command<span style="color: #f78fe7;">)</span><span style="color: #79a8ff;">)</span>
+                    <span style="color: #79a8ff;">(</span><span style="color: #cae682;">process</span> <span style="color: #f78fe7;">(</span>start-process-shell-command command-name nil command<span style="color: #f78fe7;">)</span><span style="color: #79a8ff;">)</span><span style="color: #5f9ea0;">)</span>
+               <span style="color: #5f9ea0;">(</span>set-process-sentinel
+                process
+                <span style="color: #79a8ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">lambda</span> <span style="color: #f78fe7;">(</span><span style="color: #cae682;">process</span> <span style="color: #cae682;">event</span><span style="color: #f78fe7;">)</span>
+                  <span style="color: #f78fe7;">(</span><span style="color: #8ac6f2; font-weight: bold;">when</span> <span style="color: #5f9ea0;">(</span>string-match-p <span style="color: #95e454;">"finished"</span> event<span style="color: #5f9ea0;">)</span>
+                    <span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">if</span> <span style="color: #ff66ff;">(</span>cdr commands<span style="color: #ff66ff;">)</span>
+                        <span style="color: #ff66ff;">(</span>apply 'my-shell-command-async <span style="color: #00eff0;">(</span>cdr commands<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span>
+                      nil<span style="color: #5f9ea0;">)</span><span style="color: #f78fe7;">)</span><span style="color: #79a8ff;">)</span><span style="color: #5f9ea0;">)</span>
+               process<span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span>
+
+            <span style="color: #efef00;">(</span><span style="color: #b6a0ff;">(</span>integerp command<span style="color: #b6a0ff;">)</span>
+             <span style="color: #b6a0ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">let</span> <span style="color: #5f9ea0;">(</span><span style="color: #79a8ff;">(</span><span style="color: #cae682;">timer</span> <span style="color: #f78fe7;">(</span>run-at-time command nil
+                                       <span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">lambda</span> <span style="color: #ff66ff;">()</span>
+                                         <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">if</span> <span style="color: #00eff0;">(</span>cdr commands<span style="color: #00eff0;">)</span>
+                                             <span style="color: #00eff0;">(</span>apply 'my-shell-command-async <span style="color: #ff6b55;">(</span>cdr commands<span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span><span style="color: #f78fe7;">)</span><span style="color: #79a8ff;">)</span><span style="color: #5f9ea0;">)</span><span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span>
+</pre>
+</div>
+
+<blockquote>
+<p>
+In the revised version, `(cond)` function is used to distinguish if command is a
+string or a number. If command is a string, build and run a process same as
+before. If command is a number, use `run-at-time` function to create a timer.
+`run-at-time` function takes time delay and a function to execute after delay as
+arguments. Here, `(apply 'my-shell-command-async (cdr commands))` is passed as
+function to run after delay. It calls `my-shell-command-async` recursively with
+rest of the commands.
+</p>
+</blockquote>
+</div>
+</div>
+<div id="footnotes">
+<h2 class="footnotes">Footnotes: </h2>
+<div id="text-footnotes">
+
+<div class="footdef"><sup><a id="fn.1" class="footnum" href="#fnr.1" role="doc-backlink">1</a></sup> <div class="footpara" role="doc-footnote"><p class="footpara">
+It's particularly entertaining since out of Scheme, JavaScript (VS Code),
+Lua (NVim), and Elisp the only one supporting threads is the last one.
+</p></div></div>
+
+
+</div>
+</div>
+  </article>
+
+      </div>
+
+      <div class="blog-sidebar">
+
+        <div class="sidebar-module sidebar-module-inset">
+          You can now subscribe to an
+          <a nofolow="1" href="/statics/feed.xml">RSS feed</a>
+          <a nofolow="1" href="/statics/feed.xml"><img src="/statics/feed-icon-14x14.png" style="vertical-align: baseline;"/></a>.
+        </div>
+
+        <!-- <div class="sidebar-module sidebar-module-inset" id="posts-module"> -->
+        <!-- <h4 style="">Latest posts</h4> -->
+        <!-- <ol class="list-unstyled posts-links"></ol> -->
+        <!-- </div> -->
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Quote of the Year 2023</h4>
+          <blockquote>
+            One of the most surprising things I've witnessed in my lifetime is
+            the rebirth of the concept of heresy.
+            <footer>— <cite><a href="http://paulgraham.com/heresy.html">Paul Graham</a></cite></footer>
+          </blockquote>
+        </div>
+
+        <div class="sidebar-module sidebar-module-inset">
+          <h4>About me</h4>
+          <p>
+            I'm a programmer. I like learning programming languages. I've been
+            doing it for more than a decade.
+          </p>
+          <p>
+            Here's roughly <a href="/articles/about.html#history">what I learned</a>
+            to date.
+          </p>
+          <p>
+            <a href="/articles/contact.html">Contact me</a>
+          </p>
+        </div>
+
+        <div class="sidebar-module sidebar-module-inset" id="links-module">
+          <h4>Links</h4>
+
+          <ol class="links-list">
+            <li><a href="https://www.youtube.com/watch?v=m09RWtt5nd8">Video of my talk on FP</a></li>
+            <li><a href="/warsawjs-talk/">Slides</a> and <a href="/warsawjs-talk/code.html">Examples</a> for the talk</li>
+          </ol>
+
+          <ol class="links-list">
+            <li><a href="http://hashrocket.com/blog/posts/taking-advantage-of-the-polyglot-lifestyle">Polyglot Lifestyle</a></li>
+            <li><a href="https://hyperpolyglot.org/">HyperPolyglot - language comparisons</a></li>
+            <li><a href="https://programming-idioms.org/">Programming Idioms</a></li>
+            <li><a href="https://github.com/kanaka/mal/blob/master/process/guide.md">Make a Lisp</a></li>
+            <li><a href="http://rosettacode.org/wiki/Rosetta_Code">Rosetta Code</a></li>
+            <li><a href="http://pleac.sourceforge.net/">PLEAC - Programming Language Examples Alike Cookbook</a></li>
+            <li><a href="http://learnxinyminutes.com/">Learn X in Y Minutes</a></li>
+            <li><a href="http://hyperpolyglot.org/">Hyperpolyglot</a></li>
+            <li><a href="http://rigaux.org/language-study/syntax-across-languages/">PL syntaxes comparison</a></li>
+            <li><a href="https://github.com/kanaka/mal">Make a Lisp</a></li>
+            <li><a href="https://modern-sql.com/use-case/literate-sql">Literate SQL</a></li>
+            <li><a href="http://en.literateprograms.org/LiteratePrograms:Welcome">Literate Programs</a></li>
+            <li><a href="http://radar.oreilly.com/2013/11/polyglot-programming-what-is-it-and-why-should-you-be-using-it.html">Why Polyglot?</a></li>
+          </ol>
+        </div>
+
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Quote of the Year 2022</h4>
+          <blockquote>
+            It's amazing what you can talk yourself into liking
+            <footer>— <cite>Steve Yegge</cite></footer>
+          </blockquote>
+        </div>
+
+
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Quote of the Year 2020</h4>
+          <blockquote>
+            What can change the nature of a man?
+            <footer>— <cite>Ravel Puzzlewell</cite></footer>
+          </blockquote>
+        </div>
+
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Quote of the Year 2017</h4>
+          <blockquote>
+            One foot in the grave, the other in Hell.
+            <footer>— <cite>The Nameless One</cite></footer>
+          </blockquote>
+        </div>
+
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Catch phrase of the Year 2016</h4>
+          <blockquote>
+            It isn't ideal that...
+            <footer>— <cite>many different people</cite></footer>
+          </blockquote>
+        </div>
+
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Quote of the Year 2015</h4>
+          <blockquote>
+            You can't type-check being hit by a lightning, can you?
+            <footer>
+              — <cite>Joe Armstrong, creator of <a href="https://en.wikipedia.org/wiki/Erlang_(programming_language)">Erlang</a></cite>
+            </footer>
+          </blockquote>
+        </div>
+
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Quote of the Year 2014</h4>
+          <blockquote>
+            But you <i>do know</i> that non-programmers are
+            people, too?
+            <footer>— <cite>Michał Kłujszo</cite></footer>
+          </blockquote>
+        </div>
+      </div> <!-- /.blog-sidebar -->
+    </main>
+    <footer class="blog-footer">
+      <p><a href="#">Back to top</a> / <a href="">More posts</a> </p>
+    </footer>
+
+    <script src="/statics/bundle.js?cache_busting_cookie=4239"></script>
+  </body>
+</html>

@@ -1,0 +1,211 @@
+#+TITLE: Advent of Code 2023 - Day 2
+#+SUBTITLE: Just Part 1, since I'm late to the party again today...
+#+DATE: <2023-12-02 13:27:57>
+#+AUTHOR: Pior Klibert
+#+OPTIONS: |:t toc:nil
+#+STATE: DONE
+
+** Part 1
+:PROPERTIES:
+:CUSTOM_ID: advent-of-code-2023---day-2_part-1
+:END:
+
+Here's the [[https://adventofcode.com/2023/day/2][link to the exercise]] - as usual, we get some input data, and need to
+read it and check some of the properties. In this case, the question is as
+follows:
+
+#+begin_quote
+Determine which games would have been possible if the bag had been loaded with
+only 12 red cubes, 13 green cubes, and 14 blue cubes.
+#+end_quote
+
+Okay - before we start, let's import the libraries we'll need. Strictly
+speaking, none if these are actually *needed* - you can see other
+implementations that don't use anything outside of =subr= and =simple= - but I
+want to showcase the tools modern Elisper has at their disposal.
+
+#+begin_src emacs-lisp -n :results nil :exports code :tangle advent-of-code-2023-day-2.el
+  (require 'b)
+  (require 'cl-lib)
+  (require 'map)
+  (require 'dash)  
+#+end_src
+
+With that out of the way, we can take a stab at the task. First, let's assume we
+have the input in a buffer already, in ~input.txt~. You could implement the
+task by imperatively traversing the buffer, which would be very Emacs-y way of
+doing this, but since there's an implementation [[https://github.com/amno1/AOC2023/blob/main/2.el][like that]] already, I'll go for
+a more Python-like approach and split the input into a list of lines:
+
+#+begin_src emacs-lisp +n :exports both :tangle advent-of-code-2023-day-2.el
+  (defconst aoc-games-played-input
+    (-> "input.txt" get-buffer b-string-no-properties s-trim s-lines))
+#+end_src
+
+We now have 100 lines of text, ready to be further processed:
+
+#+begin_src emacs-lisp :exports both
+  (length aoc-games-played-input)
+#+end_src
+
+#+RESULTS:
+: 100
+
+Here's how the lines look like:
+
+#+begin_src emacs-lisp :results pp :exports both
+  (-take 2 aoc-games-played-input)
+#+end_src
+
+#+RESULTS:
+: ("Game 1: 12 blue, 15 red, 2 green; 17 red, 8 green, 5 blue; 8 red, 17 blue; 9 green, 1 blue, 4 red"
+:  "Game 2: 6 red, 6 blue, 2 green; 1 blue, 1 red; 6 green, 1 red, 10 blue")
+
+We need to verify that on each line all the "subsets" - separated by
+semicolons - have color values that *do not exceed the limits* quoted at the
+beginning. First, let's further split the lines into chunks, separating game ID
+from subsets, and then further separating subsets from each other:
+
+#+begin_src emacs-lisp :results pp :exports both
+  (let ((line (car aoc-games-played-input)))
+    (pcase-let*
+        ((`(,game ,subsets) (s-split (rx ": ") line))
+         (subset-list (s-split (rx "; ") subsets))
+         (subsets (--map (s-split (rx ", ") it) subset-list)))
+      (cons
+       (cl-second (s-match (rx "Game " (group (1+ num))) game))
+       subsets)))
+#+end_src
+
+#+RESULTS:
+: ("1" ("12 blue" "15 red" "2 green") ("17 red" "8 green" "5 blue")
+:  ("8 red" "17 blue") ("9 green" "1 blue" "4 red"))
+
+It works, so let's refactor it a bit before moving on. As we're doing the
+refactor, we can also convert strings to numbers and symbols as appropriate, and
+subsets into alists:
+
+#+begin_src emacs-lisp +n :results pp :exports both :tangle advent-of-code-2023-day-2.el
+  (cl-defun get-game-id (game-name)
+    (let ((re (rx "Game " (group (1+ num)))))
+      (->> game-name (s-match re) cl-second string-to-number)))
+
+  (cl-defun subset->alist (colors)
+    (cl-loop for color in colors
+             for (num color) = (s-split (rx " ") color)
+             collect (cons (intern-soft color) (string-to-number num))))
+
+  (cl-defun line->game (line)
+    (pcase-let* ((`(,game ,subsets) (s-split (rx ": ") line))
+                 (subset-list (s-split (rx "; ") subsets))
+                 (subsets (--map (s-split (rx ", ") it) subset-list)))
+      (cons
+       (get-game-id game)
+       (-map #'subset->alist subsets)))  )
+
+  (let ((line (car aoc-games-played-input)))
+    (line->game line))
+#+end_src
+
+#+RESULTS:
+: (1 ((blue . 12) (red . 15) (green . 2)) ((red . 17) (green . 8) (blue . 5))
+:    ((red . 8) (blue . 17)) ((green . 9) (blue . 1) (red . 4)))
+
+So we have the data in a form that's convenient to work with. Now, what does it
+mean for a game to be possible? All subsets must have color values within a
+limit. Let's define a function for checking this:
+
+#+begin_src emacs-lisp +n :results pp :exports both :tangle advent-of-code-2023-day-2.el
+  (defconst limits '((red . 12) (green . 13) (blue . 14)))
+
+  (cl-defun game-possible-p (game)
+    (cl-loop for subset in (cdr game)
+             unless (cl-loop for (color . limit) in limits
+                             always (<= (map-elt subset color 0) limit))
+             return nil
+             finally return t))
+
+  (defconst line-impossible
+    "Game 1: 12 blue, 15 red, 2 green; 17 red, 8 green, 5 blue; 8 red, 17 blue; 9 green, 1 blue, 4 red")
+  (defconst line-possible
+    "Game 2: 6 red, 6 blue, 2 green; 1 blue, 1 red; 6 green, 1 red, 10 blue")
+
+  (list (game-possible-p (line->game line-possible))
+        (game-possible-p (line->game line-impossible)))
+#+end_src
+
+#+RESULTS:
+: (t nil)
+
+The predicate seems to be working. The two things left to do are to filter out
+the games for which the predicate returns ~t~ and then sum the game IDs of those
+games:
+
+#+begin_src emacs-lisp +n :results value :exports both :tangle advent-of-code-2023-day-2.el
+  (cl-loop for line in aoc-games-played-input
+           for game = (line->game line)
+           if (game-possible-p game)
+           sum (car game))
+#+end_src
+
+#+RESULTS:
+: 2716
+
+And that's, according to the AoC page, the correct answer for my dataset, for
+part 1!
+
+** Part 2
+:PROPERTIES:
+:CUSTOM_ID: advent-of-code-2023---day-2_part-2
+:END:
+
+For completeness sake, here's the answer to the second part of the puzzle. Here,
+we need to find the maximum values for each color across all subsets of a given
+game:
+
+#+begin_src emacs-lisp +n :results pp :exports both :tangle advent-of-code-2023-day-2.el
+  (defconst maxes '((red . 0) (green . 0) (blue . 0)))
+
+  (cl-macrolet
+      ((alist-maximize (key acc alist)
+         `(setf (alist-get ,key ,acc)
+                (max (alist-get ,key ,acc) (alist-get ,key ,alist 0)))))
+    (cl-loop for line in aoc-games-played-input
+             for game = (line->game line)
+             sum (cl-loop with maxs = (copy-tree maxes)
+                          for x in (cdr game)
+                          do (progn
+                               (alist-maximize 'red maxs x)  
+                               (alist-maximize 'green maxs x)
+                               (alist-maximize 'blue maxs x) )
+                          finally return (apply #'* (map-values maxs)))))
+#+end_src
+
+#+RESULTS:
+: 72227
+
+The result happens to be correct for my dataset, here too.
+
+The main highlight here is the ~cl-macrolet~ form, which defines local macros,
+valid only in the lexical scope of the form. It's great for getting syntactic
+clutter out of the way without polluting the global namespace.
+
+A honorary mention goes to ~setf~ - a versatile tool for updating contents of
+things. There are many "things" that you can set/update, and you can your own
+"places" and have ~setf~ work with them, too. The selling point of ~setf~ is the
+symmetry: most often, the "place" has the same syntactic form as the getter for
+a given thing. Here, ~alist-get~ is used with ~setf~ to update a value in an
+alist - it's way cleaner than ~assoc~ and ~setcdr~ to which it expands to.
+
+Notice also the ~copy-tree~ - it's important because of the mutability of
+Elisp's lists. It's obvious now when the alist is defined outside of the
+function, but the call to ~copy-tree~ would be needed even if the variable was
+inlined! That is, this:
+
+#+begin_src emacs-lisp
+  (cl-loop with maxs = '((red . 0) (green . 0) (blue . 0)) ...)
+#+end_src
+
+Would still produce wrong output. An alternative to ~copy-tree~ would be
+constructing the list at runtime by calling ~list~ and ~cons~ functions. I'll
+leave the detail as to why this happens for a future post.

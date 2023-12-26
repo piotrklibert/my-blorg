@@ -1,0 +1,40 @@
+#+TITLE: Make <TAB> select the other Dired window
+#+SUBTITLE: Replicating the best feature of Sunrise Commander in plain Dired
+#+DATE: <2023-11-26 10:00>
+#+AUTHOR: Pior Klibert
+
+Some time ago, Sunrise Commander - a two-pane file manager for Emacs, built on
+top of Dired by Drew Adams - stopped working for me. The loss of familiar
+bindings was a little painful, but I mostly solved it with Hydra - the
+functionality is mostly still there in Dired.
+
+One thing I missed was swithcing to the other Dired window easily. With just two
+Dired windows occupying a whole frame just ~M-x other-window~ worked well, but
+with more windows, I had to fall back to ~M-x windmove-*~ and that was less
+convenient[fn:1].
+
+I decided to fix it at some point, and here's the result:
+
+#+begin_src emacs-lisp -n
+  (defun my-select-other-dired-window ()
+    "Select the other dired window, if there is only one."
+    (interactive)
+    (let* ((selected-window (selected-window))
+           (other-windows (cdr (window-list))))
+      (cl-loop for w in other-windows
+               if (with-current-buffer (window-buffer w)
+                    (derived-mode-p 'dired-mode)) 
+               collect w into result
+               finally
+               (when (= 1 (length result))
+                 (select-window (car result))))))
+
+  (keymap-set dired-mode-map "<tab>" #'my-select-other-dired-window)
+#+end_src
+
+Now I can select the other Dired buffer by pressing ~<TAB>~ in one of them, no
+matter how many other windows are there.
+
+* Footnotes
+
+[fn:1] Testing footnotes 

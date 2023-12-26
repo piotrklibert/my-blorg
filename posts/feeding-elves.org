@@ -1,0 +1,63 @@
+#+TITLE: Advent of Code - Feeding hungry Elves, with Elisp
+#+SUBTITLE: Surprisingly fun exercise!
+#+DATE: <2023-11-30 00:13:44>
+#+UPDATED: <2023-12-03 15:34>
+#+AUTHOR: Pior Klibert
+#+STATE: DONE
+
+Solutions to the previous (2022) year AoC [[https://adventofcode.com/2022/day/1][first puzzle]].
+
+Input looks like this:
+
+#+begin_src markdown
+  123
+  324
+
+  2
+
+  4322
+  3
+#+end_src
+
+IOW, a list of lists of numbers. We need to sum the sublists and find the
+biggest sum.
+
+First solution uses Calc: it grabs one sublist and puts it on the stack as a
+vector. It then reduces the vector by applying ~+~ function, leaving only the
+sum on the stack. This repeats in a loop until we have a stack of sums. Finally,
+we pack the whole stack into a single vector and select the maximum element from
+it. That's it! 
+
+#+begin_src emacs-lisp -n
+  (save-excursion
+    (calc-pop (calc-stack-size))
+    (while (progn (skip-chars-forward " \t\n") (not (eobp)))
+      (save-selected-window
+        (calc-grab-region (point) (progn (forward-paragraph) (point)) nil)
+        (calc-eval "VR+" 'macro)))
+    (calc-pack (calc-stack-size))
+    (calc-vector-max nil)
+    (calc-top-n 1))
+#+end_src
+
+However, it's INCREDIBLY slow 🙂 There are many reasons for that, I think the
+major one is that we're scripting an actual Calc instance and we need to wait
+for it to update its display after every command.
+
+The second solution is instantaneous - it reads the whole buffer at once, splits
+the lines, converts textual representation to actual numbers, sums sublists,
+sorts them and returns the biggest element.
+
+#+begin_src emacs-lisp -n
+  (cl-labels
+      ((split-to-numbers (lst)
+         (--map (->> (s-split "\n" it) (-map #'string-to-number)) lst)))
+    (skip-chars-forward " \t\n")
+    (let* ((input (buffer-substring-no-properties (point) (point-max)))
+           (subs (->> input s-trim (s-split "\n\n") split-to-numbers))
+           (sorted (cl-sort (-map #'-sum subs) #'>)))
+      (message "Winner: %s" (car sorted))))
+#+end_src
+
+That's it for the last year. Let's see if I can play a little with the 2023
+edition! 🙂

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Piotr Klibert" />
+    <meta name="description" content="Exciting new programming Languages and Polyglot programming; also Emacs" />
+
+    <link rel="preload" as="font" href="/statics/fonts/Roboto-Regular.ttf" type="font/ttf" crossorigin="anonymous" />
+    <link rel="preload" as="font" href="/statics/fonts/Roboto-Italic.ttf" type="font/ttf" crossorigin="anonymous" />
+    <link rel="preload" as="font" href="/statics/fonts/Roboto-Black.ttf" type="font/ttf" crossorigin="anonymous" />
+    <link rel="preload" as="font" href="/statics/fonts/Roboto-Black.ttf" type="font/ttf" crossorigin="anonymous" />
+    <link rel="preload" href="/output/base.min.css?cache_busting_cookie=4333" as="style" />
+
+    <link rel="icon" type="image/x-icon" href="/statics/images/favicon.ico" />
+    <link href="/statics/base.min.css?cache_busting_cookie=4287" rel="stylesheet" />
+    <link href="/statics/styles/my-styles.css?cache_busting_cookie=4202" rel="stylesheet" />
+    <link href="/statics/highlight-code.min.css?cache_busting_cookie=4398" rel="stylesheet" />
+    <style type="text/css">.example { color: white; }</style>
+    <title>Advent of Code - Feeding hungry Elves, with Elisp -- Piotr Klibert's blog</title>
+  </head>
+  <body>
+
+    <header id="blog-header">
+      <div id="blog-title">
+        <h1>The Right Lang for the Job</h1>
+        <div><p>Exploring the abbyss of non-mainstream programming languages</p></div>
+      </div>
+
+      <div id="top-menu-container">
+        <nav>
+          <a href="/">Blog</a>
+          <!-- <a href="/articles/archive.html">Archive</a> -->
+          <!-- <a href="/articles/programming_langs.html">Languages</a> -->
+          <!-- <a href="/articles/about.html">About</a> -->
+          <!-- <a href="/articles/contact.html">Contact</a> -->
+          <!-- <div id="blog-nav-rss"> -->
+          <!-- <a nofolow="1" href="/statics/feed.xml"> -->
+          <!-- <img src="/statics/icons/rss0.png" alt="RSS icon" /> -->
+          <!-- </a> -->
+          <!-- </div> -->
+        </nav>
+      </div>
+    </header>
+
+    <main id="blog-main">
+      <div class="blog-main">
+        
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a class="title-link" id="advent-of-code-feeding-hungry-elves-with-elisp" href="/posts/advent-of-code-feeding-hungry-elves-with-elisp.html" title="Read on separate page">
+          Advent of Code - Feeding hungry Elves, with Elisp
+        </a>
+        <a href="#advent-of-code-feeding-hungry-elves-with-elisp" class="robaczek" title="Link to this place on current page">¶</a>
+      </h1>
+      
+        <h3 class="subtitle">Surprisingly fun exercise!</h3>
+      
+      <p class="meta">
+        Created: <time>&lt;2023-11-30 00:13:44&gt;</time>
+        
+          &middot; Updated: <time>&lt;2023-12-03 15:34&gt;</time>
+        
+      </p>
+    </header>
+
+    <p>
+Solutions to the previous (2022) year AoC <a href="https://adventofcode.com/2022/day/1">first puzzle</a>.
+</p>
+
+<p>
+Input looks like this:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-markdown">123
+324
+
+2
+
+4322
+3
+</pre>
+</div>
+
+<p>
+IOW, a list of lists of numbers. We need to sum the sublists and find the
+biggest sum.
+</p>
+
+<p>
+First solution uses Calc: it grabs one sublist and puts it on the stack as a
+vector. It then reduces the vector by applying <code>+</code> function, leaving only the
+sum on the stack. This repeats in a loop until we have a stack of sums. Finally,
+we pack the whole stack into a single vector and select the maximum element from
+it. That's it! 
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span class="linenr">1: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">save-excursion</span>
+<span class="linenr">2: </span>  <span style="color: #ff66ff;">(</span>calc-pop <span style="color: #00eff0;">(</span>calc-stack-size<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span>
+<span class="linenr">3: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">while</span> <span style="color: #00eff0;">(</span><span style="color: #8ac6f2; font-weight: bold;">progn</span> <span style="color: #ff6b55;">(</span>skip-chars-forward <span style="color: #95e454;">" \t\n"</span><span style="color: #ff6b55;">)</span> <span style="color: #ff6b55;">(</span>not <span style="color: #efef00;">(</span>eobp<span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span>
+<span class="linenr">4: </span>    <span style="color: #00eff0;">(</span><span style="color: #8ac6f2; font-weight: bold;">save-selected-window</span>
+<span class="linenr">5: </span>      <span style="color: #ff6b55;">(</span>calc-grab-region <span style="color: #efef00;">(</span>point<span style="color: #efef00;">)</span> <span style="color: #efef00;">(</span><span style="color: #8ac6f2; font-weight: bold;">progn</span> <span style="color: #b6a0ff;">(</span>forward-paragraph<span style="color: #b6a0ff;">)</span> <span style="color: #b6a0ff;">(</span>point<span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span> nil<span style="color: #ff6b55;">)</span>
+<span class="linenr">6: </span>      <span style="color: #ff6b55;">(</span>calc-eval <span style="color: #95e454;">"VR+"</span> 'macro<span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span>
+<span class="linenr">7: </span>  <span style="color: #ff66ff;">(</span>calc-pack <span style="color: #00eff0;">(</span>calc-stack-size<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span>
+<span class="linenr">8: </span>  <span style="color: #ff66ff;">(</span>calc-vector-max nil<span style="color: #ff66ff;">)</span>
+<span class="linenr">9: </span>  <span style="color: #ff66ff;">(</span>calc-top-n 1<span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<p>
+However, it's INCREDIBLY slow 🙂 There are many reasons for that, I think the
+major one is that we're scripting an actual Calc instance and we need to wait
+for it to update its display after every command.
+</p>
+
+<p>
+The second solution is instantaneous - it reads the whole buffer at once, splits
+the lines, converts textual representation to actual numbers, sums sublists,
+sorts them and returns the biggest element.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span class="linenr">1: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-labels</span>
+<span class="linenr">2: </span>    <span style="color: #ff66ff;">(</span><span style="color: #00eff0;">(</span>split-to-numbers <span style="color: #ff6b55;">(</span>lst<span style="color: #ff6b55;">)</span>
+<span class="linenr">3: </span>       <span style="color: #ff6b55;">(</span><span style="color: #8ac6f2; font-weight: bold;">--map</span> <span style="color: #efef00;">(</span><span style="color: #8ac6f2; font-weight: bold;">-&gt;&gt;</span> <span style="color: #b6a0ff;">(</span>s-split <span style="color: #95e454;">"\n"</span> it<span style="color: #b6a0ff;">)</span> <span style="color: #b6a0ff;">(</span>-map #'<span style="color: #cae682;">string-to-number</span><span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span> lst<span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span>
+<span class="linenr">4: </span>  <span style="color: #ff66ff;">(</span>skip-chars-forward <span style="color: #95e454;">" \t\n"</span><span style="color: #ff66ff;">)</span>
+<span class="linenr">5: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">let*</span> <span style="color: #00eff0;">(</span><span style="color: #ff6b55;">(</span><span style="color: #cae682;">input</span> <span style="color: #efef00;">(</span>buffer-substring-no-properties <span style="color: #b6a0ff;">(</span>point<span style="color: #b6a0ff;">)</span> <span style="color: #b6a0ff;">(</span>point-max<span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span>
+<span class="linenr">6: </span>         <span style="color: #ff6b55;">(</span><span style="color: #cae682;">subs</span> <span style="color: #efef00;">(</span><span style="color: #8ac6f2; font-weight: bold;">-&gt;&gt;</span> input s-trim <span style="color: #b6a0ff;">(</span>s-split <span style="color: #95e454;">"\n\n"</span><span style="color: #b6a0ff;">)</span> split-to-numbers<span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span>
+<span class="linenr">7: </span>         <span style="color: #ff6b55;">(</span><span style="color: #cae682;">sorted</span> <span style="color: #efef00;">(</span>cl-sort <span style="color: #b6a0ff;">(</span>-map #'<span style="color: #cae682;">-sum</span> subs<span style="color: #b6a0ff;">)</span> #'<span style="color: #cae682;">&gt;</span><span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span>
+<span class="linenr">8: </span>    <span style="color: #00eff0;">(</span>message <span style="color: #95e454;">"Winner: %s"</span> <span style="color: #ff6b55;">(</span>car sorted<span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<p>
+That's it for the last year. Let's see if I can play a little with the 2023
+edition! 🙂
+</p>
+
+  </article>
+
+      </div>
+
+      <div class="blog-sidebar">
+
+        <div class="sidebar-module sidebar-module-inset">
+          You can now subscribe to an
+          <a nofolow="1" href="/statics/feed.xml">RSS feed</a>
+          <a nofolow="1" href="/statics/feed.xml"><img src="/statics/feed-icon-14x14.png" style="vertical-align: baseline;"/></a>.
+        </div>
+
+        <!-- <div class="sidebar-module sidebar-module-inset" id="posts-module"> -->
+        <!-- <h4 style="">Latest posts</h4> -->
+        <!-- <ol class="list-unstyled posts-links"></ol> -->
+        <!-- </div> -->
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Quote of the Year 2023</h4>
+          <blockquote>
+            One of the most surprising things I've witnessed in my lifetime is
+            the rebirth of the concept of heresy.
+            <footer>— <cite><a href="http://paulgraham.com/heresy.html">Paul Graham</a></cite></footer>
+          </blockquote>
+        </div>
+
+        <div class="sidebar-module sidebar-module-inset">
+          <h4>About me</h4>
+          <p>
+            I'm a programmer. I like learning programming languages. I've been
+            doing it for more than a decade.
+          </p>
+          <p>
+            Here's roughly <a href="/articles/about.html#history">what I learned</a>
+            to date.
+          </p>
+          <p>
+            <a href="/articles/contact.html">Contact me</a>
+          </p>
+        </div>
+
+        <div class="sidebar-module sidebar-module-inset" id="links-module">
+          <h4>Links</h4>
+
+          <ol class="links-list">
+            <li><a href="https://www.youtube.com/watch?v=m09RWtt5nd8">Video of my talk on FP</a></li>
+            <li><a href="/warsawjs-talk/">Slides</a> and <a href="/warsawjs-talk/code.html">Examples</a> for the talk</li>
+          </ol>
+
+          <ol class="links-list">
+            <li><a href="http://hashrocket.com/blog/posts/taking-advantage-of-the-polyglot-lifestyle">Polyglot Lifestyle</a></li>
+            <li><a href="https://hyperpolyglot.org/">HyperPolyglot - language comparisons</a></li>
+            <li><a href="https://programming-idioms.org/">Programming Idioms</a></li>
+            <li><a href="https://github.com/kanaka/mal/blob/master/process/guide.md">Make a Lisp</a></li>
+            <li><a href="http://rosettacode.org/wiki/Rosetta_Code">Rosetta Code</a></li>
+            <li><a href="http://pleac.sourceforge.net/">PLEAC - Programming Language Examples Alike Cookbook</a></li>
+            <li><a href="http://learnxinyminutes.com/">Learn X in Y Minutes</a></li>
+            <li><a href="http://hyperpolyglot.org/">Hyperpolyglot</a></li>
+            <li><a href="http://rigaux.org/language-study/syntax-across-languages/">PL syntaxes comparison</a></li>
+            <li><a href="https://github.com/kanaka/mal">Make a Lisp</a></li>
+            <li><a href="https://modern-sql.com/use-case/literate-sql">Literate SQL</a></li>
+            <li><a href="http://en.literateprograms.org/LiteratePrograms:Welcome">Literate Programs</a></li>
+            <li><a href="http://radar.oreilly.com/2013/11/polyglot-programming-what-is-it-and-why-should-you-be-using-it.html">Why Polyglot?</a></li>
+          </ol>
+        </div>
+
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Quote of the Year 2022</h4>
+          <blockquote>
+            It's amazing what you can talk yourself into liking
+            <footer>— <cite>Steve Yegge</cite></footer>
+          </blockquote>
+        </div>
+
+
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Quote of the Year 2020</h4>
+          <blockquote>
+            What can change the nature of a man?
+            <footer>— <cite>Ravel Puzzlewell</cite></footer>
+          </blockquote>
+        </div>
+
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Quote of the Year 2017</h4>
+          <blockquote>
+            One foot in the grave, the other in Hell.
+            <footer>— <cite>The Nameless One</cite></footer>
+          </blockquote>
+        </div>
+
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Catch phrase of the Year 2016</h4>
+          <blockquote>
+            It isn't ideal that...
+            <footer>— <cite>many different people</cite></footer>
+          </blockquote>
+        </div>
+
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Quote of the Year 2015</h4>
+          <blockquote>
+            You can't type-check being hit by a lightning, can you?
+            <footer>
+              — <cite>Joe Armstrong, creator of <a href="https://en.wikipedia.org/wiki/Erlang_(programming_language)">Erlang</a></cite>
+            </footer>
+          </blockquote>
+        </div>
+
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Quote of the Year 2014</h4>
+          <blockquote>
+            But you <i>do know</i> that non-programmers are
+            people, too?
+            <footer>— <cite>Michał Kłujszo</cite></footer>
+          </blockquote>
+        </div>
+      </div> <!-- /.blog-sidebar -->
+    </main>
+    <footer class="blog-footer">
+      <p><a href="#">Back to top</a> / <a href="">More posts</a> </p>
+    </footer>
+
+    <script src="/statics/bundle.js?cache_busting_cookie=4239"></script>
+  </body>
+</html>

@@ -1,0 +1,31 @@
+#+TITLE: duplicate-sexp - a little help when editing lisp-y languages
+#+SUBTITLE: subtitle
+#+DATE: <2023-12-06 22:19:59>
+#+AUTHOR: Pior Klibert
+#+STATE: WIP
+
+I use ~duplicate-dwim~ quite often - blocks of lines very similar to each other
+are common in programming. In languages like Python, it works remarkably well.
+It's more problematic in Lisps, where duplicating a line risks unbalancing
+(sometimes a lot of) the parentheses.
+
+Tired of manually inserting newlines to drop parens a line down before
+duplicating a line, I decided to write ~duplicate-sexp~ command:
+
+#+begin_src emacs-lisp -n
+  (cl-defun my-duplicate-sexp (&optional (levels-up 1))
+    (interactive "p")
+    (save-excursion
+      (if (= levels-up 0)
+          (goto-char (car (bounds-of-thing-at-point 'sexp)))
+        (backward-up-list levels-up))
+      (paredit-copy-sexps-as-kill)
+      (forward-sexp)
+      (cond
+       ((= (point) (pos-eol))
+        (newline)
+        (indent-for-tab-command))
+       ((or (= levels-up 0) (looking-back ")" 1))
+        (insert " ")))
+      (yank)))
+#+end_src

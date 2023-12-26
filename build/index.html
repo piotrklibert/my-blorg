@@ -1,0 +1,1795 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Piotr Klibert" />
+    <meta name="description" content="Exciting new programming Languages and Polyglot programming; also Emacs" />
+
+    <link rel="preload" as="font" href="/statics/fonts/Roboto-Regular.ttf" type="font/ttf" crossorigin="anonymous" />
+    <link rel="preload" as="font" href="/statics/fonts/Roboto-Italic.ttf" type="font/ttf" crossorigin="anonymous" />
+    <link rel="preload" as="font" href="/statics/fonts/Roboto-Black.ttf" type="font/ttf" crossorigin="anonymous" />
+    <link rel="preload" as="font" href="/statics/fonts/Roboto-Black.ttf" type="font/ttf" crossorigin="anonymous" />
+    <link rel="preload" href="/output/base.min.css?cache_busting_cookie=4333" as="style" />
+
+    <link rel="icon" type="image/x-icon" href="/statics/images/favicon.ico" />
+    <link href="/statics/base.min.css?cache_busting_cookie=4287" rel="stylesheet" />
+    <link href="/statics/styles/my-styles.css?cache_busting_cookie=4202" rel="stylesheet" />
+    <link href="/statics/highlight-code.min.css?cache_busting_cookie=4398" rel="stylesheet" />
+    <style type="text/css">.example { color: white; }</style>
+    <title>The Right Lang for The Job ― Piotr Klibert's blog</title>
+  </head>
+  <body>
+
+    <header id="blog-header">
+      <div id="blog-title">
+        <h1>The Right Lang for the Job</h1>
+        <div><p>Exploring the abbyss of non-mainstream programming languages</p></div>
+      </div>
+
+      <div id="top-menu-container">
+        <nav>
+          <a href="/">Blog</a>
+          <!-- <a href="/articles/archive.html">Archive</a> -->
+          <!-- <a href="/articles/programming_langs.html">Languages</a> -->
+          <!-- <a href="/articles/about.html">About</a> -->
+          <!-- <a href="/articles/contact.html">Contact</a> -->
+          <!-- <div id="blog-nav-rss"> -->
+          <!-- <a nofolow="1" href="/statics/feed.xml"> -->
+          <!-- <img src="/statics/icons/rss0.png" alt="RSS icon" /> -->
+          <!-- </a> -->
+          <!-- </div> -->
+        </nav>
+      </div>
+    </header>
+
+    <main id="blog-main">
+      <div class="blog-main">
+        
+  
+    <article>
+  <header>
+    <h1 class="entry-title">
+      <a class="title-link" id="supercharge-your-eval-expression-with-ielm" href="/posts/supercharge-your-eval-expression-with-ielm.html" title="Read on separate page">
+        Supercharge your eval-expression with ielm!
+      </a>
+      <a href="#supercharge-your-eval-expression-with-ielm" class="robaczek" title="Link to this place on current page">¶</a>
+    </h1>
+    
+      <h3 class="subtitle">With some tinkering customization, ielm can be a capable replacement</h3>
+    
+    <p class="meta">
+      Created: <time>&lt;2023-12-04 Mon 23:00&gt;</time>
+      
+        &middot; Updated: <time>&lt;2023-12-06 Wed 14:04&gt;</time>
+      
+    </p>
+  </header>
+
+  <div id="outline-container-supercharge-your-eval-expression-with-ielm!_tldr:-why-and-when" class="outline-2">
+<h2 id="supercharge-your-eval-expression-with-ielm!_tldr:-why-and-when"><span class="section-number-2">1.</span> TLDR: why and when</h2>
+<div class="outline-text-2" id="text-supercharge-your-eval-expression-with-ielm!_tldr:-why-and-when">
+<p>
+I often use <code>straight-visit-package</code> and <code>find-library</code> to read the READMEs and
+<code>;; Commentary:</code> sections in Elisp files. On top of that, I use Info quite
+extensively - the manuals for <a href="https://www.gnu.org/software/emacs/manual/html_mono/elisp.html#Top">Elisp</a> and <a href="https://www.gnu.org/software/emacs/manual/html_mono/org.html#Top">Org Mode</a> are loaded with tons of useful
+Elisp snippets.
+</p>
+
+<p>
+The problem: while you can use <code>C-x C-e</code> almost everywhere, some of the places
+listed above are <b>read-only</b> buffers (Info, built-ins from <code>/usr/lib/</code>), so if I
+want to evaluate it in a slightly changed form (longer than one line, since that
+would fit in <code>eval-expression</code>), I need to switch to scratch buffer, which is
+pretty intrusive. With addition of IELM, my workflow looks like this:
+</p>
+
+<ol class="org-ol">
+<li>I'm reading code or docs in a read-only buffer.</li>
+<li>I find a piece of code I want to play with (modify and execute)</li>
+<li>If it's one line, I copy it to <code>M-:</code> (<code>eval-expression</code>)</li>
+<li>If it's up to 10 lines, I copy it to <code>C-M-:</code> (<code>ielm</code>)</li>
+<li>If it's longer, I copy it to <code>*scratch*</code> buffer</li>
+</ol>
+
+<p>
+In this post, I focus on pt. 4.
+</p>
+
+<p>
+UPDATE: Another <a href="https://old.reddit.com/user/deaddyfreddy">kind soul on Reddit (/u/deaddyfreddy)</a> pointed at <a href="https://github.com/Fanael/edit-indirect"><code>edit-indirect</code>
+package</a> that could be a good replacement for this. I will take a look!
+</p>
+</div>
+</div>
+<div id="outline-container-supercharge-your-eval-expression-with-ielm!_eval-expression--~m-:~" class="outline-2">
+<h2 id="supercharge-your-eval-expression-with-ielm!_eval-expression--~m-:~"><span class="section-number-2">2.</span> eval-expression / <code>M-:</code></h2>
+<div class="outline-text-2" id="text-supercharge-your-eval-expression-with-ielm!_eval-expression--~m-:~">
+<p>
+Bound under <code>M-:</code> by default, <code>eval-expression</code> allows you to quickly type any
+Elisp and execute it in the context of current window and buffer. I think it's
+one of my most used key bindings, after <code>M-x</code>. It supports <code>TAB</code>-completion, and
+even shows help (function and macro signatures).
+</p>
+
+
+<div id="org1df8c47" class="figure">
+<p><img src="/posts/./data/ba/61d0fa-c051-4d8b-9d8a-71cf33867960/screenshot_2023-12-04_2244.png" alt="screenshot_2023-12-04_2244.png" />
+</p>
+</div>
+
+<p>
+The input takes place in the minibuffer, which means it automatically keeps
+history of pevious invokations. You can search through that history, using your
+preferred completion styles, for example with Orderless (and Vertico, here) you
+can use regular expressions to get what you want:
+</p>
+
+
+<div id="org845b436" class="figure">
+<p><img src="/posts/./data/ba/61d0fa-c051-4d8b-9d8a-71cf33867960/screenshot_2023-12-04_2258.png" alt="screenshot_2023-12-04_2258.png" />
+</p>
+</div>
+
+<p>
+Unfortunately, the minibuffer is not the best way to input more complex forms.
+Multiline is possible, but tedious. Lack of enabled <code>paredit</code> hurts (and
+enabling it messes up incomplete input handling). For these reasons, for trying
+out longer pieces of code, I normally switch to the <code>*scratch*</code> buffer. The
+downside of it is that I need to switch to a buffer, often losing sight of the
+buffer I worked with before that.
+</p>
+
+<p>
+Fortunately, there's a middle ground: <code>ielm</code>! It's documented with a single page
+in the <a href="https://www.gnu.org/software/emacs/manual/html_mono/emacs.html#Lisp-Interaction">Emacs manual</a> and just a handful of customizable options. By default, as
+is usual for Emacs, it doesn't look or work too well, but with a bit of
+configuration, it gets <b><b>a lot</b></b> better. Here's how I use it.
+</p>
+</div>
+</div>
+<div id="outline-container-supercharge-your-eval-expression-with-ielm!_ielm--~c-m-:~" class="outline-2">
+<h2 id="supercharge-your-eval-expression-with-ielm!_ielm--~c-m-:~"><span class="section-number-2">3.</span> ielm / <code>C-M-:</code></h2>
+<div class="outline-text-2" id="text-supercharge-your-eval-expression-with-ielm!_ielm--~c-m-:~">
+<p>
+First, let's make <code>ielm</code> look better. As a replacement for <code>eval-expression</code> it
+should display at the bottom of the frame. I also prefer it to reduce the
+clutter - the default headaer and the prompt could use some tweaking:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span class="linenr"> 1: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-defun</span> <span style="color: #cae682;">my-make-right-arrow-icon</span> <span style="color: #ff66ff;">()</span>
+<span class="linenr"> 2: </span>  <span style="color: #95e454;">"Return a string that displays arrow icon  when inserted in a buffer."</span>
+<span class="linenr"> 3: </span>  <span style="color: #ff66ff;">(</span>propertize <span style="color: #00eff0;">(</span>all-the-icons-octicon <span style="color: #95e454;">"arrow-right"</span><span style="color: #00eff0;">)</span>
+<span class="linenr"> 4: </span>    'face <span style="color: #ccaa8f;">`</span><span style="color: #00eff0;">(</span><span style="color: #e5786d;">:family</span> <span style="color: #ccaa8f;">,</span><span style="color: #ff6b55;">(</span>all-the-icons-octicon-family<span style="color: #ff6b55;">)</span> <span style="color: #e5786d;">:height</span> 1.2<span style="color: #00eff0;">)</span>
+<span class="linenr"> 5: </span>    'display '<span style="color: #00eff0;">(</span>raise 0<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr"> 6: </span>
+<span class="linenr"> 7: </span><span style="color: #99968b;">;; </span><span style="color: #99968b;">Make *ielm* buffer display in a side-window at the bottom of the frame</span>
+<span class="linenr"> 8: </span><span style="color: #5f9ea0;">(</span>add-to-list 'display-buffer-alist
+<span class="linenr"> 9: </span>             '<span style="color: #ff66ff;">(</span><span style="color: #95e454;">"*ielm*"</span>
+<span class="linenr">10: </span>               <span style="color: #00eff0;">(</span>display-buffer-in-side-window<span style="color: #00eff0;">)</span>
+<span class="linenr">11: </span>               <span style="color: #00eff0;">(</span>side . bottom<span style="color: #00eff0;">)</span>
+<span class="linenr">12: </span>               <span style="color: #00eff0;">(</span>window-height . 10<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">13: </span>
+<span class="linenr">14: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">setq</span> ielm-header <span style="color: #95e454;">""</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">15: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">setq</span> ielm-prompt <span style="color: #ff66ff;">(</span>concat <span style="color: #00eff0;">(</span>my-make-right-arrow-icon<span style="color: #00eff0;">)</span> <span style="color: #95e454;">" "</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">16: </span>
+<span class="linenr">17: </span><span style="color: #5f9ea0;">(</span>keymap-global-set <span style="color: #95e454;">"C-M-:"</span> #'<span style="color: #cae682;">ielm</span><span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<p>
+We use <code>display-buffer-alist</code> to add a rule for where and how <code>*ielm*</code> buffers
+should show up, then remove the header (why waste a line?) and change the prompt
+to a shorter one. We get this as a result:
+</p>
+
+
+<div id="org67747ae" class="figure">
+<p><img src="/posts/./data/ba/61d0fa-c051-4d8b-9d8a-71cf33867960/screenshot_2023-12-05_2101.png" alt="screenshot_2023-12-05_2101.png" />
+</p>
+</div>
+
+<p>
+Now, let's make the <code>*ielm*</code> buffer behave more like a normal Elisp buffer. I
+have <b>a lot</b> of config already in place for Elisp, and since the buffer is not a
+minibuffer, most of these will just work. So, I add a few hooks:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span class="linenr"> 1: </span><span style="color: #99968b;">;; </span><span style="color: #99968b;">*ielm* buffer</span>
+<span class="linenr"> 2: </span><span style="color: #5f9ea0;">(</span>add-hook 'ielm-mode-hook 'my-elisp-mode-setup<span style="color: #5f9ea0;">)</span> <span style="color: #99968b;">; </span><span style="color: #99968b;">(1)</span>
+<span class="linenr"> 3: </span><span style="color: #5f9ea0;">(</span>add-hook 'ielm-mode-hook 'my-ielm-mode-setup<span style="color: #5f9ea0;">)</span>
+<span class="linenr"> 4: </span><span style="color: #5f9ea0;">(</span>keymap-set ielm-map <span style="color: #95e454;">"C-M-:"</span> #'<span style="color: #cae682;">kill-buffer-and-window</span><span style="color: #5f9ea0;">)</span> <span style="color: #99968b;">; </span><span style="color: #99968b;">(2)</span>
+<span class="linenr"> 5: </span>
+<span class="linenr"> 6: </span><span style="color: #99968b;">;; </span><span style="color: #99968b;">indirect buffer used by ielm to fontify elisp code</span>
+<span class="linenr"> 7: </span><span style="color: #5f9ea0;">(</span>add-hook 'ielm-indirect-setup-hook #'<span style="color: #cae682;">rainbow-delimiters-mode</span><span style="color: #5f9ea0;">)</span> <span style="color: #99968b;">; </span><span style="color: #99968b;">(3)</span>
+<span class="linenr"> 8: </span>
+<span class="linenr"> 9: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">defun</span> <span style="color: #cae682;">my-ielm-mode-setup</span> <span style="color: #ff66ff;">()</span>
+<span class="linenr">10: </span>  <span style="color: #ff66ff;">(</span>paredit-mode<span style="color: #ff66ff;">)</span>
+<span class="linenr">11: </span>  <span style="color: #ff66ff;">(</span>keymap-local-set <span style="color: #95e454;">"C-&lt;return&gt;"</span> #'<span style="color: #cae682;">my-ielm-send-input</span><span style="color: #ff66ff;">)</span> <span style="color: #99968b;">; </span><span style="color: #99968b;">(4)</span>
+<span class="linenr">12: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">let</span> <span style="color: #00eff0;">(</span><span style="color: #ff6b55;">(</span><span style="color: #cae682;">map</span> <span style="color: #efef00;">(</span>copy-keymap paredit-mode-map<span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span>
+<span class="linenr">13: </span>    <span style="color: #00eff0;">(</span>keymap-set map <span style="color: #95e454;">"&lt;RET&gt;"</span> 'ielm-return<span style="color: #00eff0;">)</span>
+<span class="linenr">14: </span>    <span style="color: #00eff0;">(</span><span style="color: #8ac6f2; font-weight: bold;">push</span> <span style="color: #ccaa8f;">`</span><span style="color: #ff6b55;">(</span>paredit-mode . <span style="color: #ccaa8f;">,</span>map<span style="color: #ff6b55;">)</span> minor-mode-overriding-map-alist<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">15: </span>
+<span class="linenr">16: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-defun</span> <span style="color: #cae682;">my-ielm-send-input</span> <span style="color: #ff66ff;">()</span>
+<span class="linenr">17: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">interactive</span><span style="color: #ff66ff;">)</span>
+<span class="linenr">18: </span>  <span style="color: #99968b;">;; </span><span style="color: #99968b;">The pattern of: '&lt;return&gt; SHIT, I meant execute! C-/ C-&lt;return&gt;' repeats</span>
+<span class="linenr">19: </span>  <span style="color: #99968b;">;; </span><span style="color: #99968b;">iself often enough that automation seems warranted... :)</span>
+<span class="linenr">20: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">when</span> <span style="color: #00eff0;">(</span>eq 'ielm-return last-command<span style="color: #00eff0;">)</span> <span style="color: #00eff0;">(</span>undo<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span>
+<span class="linenr">21: </span>  <span style="color: #ff66ff;">(</span>ielm-send-input<span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<p>
+<code>my-elisp-mode-setup</code> (at <code>(1)</code>) is a hook I run in normal Elisp buffers. It
+enables tens of packages and messes with a lot of keybindings, you can see it <a href="https://gist.github.com/piotrklibert/44801d13513ac1c9aca5b4522bbbde79">on
+Github</a>. <code>my-ielm-mode-setup</code> only overrides some key bindings - <code>paredit</code>
+would normally hijack the <code>RET</code> key, so we use <a href="https://www.gnu.org/software/emacs/manual/html_mono/elisp.html#Controlling-Active-Maps">minor-mode-overriding-map-alist</a>
+to tell it not to do that. With that, we have a nice multiline editing,
+structural editing with paredit, and fontification and indentation that work:
+</p>
+
+
+<div id="org34e59f5" class="figure">
+<p><img src="/posts/./data/ba/61d0fa-c051-4d8b-9d8a-71cf33867960/screenshot_2023-12-05_2116.png" alt="screenshot_2023-12-05_2116.png" />
+</p>
+</div>
+
+<p>
+With <code>ielm-dynamic-multiline-inputs</code> and <code>ielm-dynamic-return</code> set, we can now
+insert newlines normally as long as we're not at the very end of the input.
+Having to move point to the end to execute the code can be tedious, so I bound
+<code>C-&lt;return&gt;</code> to send the input immediately, no matter where the point currently
+is.
+</p>
+
+<p>
+Since this is a normal Elisp buffer, we can also use <code>C-M-x</code> and <code>C-x C-e</code> to
+execute <b>parts</b> of the current input. That allows you to refine the input before
+actually executing it.
+</p>
+
+<p>
+Going further, one of the nice things about <code>eval-expression</code> is that it works
+in the context of the current window and buffer. I didn't want to mess with how
+IELM executes its input; instead, I made a little helper function:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span class="linenr"> 1: </span><span style="color: #5f9ea0;">(</span>keymap-global-set <span style="color: #95e454;">"C-M-:"</span> #'<span style="color: #cae682;">my-run-ielm</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr"> 2: </span>
+<span class="linenr"> 3: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-defun</span> <span style="color: #cae682;">my-run-ielm</span> <span style="color: #ff66ff;">(</span><span style="color: #cae682;">arg</span><span style="color: #ff66ff;">)</span>
+<span class="linenr"> 4: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">interactive</span> <span style="color: #95e454;">"P"</span><span style="color: #ff66ff;">)</span>
+<span class="linenr"> 5: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">let</span> <span style="color: #00eff0;">(</span><span style="color: #ff6b55;">(</span><span style="color: #cae682;">buf</span> <span style="color: #efef00;">(</span>buffer-name <span style="color: #b6a0ff;">(</span>current-buffer<span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span>
+<span class="linenr"> 6: </span>    <span style="color: #00eff0;">(</span>ielm<span style="color: #00eff0;">)</span>
+<span class="linenr"> 7: </span>    <span style="color: #00eff0;">(</span><span style="color: #8ac6f2; font-weight: bold;">when</span> arg
+<span class="linenr"> 8: </span>      <span style="color: #ff6b55;">(</span>insert
+<span class="linenr"> 9: </span>       <span style="color: #efef00;">(</span>prin1-to-string
+<span class="linenr">10: </span>        <span style="color: #b6a0ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">pcase</span> arg
+<span class="linenr">11: </span>          <span style="color: #5f9ea0;">(</span>'<span style="color: #79a8ff;">(</span>4<span style="color: #79a8ff;">)</span> <span style="color: #ccaa8f;">`</span><span style="color: #79a8ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">with-selected-window</span> <span style="color: #f78fe7;">(</span>get-buffer-window <span style="color: #ccaa8f;">,</span>buf<span style="color: #f78fe7;">)</span><span style="color: #79a8ff;">)</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">12: </span>          <span style="color: #5f9ea0;">(</span>'<span style="color: #79a8ff;">(</span>16<span style="color: #79a8ff;">)</span> <span style="color: #ccaa8f;">`</span><span style="color: #79a8ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">with-current-buffer</span> <span style="color: #ccaa8f;">,</span>buf<span style="color: #79a8ff;">)</span><span style="color: #5f9ea0;">)</span><span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span>
+<span class="linenr">13: </span>      <span style="color: #ff6b55;">(</span>forward-char -1<span style="color: #ff6b55;">)</span>
+<span class="linenr">14: </span>      <span style="color: #ff6b55;">(</span>ielm-return<span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<p>
+Now, when I want to execute some code in the context of a window or buffer I was
+before invoking IELM, I can press <code>C-u C-M-:</code> or <code>C-u C-u C-M-:</code>. This is what I
+get in that case:
+</p>
+
+
+<div id="org8f5a251" class="figure">
+<p><img src="/posts/./data/ba/61d0fa-c051-4d8b-9d8a-71cf33867960/screenshot_2023-12-05_2131.png" alt="screenshot_2023-12-05_2131.png" />
+</p>
+</div>
+
+<p>
+I can now use things like <code>re-search-forward</code> in the context of the window I was
+in before switching to IELM - and see the point move as the command gets
+executed.
+</p>
+
+<p>
+Finally, remember the "help" that <code>eval-expression</code> offers? Since <code>*ielm*</code> is a
+normal buffer, it can do a lot more - for example, you can use it with Corfu:
+</p>
+
+
+<div id="orgd5340f1" class="figure">
+<p><img src="/posts/./data/ba/61d0fa-c051-4d8b-9d8a-71cf33867960/screenshot_2023-12-05_2143.png" alt="screenshot_2023-12-05_2143.png" />
+</p>
+</div>
+
+<p>
+Of course, all the other goodies you have configured for <code>emacs-lisp-mode</code> will
+also work. This is the ultimate advantage of this solution over
+<code>eval-expression</code>, in my opinion.
+</p>
+</div>
+</div>
+<div id="outline-container-supercharge-your-eval-expression-with-ielm!_conclusion" class="outline-2">
+<h2 id="supercharge-your-eval-expression-with-ielm!_conclusion"><span class="section-number-2">4.</span> Conclusion</h2>
+<div class="outline-text-2" id="text-supercharge-your-eval-expression-with-ielm!_conclusion">
+<p>
+One thing missing is saving and searching of the history of commands. It's kept
+in <code>comint</code>, I think, and is not persistent. Recalling previous commands in a
+single IELM session (with <code>C-&lt;up&gt;</code>) works, but <code>C-r</code> starts an <code>isearch</code> of
+the buffer instead of Orderless search with Vertico. This is something I still
+need to figure out.
+</p>
+
+<p>
+UPDATE: a kind soul <a href="https://old.reddit.com/user/FrankLeeMadear">over at Reddit (/u/FrankLeeMadear)</a> provided the missing
+piece for me! Thank you, I will use it well! 🙂
+</p>
+
+<p>
+UPDATE: The code was a little buggy - it required some conversions between the
+ring and a list. It works now, including persistence between Emacs restarts.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span class="linenr"> 1: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">defvar</span> <span style="color: #cae682;">ielm-input-history</span> nil
+<span class="linenr"> 2: </span>  <span style="color: #95e454;">"History of input entered in ielm buffers. Persistent across sessions."</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr"> 3: </span>
+<span class="linenr"> 4: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-defun</span> <span style="color: #cae682;">my-ielm-get-history</span> <span style="color: #ff66ff;">()</span>
+<span class="linenr"> 5: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">unless</span> <span style="color: #00eff0;">(</span>get-buffer <span style="color: #95e454;">"*ielm*"</span><span style="color: #00eff0;">)</span>
+<span class="linenr"> 6: </span>    <span style="color: #00eff0;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-return-from</span> my-ielm-get-history ielm-input-history<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span>
+<span class="linenr"> 7: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">let*</span> <span style="color: #00eff0;">(</span><span style="color: #ff6b55;">(</span><span style="color: #cae682;">input-ring</span> <span style="color: #efef00;">(</span><span style="color: #8ac6f2; font-weight: bold;">if</span> <span style="color: #b6a0ff;">(</span>eq major-mode 'inferior-emacs-lisp-mode<span style="color: #b6a0ff;">)</span>
+<span class="linenr"> 8: </span>                         comint-input-ring
+<span class="linenr"> 9: </span>                       <span style="color: #b6a0ff;">(</span>buffer-local-value 'comint-input-ring
+<span class="linenr">10: </span>                                           <span style="color: #5f9ea0;">(</span>get-buffer <span style="color: #95e454;">"*ielm*"</span><span style="color: #5f9ea0;">)</span><span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span>
+<span class="linenr">11: </span>         <span style="color: #ff6b55;">(</span><span style="color: #cae682;">input-list</span> <span style="color: #efef00;">(</span>-map #'<span style="color: #cae682;">substring-no-properties</span> <span style="color: #b6a0ff;">(</span>ring-elements input-ring<span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span>
+<span class="linenr">12: </span>    <span style="color: #00eff0;">(</span>-uniq <span style="color: #ff6b55;">(</span>append input-list ielm-input-history<span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">13: </span>
+<span class="linenr">14: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-defun</span> <span style="color: #cae682;">my-ielm-search-history</span> <span style="color: #ff66ff;">()</span>
+<span class="linenr">15: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">interactive</span><span style="color: #ff66ff;">)</span>
+<span class="linenr">16: </span>  <span style="color: #ff66ff;">(</span>insert <span style="color: #00eff0;">(</span>completing-read <span style="color: #95e454;">"History: "</span> <span style="color: #ff6b55;">(</span>my-ielm-get-history<span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">17: </span>
+<span class="linenr">18: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">defun</span> <span style="color: #cae682;">save-ielm-input-history</span> <span style="color: #ff66ff;">()</span>
+<span class="linenr">19: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">setq</span> ielm-input-history <span style="color: #00eff0;">(</span>my-ielm-get-history<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">20: </span>
+<span class="linenr">21: </span><span style="color: #5f9ea0;">(</span>add-hook 'savehist-save-hook #'<span style="color: #cae682;">save-ielm-input-history</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">22: </span><span style="color: #5f9ea0;">(</span>add-to-list 'savehist-additional-variables 'ielm-input-history<span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<p>
+Other than that, I think this config fits nicely between <code>eval-expression</code> and
+visiting an Elisp buffer (scratch or otherwise). I've been using this for a few
+weeks to experiment and play with new libraries. Being able to choose in which
+context the code will be executed is convenient, and the full power of
+structural editing and completion with Corfu even for throwaway snippets helps a
+lot when exploring and prototyping code.
+</p>
+</div>
+</div>
+
+</article>
+
+  
+    <article>
+  <header>
+    <h1 class="entry-title">
+      <a class="title-link" id="why-do-you-say-emacs-has-no-threading-support" href="/posts/why-do-you-say-emacs-has-no-threading-support.html" title="Read on separate page">
+        Why do you say Emacs has no threading support?
+      </a>
+      <a href="#why-do-you-say-emacs-has-no-threading-support" class="robaczek" title="Link to this place on current page">¶</a>
+    </h1>
+    
+      <h3 class="subtitle">Concurrency in Emacs doesn&#39;t have to suck</h3>
+    
+    <p class="meta">
+      Created: <time>&lt;2023-12-04 16:41:49&gt;</time>
+      
+    </p>
+  </header>
+
+  <div id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#org6ba0a94">1. Intro</a></li>
+<li><a href="#orgfd6b4ca">2. How do threads look in Emacs?</a></li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org6ba0a94" class="outline-2">
+<h2 id="org6ba0a94"><span class="section-number-2">1.</span> Intro</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+The topic comes up every so often: there are no threads in Emacs! Quick, let's
+rewrite it in Scheme before users jump ship to VS Code or NVim!<sup><a id="fnr.1" class="footref" href="#fn.1" role="doc-backlink">1</a></sup>
+</p>
+
+<p>
+Even just a month ago someone <a href="https://www.reddit.com/r/emacs/comments/17zoe3d/is_the_lack_of_multithreading_support_in_emacs_a/?utm_source=share&amp;utm_medium=web2x&amp;context=3">made a poll</a> asking the following question:
+</p>
+
+<blockquote>
+<p>
+Is the lack of multithreading support in emacs a dealbreaker for you?
+</p>
+</blockquote>
+
+<p>
+The problem: Emacs <b><b>does have</b></b> threading primitives implemented and exposed to
+Lisp programs.
+</p>
+
+<p>
+There are of course good reasons for why the perception of "no threads" is so
+pervasive. In this post, I will:
+</p>
+
+<ol class="org-ol">
+<li>Explain why the threads in Emacs are so useless most people are unaware
+they're even there.</li>
+<li>Show that, limited as they are, they are a fine addition to Elisp's hacker
+arsenal.</li>
+</ol>
+</div>
+</div>
+<div id="outline-container-orgfd6b4ca" class="outline-2">
+<h2 id="orgfd6b4ca"><span class="section-number-2">2.</span> How do threads look in Emacs?</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+<a href="/posts/./data/64/6acb7e-011e-42d1-ad24-92127338dfde/Evolution of Emacs Lisp.pdf">/posts/./data/64/6acb7e-011e-42d1-ad24-92127338dfde/Evolution of Emacs Lisp.pdf</a>
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">let</span> <span style="color: #ff66ff;">(</span><span style="color: #00eff0;">(</span><span style="color: #cae682;">table</span> <span style="color: #ff6b55;">(</span>make-list 4 <span style="color: #efef00;">(</span>-map #'<span style="color: #cae682;">number-to-string</span> <span style="color: #b6a0ff;">(</span>number-sequence 1 4<span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span>
+  table<span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+
+<div class="org-src-container">
+<pre class="src src-sh">xset dpms 0 0 0
+xset s off
+xset dpms force on
+firefox
+sleep 30
+xdotool key Control+l
+sleep 3
+xdotool type <span style="color: #95e454;">'http://shiro/'</span>
+sleep 6
+xdotool key Return
+xdotool key F11
+</pre>
+</div>
+
+<blockquote>
+<p>
+Emacs Lisp is a fundamentally sequential language, and relies heavily on
+side-effects to a global state. Yet, its use in an interactive program has
+inevitably lead to a desire for concurrency to try and improve responsiveness.
+Concurrency appeared very early on: since Emacs 16.56, Emacs has included
+support for asynchronous processes, that is, the execution of separate programs
+whose output was processed by so-called process filters whenever the Emacs Lisp
+execution engine is idly waiting for the next user input.
+</p>
+
+<p>
+While this very limited form of cooperative concurrency was slightly improved in
+1994’s Lucid Emacs 19.9 and 1996’s Emacs 19.31 by adding native support for
+timers (timers had earlier been implemented as an asynchronous process sending
+Emacs output at the requested time), it has been the only form of concurrency
+available for most of Emacs’s life.
+</p>
+
+<p>
+Adding true shared-memory concurrency to Emacs Lisp is problematic because of
+the pervasive reliance on shared state in existing Emacs Lisp code. In some
+cases, shared state is not a problem and concurrency can be mimicked via
+asynchronous programming: When a program waits for an operation (such as an
+external program), instead of blocking, it registers a continuation callback and
+returns control to the main event loop. Yet many Emacs Lisp packages instead
+block, because slicing the execution via callbacks means effectively writing
+code in continuation-passing style which is poorly supported in Emacs Lisp,
+interacts badly with dynamic scoping, and requires significant surgery to
+retro-fit to existing code.
+</p>
+
+<p>
+So, shared-memory concurrency was largely considered as inapplicable to Emacs
+Lisp. Never- theless, in November 2008, Giuseppe Scrivano posted a first naive
+attempt at adding threads to Emacs Lisp. This effort did not go much further,
+but it inspired Tom Tromey to try his own luck. Proc. ACM Program. Lang., Vol.
+4, No. HOPL, Article 74. Publication date: June 2020.74:44 Stefan Monnier and
+Michael Sperber
+</p>
+
+<p>
+In 2010, he started to work on adding shared-memory cooperative concurrency
+primitives like make-thread to Emacs. Interaction with the implementation of
+dynamic scoping, which is based on a global state for speed, required
+experimentation with various approaches. Correctly handling buffer-local and
+frame-local bindings without a complete rewrite was particularly painful and
+most approaches were abandoned simply because it was too difficult to keep them
+up-to-date with the evolving Emacs codebase.
+</p>
+
+<p>
+A working approach was finally released in 2018, as part of Emacs 26.1. Context
+switches still take place only at a few known points where Emacs Lisp is idle
+(or via explicit calls to thread-yield). The current implementation of this
+feature makes context switches take time proportional to the current stack
+depth, because the dynamic bindings of the old thread need to be saved and
+removed, after which the dynamic bindings of the new thread need to be restored.
+Earlier implementation approaches tried to avoid this expensive form of context
+switching by making global variable lookups a bit more expensive instead, but
+these would have required more extensive and delicate changes to existing code.
+Therefore, while this approach may be reconsidered in the future, the current
+implementation favored a simpler and safer approach.
+</p>
+
+<p>
+The inclusion of such a form of shared-state concurrency was hotly debated
+between the main- tainers. They all agreed that Emacs Lisp needs to develop
+concurrency and parallelism in order to take advantage of the increasing number
+of CPU cores available, especially since single-core performance is not
+increasing significantly any more; but there was also a consensus that shared
+memory is a very bad fit to the current Emacs Lisp world. Tom Tromey’s patch was
+finally accepted only because it was non-invasive, and because there was a
+feeling that it was important to do something.
+</p>
+
+<p>
+This is still a fairly experimental feature, and two years after its appearance,
+its use appears to still be limited to experimental patches to a handful of
+packages such as the Gnus MUA. Arguably the main outcome so far has been to
+expose some latent bugs in some packages’s asynchronous processing.
+</p>
+
+<p>
+Over the years, other approaches to concurrency and parallelism have been
+developed as Emacs Lisp packages, most notably the async.el package [Wiegley
+2019] developed in 2012 that runs Emacs Lisp code in parallel in a separate
+Emacs subprocess. Its applicability is limited by the fact that the buffers’s
+contents need to be explicitly sent as needed between the two processes, forcing
+a very coarse grain of parallelism. Moreover, there is no guarantee that the
+configuration of the subprocess is consistent with that of the main processÐthe
+subprocess may even be another version of Emacs in some cases. Still, several
+third party packages make limited use of async.el.
+</p>
+</blockquote>
+
+<blockquote>
+<p>
+Tom Tromey’s patch was finally accepted only because it was non-invasive, and
+because there was a feeling that it was important to do something.
+</p>
+</blockquote>
+
+
+<p>
+&gt; Sadly, multithreading is an afterthought for Emacs
+</p>
+
+
+<p>
+It is, but it's usable. I'm actually amazed that, even after three major
+versions, the built-in threading is not used by the community.
+</p>
+
+
+<p>
+Yes, the threads currently are not usable for number crunching in the
+background. And yes, there are bugs, and trying to do many things from the
+background thread doesn't work, sometimes in unexpected ways. You can still
+block the main thread from the background thread since some things block the
+event loop, no matter where they were started.
+</p>
+
+<p>
+But, the threads do give you independent control flows. Whatever you cannot do
+in the background, you can offload to the main thread with a timer and a queue
+of lambdas.
+</p>
+
+<p>
+The built-in threads are very, very bare-bones - it's around 15 functions, for
+threads, mutexes, and condition variables. They are very limited by their
+"mostly cooperative" nature. However, with a bit of sugar, they are usable for
+at least one thing: async processes and network communication.
+</p>
+
+<p>
+In a background thread, you can "block" to wait for a child process to do
+something. It's natural and requires no macrology (async.el&#x2026;). The same is
+true for network communication. You can block and wait for a response while the
+rest of Emacs does whatever. With just two functions, you can write code without
+blocking as if you used `call-process`. Sequential actions - call this, wait for
+it to finish, call that, wait for it to finish, etc. - can now be coded in a
+sequential way, without having to worry about callbacks, sentinels, and a
+poor-man FSM implementation that invariably appears in Elisp that doesn't use
+threads.
+</p>
+
+<p>
+The threads built into Emacs, currently, are closer to green threads or
+coroutines, functionally, than to OS-level threads. But that's still a huge help
+in a bunch of important and pervasive scenarios. It's really strange that nobody
+seems to realize this.
+</p>
+
+<p>
+With threads (as they are), the Continuation Passing Style compiler macro (in
+generator.el), and dynamic modules (for actual parallelism where needed) Emacs
+now has everything it needs to make it non-blocking by default. Of course, that
+would entail rewriting everything on top of these abstractions, so it's
+unrealistic - but for new code and packages? I think we're just one package
+(along the lines of dash, s, etc.) away from convenient concurrency and
+parallelism in Emacs. The problem, of course, is that someone needs to design
+and code that package&#x2026;
+</p>
+
+
+<p>
+&gt; Anyway, as I see it, the Emacs threads would not help for Affe
+</p>
+
+<p>
+You're right. I misspoke. I was thinking about the performance of sending large amounts of data through pipes versus accessing them through shared memory. I didn't consider the CPU-bound action of filtering the data. As we don't get parallelism with threads, the filtering itself would be most likely slower. 
+</p>
+
+<p>
+&gt; The net positive is that one can run multiple blocking IO operations in
+&gt; parallel,
+</p>
+
+<p>
+First of all, you cannot (in Emacs, I mean), run "multiple blocking operations
+in parallel" just because you spawn a new thread. `call-process` and friends
+will block the main thread, and therefore the event loop, no matter which thread
+they were called from. It's far from the only case where a function invoked from
+a background thread will freeze Emacs. :)
+</p>
+
+<p>
+The threads as they currently are in Emacs <b><b>are basically useless</b></b> for running
+"multiple blocking" ops in parallel :D
+</p>
+
+<p>
+There's more: calling certain other functions from the background thread might
+mess up the display. Updating a buffer that's currently displayed in a visible
+window can make the display flicker, some modes toggle off and back on, and even
+search data might get corrupted.
+</p>
+
+<p>
+Add the lack of parallelism to this, along with the most bare-bones API
+provided, and you get threads that are not just "close to useless", but already
+past all redemption :D
+</p>
+
+<p>
+Or at least threads that cannot be used like "normal" threads would be in other
+contexts. But they <b>might be</b> a small part of a layer of library code that would
+make async programming convenient in Emacs.
+</p>
+
+<p>
+&gt; but I think asynchronous, non-blocking IO is widely considered the more
+&gt; efficient alternative, but is probably also more complicated.
+</p>
+
+<p>
+The real problem is that, I think, async and non-blocking programming in Emacs
+is incredibly inconvenient. It's a decade past the point where everyone and
+their cat decided that coroutines are good, and started implementing them. There
+are mature async stacks all around, yet Emacs still asks you to deal with
+filters, sentinels, and pipes!, when you want to do something async in the
+background.
+</p>
+
+<p>
+You end up performing CPS transformation on your code by hand, or you build a
+giant FSM with a `pcase` of all possible states in some entry-point defun.
+</p>
+
+
+<blockquote>
+<p>
+### Create a function that will take a variable number of string arguments. Each
+string will be a shell command. The function needs to execute a command in an
+async background process, wait for the process to finish, and proceed to execute
+the rest of the arguments. The function cannot block.
+</p>
+
+<p>
+Pseudocode:
+</p>
+
+<ol class="org-ol">
+<li>Create the function: (defun my-shell-command-async (&amp;rest commands)</li>
+<li>If the list of commands is empty, return nil.</li>
+<li>Given a command from the list:</li>
+<li>Use start-process-shell-command, providing it with a unique process name, nil for the buffer (we don't need to see output), and the command itself.</li>
+<li>Define a sentinel function. This function:
+a. Takes a process argument and an event string.
+b. The function uses the process to check if it has finished. If it hasn't, return early.
+c. If the command list still contains commands, it recursively calls my-shell-command-async with the rest of the commands.</li>
+<li>Set the sentinel of the process to be this function.</li>
+<li>Return the process object.</li>
+</ol>
+
+<p>
+Emacs Lisp code:
+</p>
+
+<p>
+```lisp
+(defun my-shell-command-async (&amp;rest commands)
+  "Execute each command in COMMANDS in a sequential non-blocking
+  manner. Each command runs in a separate background process."
+  (if (not commands)
+      nil ; Return nil if there are no commands to run
+    (let* ((command (car commands))
+           (command-name (format "<b>my-async-shell-command-%s</b>" command))
+           (process (start-process-shell-command command-name nil command)))
+      (set-process-sentinel
+       process
+       (lambda (process event)
+         (when (string-match-p "finished" event)
+           (if (cdr commands)
+               (apply 'my-shell-command-async (cdr commands))
+             nil))))
+      process)))
+```
+</p>
+
+<p>
+This function follows a recursive approach, using the sentinel function to
+trigger the next command once the current one has finished. Notice that "apply"
+is used to pass the rest of the commands to the recursive call. This essentially
+unpacks the list of commands so they remain separate function arguments.
+</p>
+
+<p>
+### Refine the above solution. The function will take a variable number of
+arguments, as before, but the arguments will be either strings or integers.
+String arguments are handled as before, but when encountering a number, the
+function should wait a specified number of seconds before continuing with the
+next argument.
+</p>
+
+<p>
+Pseudocode:
+</p>
+
+<ol class="org-ol">
+<li>Create the function: (defun my-shell-command-async (&amp;rest commands)</li>
+<li>If the list of commands is empty, return nil.</li>
+<li>Given a command from the list:</li>
+<li>If the command is a string, use start-process-shell-command, providing it with a unique process name, nil for the buffer (we don't need to see output), and the command. Set the sentinel of the process to this function, similar as before.</li>
+<li>If the command is a number, use (run-with-timer) function, providing it with the delay value equals to command and 
+a. Define a timer function that recursively call my-shell-command-async with the rest of the commands.
+b. Pass the lambda function as a timer function to (run-with-timer) function.</li>
+<li>Return the process object.</li>
+</ol>
+
+<p>
+Emacs Lisp code:
+</p>
+
+<p>
+```lisp
+(defun my-shell-command-async (&amp;rest commands)
+  "Execute each command in COMMANDS in a sequential non-blocking
+  manner. Each command runs in a separate background process.
+  If command is a number, delay that many seconds before the
+  next command."
+  (if (not commands)
+      nil ; Return nil if there are no commands to run
+</p>
+
+<p>
+(let ((command (car commands)))
+  (cond ((stringp command)
+         (let* ((command-name (format "<b>my-async-shell-command-%s</b>" command))
+                (process (start-process-shell-command command-name nil command)))
+           (set-process-sentinel
+            process
+            (lambda (process event)
+              (when (string-match-p "finished" event)
+                (if (cdr commands)
+                    (apply 'my-shell-command-async (cdr commands))
+                  nil))))
+           process))
+</p>
+
+<p>
+            ((integerp command)
+             (let ((timer (run-at-time command nil
+                                       (lambda ()
+                                         (if (cdr commands)
+                                             (apply 'my-shell-command-async (cdr commands)))))))
+      ))))
+```
+</p>
+
+<p>
+In the revised version, `(cond)` function is used to distinguish if command is a
+string or a number. If command is a string, build and run a process same as
+before. If command is a number, use `run-at-time` function to create a timer.
+`run-at-time` function takes time delay and a function to execute after delay as
+arguments. Here, `(apply 'my-shell-command-async (cdr commands))` is passed as
+function to run after delay. It calls `my-shell-command-async` recursively with
+rest of the commands.
+</p>
+
+<p>
+### 
+</p>
+</blockquote>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">defun</span> <span style="color: #cae682;">my-shell-command-async</span> <span style="color: #ff66ff;">(</span><span style="color: #92a65e; font-weight: bold;">&amp;rest</span> <span style="color: #cae682;">commands</span><span style="color: #ff66ff;">)</span>
+  <span style="color: #95e454;">"Execute each command in COMMANDS in a sequential non-blocking</span>
+<span style="color: #95e454;">  manner. Each command runs in a separate background process."</span>
+  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">if</span> <span style="color: #00eff0;">(</span>not commands<span style="color: #00eff0;">)</span>
+      nil <span style="color: #99968b;">; </span><span style="color: #99968b;">Return nil if there are no commands to run</span>
+    <span style="color: #00eff0;">(</span><span style="color: #8ac6f2; font-weight: bold;">let*</span> <span style="color: #ff6b55;">(</span><span style="color: #efef00;">(</span><span style="color: #cae682;">command</span> <span style="color: #b6a0ff;">(</span>car commands<span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span>
+           <span style="color: #efef00;">(</span><span style="color: #cae682;">command-name</span> <span style="color: #b6a0ff;">(</span>format <span style="color: #95e454;">"*my-async-shell-command-%s*"</span> command<span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span>
+           <span style="color: #efef00;">(</span><span style="color: #cae682;">process</span> <span style="color: #b6a0ff;">(</span>start-process-shell-command command-name nil command<span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span>
+      <span style="color: #ff6b55;">(</span>set-process-sentinel
+       process
+       <span style="color: #efef00;">(</span><span style="color: #8ac6f2; font-weight: bold;">lambda</span> <span style="color: #b6a0ff;">(</span><span style="color: #cae682;">process</span> <span style="color: #cae682;">event</span><span style="color: #b6a0ff;">)</span>
+         <span style="color: #b6a0ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">when</span> <span style="color: #5f9ea0;">(</span>string-match-p <span style="color: #95e454;">"finished"</span> event<span style="color: #5f9ea0;">)</span>
+           <span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">if</span> <span style="color: #79a8ff;">(</span>cdr commands<span style="color: #79a8ff;">)</span>
+               <span style="color: #79a8ff;">(</span>apply 'my-shell-command-async <span style="color: #f78fe7;">(</span>cdr commands<span style="color: #f78fe7;">)</span><span style="color: #79a8ff;">)</span>
+             nil<span style="color: #5f9ea0;">)</span><span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span>
+      process<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">defun</span> <span style="color: #cae682;">my-shell-command-async</span> <span style="color: #ff66ff;">(</span><span style="color: #92a65e; font-weight: bold;">&amp;rest</span> <span style="color: #cae682;">commands</span><span style="color: #ff66ff;">)</span>
+  <span style="color: #95e454;">"Execute each command in COMMANDS in a sequential non-blocking</span>
+<span style="color: #95e454;">  manner. Each command runs in a separate background process.</span>
+<span style="color: #95e454;">  If command is a number, delay that many seconds before the</span>
+<span style="color: #95e454;">  next command."</span>
+  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">if</span> <span style="color: #00eff0;">(</span>not commands<span style="color: #00eff0;">)</span>
+      nil                           <span style="color: #99968b;">; </span><span style="color: #99968b;">Return nil if there are no commands to run</span>
+    <span style="color: #00eff0;">(</span><span style="color: #8ac6f2; font-weight: bold;">let</span> <span style="color: #ff6b55;">(</span><span style="color: #efef00;">(</span><span style="color: #cae682;">command</span> <span style="color: #b6a0ff;">(</span>car commands<span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span>
+      <span style="color: #ff6b55;">(</span><span style="color: #8ac6f2; font-weight: bold;">cond</span>
+       <span style="color: #efef00;">(</span><span style="color: #b6a0ff;">(</span>stringp command<span style="color: #b6a0ff;">)</span>
+        <span style="color: #b6a0ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">let*</span> <span style="color: #5f9ea0;">(</span><span style="color: #79a8ff;">(</span><span style="color: #cae682;">command-name</span> <span style="color: #f78fe7;">(</span>format <span style="color: #95e454;">"*my-async-shell-command-%s*"</span> command<span style="color: #f78fe7;">)</span><span style="color: #79a8ff;">)</span>
+               <span style="color: #79a8ff;">(</span><span style="color: #cae682;">process</span> <span style="color: #f78fe7;">(</span>start-process-shell-command command-name nil command<span style="color: #f78fe7;">)</span><span style="color: #79a8ff;">)</span><span style="color: #5f9ea0;">)</span>
+          <span style="color: #5f9ea0;">(</span>set-process-sentinel
+           process
+           <span style="color: #79a8ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">lambda</span> <span style="color: #f78fe7;">(</span><span style="color: #cae682;">process</span> <span style="color: #cae682;">event</span><span style="color: #f78fe7;">)</span>
+             <span style="color: #f78fe7;">(</span><span style="color: #8ac6f2; font-weight: bold;">when</span> <span style="color: #5f9ea0;">(</span>string-match-p <span style="color: #95e454;">"finished"</span> event<span style="color: #5f9ea0;">)</span>
+               <span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">if</span> <span style="color: #ff66ff;">(</span>cdr commands<span style="color: #ff66ff;">)</span>
+                   <span style="color: #ff66ff;">(</span>apply 'my-shell-command-async <span style="color: #00eff0;">(</span>cdr commands<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span>
+                 nil<span style="color: #5f9ea0;">)</span><span style="color: #f78fe7;">)</span><span style="color: #79a8ff;">)</span><span style="color: #5f9ea0;">)</span>
+          process<span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span>
+       <span style="color: #efef00;">(</span><span style="color: #b6a0ff;">(</span>integerp command<span style="color: #b6a0ff;">)</span>
+        <span style="color: #b6a0ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">let</span> <span style="color: #5f9ea0;">(</span><span style="color: #79a8ff;">(</span><span style="color: #cae682;">timer</span> <span style="color: #f78fe7;">(</span>run-at-time command nil
+                       <span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">lambda</span> <span style="color: #ff66ff;">()</span>
+                         <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">if</span> <span style="color: #00eff0;">(</span>cdr commands<span style="color: #00eff0;">)</span>
+                             <span style="color: #00eff0;">(</span>apply 'my-shell-command-async <span style="color: #ff6b55;">(</span>cdr commands<span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span><span style="color: #f78fe7;">)</span><span style="color: #79a8ff;">)</span><span style="color: #5f9ea0;">)</span><span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+</div>
+</div>
+<div id="footnotes">
+<h2 class="footnotes">Footnotes: </h2>
+<div id="text-footnotes">
+
+<div class="footdef"><sup><a id="fn.1" class="footnum" href="#fnr.1" role="doc-backlink">1</a></sup> <div class="footpara" role="doc-footnote"><p class="footpara">
+It's particularly entertaining since out of Scheme, JavaScript (VS Code),
+Lua (NVim), and Elisp the only one supporting threads is the last one.
+</p></div></div>
+
+
+</div>
+</div>
+</article>
+
+  
+    <article>
+  <header>
+    <h1 class="entry-title">
+      <a class="title-link" id="advent-of-code-2023-day-4" href="/posts/advent-of-code-2023-day-4.html" title="Read on separate page">
+        Advent of Code 2023 - Day 4
+      </a>
+      <a href="#advent-of-code-2023-day-4" class="robaczek" title="Link to this place on current page">¶</a>
+    </h1>
+    
+      <h3 class="subtitle">I&#39;ll just stop adding &#34;Part 1&#34; to the title...</h3>
+    
+    <p class="meta">
+      Created: <time>&lt;2023-12-04 14:11:41&gt;</time>
+      
+    </p>
+  </header>
+
+  <p>
+This <a href="https://adventofcode.com/2023/day/4">puzzle</a> was way too easy, compared to yesterday's. Again, I won't do part 2
+due to lack of time - that's probably going to be the same for the following
+posts, too - but part 1 was trivial.
+</p>
+
+<p>
+In this puzzle, we're asked to find the size of the set intersection of two
+lists of numbers. After that, we need to compute the following:
+</p>
+
+<blockquote>
+<p>
+The first match makes the card worth <b>one point</b> and each match after the first
+doubles the point value of that card.
+</p>
+</blockquote>
+
+<p>
+According to the explanation, the result for the example should be <b><b>13</b></b>.
+Here's the solution:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span class="linenr"> 1: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">defconst</span> <span style="color: #cae682;">example-input</span>
+<span class="linenr"> 2: </span>  <span style="color: #95e454;">"Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53</span>
+<span class="linenr"> 3: </span><span style="color: #95e454;">Card 2: 13 32 20 16 61 | 61 30 68 82 17 32 24 19</span>
+<span class="linenr"> 4: </span><span style="color: #95e454;">Card 3:  1 21 53 59 44 | 69 82 63 72 16 21 14  1</span>
+<span class="linenr"> 5: </span><span style="color: #95e454;">Card 4: 41 92 73 84 69 | 59 84 76 51 58  5 54 83</span>
+<span class="linenr"> 6: </span><span style="color: #95e454;">Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36</span>
+<span class="linenr"> 7: </span><span style="color: #95e454;">Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11"</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr"> 8: </span>
+<span class="linenr"> 9: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-defun</span> <span style="color: #cae682;">parse-input</span> <span style="color: #ff66ff;">(</span><span style="color: #cae682;">data</span><span style="color: #ff66ff;">)</span>
+<span class="linenr">10: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-loop</span> <span style="color: #e5786d;">for</span> <span style="color: #cae682;">card</span> <span style="color: #e5786d;">in</span> <span style="color: #00eff0;">(</span>split-string data <span style="color: #95e454;">"\n"</span><span style="color: #00eff0;">)</span>
+<span class="linenr">11: </span>           <span style="color: #e5786d;">for</span> <span style="color: #00eff0;">(</span>name scores<span style="color: #00eff0;">)</span> <span style="color: #e5786d;">=</span> <span style="color: #00eff0;">(</span>split-string card <span style="color: #95e454;">": +"</span><span style="color: #00eff0;">)</span>
+<span class="linenr">12: </span>           <span style="color: #e5786d;">for</span> <span style="color: #cae682;">nums</span> <span style="color: #e5786d;">=</span> <span style="color: #00eff0;">(</span>split-string scores <span style="color: #95e454;">" +"</span><span style="color: #00eff0;">)</span>
+<span class="linenr">13: </span>           <span style="color: #e5786d;">collect</span> <span style="color: #00eff0;">(</span>-map #'<span style="color: #cae682;">read</span> nums<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">14: </span>
+<span class="linenr">15: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">let</span> <span style="color: #ff66ff;">(</span><span style="color: #00eff0;">(</span><span style="color: #cae682;">scores</span> <span style="color: #ff6b55;">(</span><span style="color: #8ac6f2; font-weight: bold;">--map</span> <span style="color: #efef00;">(</span>-partition-by #'<span style="color: #cae682;">numberp</span> it<span style="color: #efef00;">)</span> <span style="color: #efef00;">(</span>parse-input example-input<span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span>
+<span class="linenr">16: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-loop</span> <span style="color: #e5786d;">for</span> <span style="color: #00eff0;">(</span>winning _ haves<span style="color: #00eff0;">)</span> <span style="color: #e5786d;">in</span> scores
+<span class="linenr">17: </span>           <span style="color: #e5786d;">for</span> <span style="color: #cae682;">win-expt</span> <span style="color: #e5786d;">=</span> <span style="color: #00eff0;">(</span>1- <span style="color: #ff6b55;">(</span>length <span style="color: #efef00;">(</span>-intersection winning haves<span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span>
+<span class="linenr">18: </span>           <span style="color: #e5786d;">when</span> <span style="color: #00eff0;">(</span>&gt;= win-expt 0<span style="color: #00eff0;">)</span>        <span style="color: #99968b;">; </span><span style="color: #99968b;">b/c `</span><span style="color: #e5786d;">expt</span><span style="color: #99968b;">' works with negative numbers</span>
+<span class="linenr">19: </span>           <span style="color: #e5786d;">sum</span> <span style="color: #00eff0;">(</span>expt 2 win-expt<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<pre class="example">
+13
+</pre>
+
+
+<p>
+It works! 🙂
+</p>
+
+<p>
+Interesting points:
+</p>
+
+<ol class="org-ol">
+<li>We use <code>read</code> instead of <code>string-to-number</code> on line 13 because the separator
+(<code>|</code>) is a valid symbol, so we don't need to special-case it.</li>
+<li>The multiplication described in the task can be written as exponentiation
+with base 2, with exponent being one less than the number of winning numbers
+we have. However, <code>expt</code> works with negative exponents properly (instead of
+throwing an error or returning 0), so we need to filter out cases where none
+of the numbers we have are "winning". Otherwise, we'd get <code>(expt 2 -1) ==
+   0.5</code>, which would be accumulated and we'd get the wrong result.</li>
+<li>As previously, <code>split-string</code> is the workhorse for parsing, and <code>cl-loop</code>
+along with a few functions from <code>dash</code> (esp. <code>-partition-by</code> and obviously
+<code>-intersection</code>) came in handy.</li>
+</ol>
+
+<p>
+Part 2 is a little more interesting, but unfortunately, I have to go to work, so
+maybe next time&#x2026;
+</p>
+
+</article>
+
+  
+    <article>
+  <header>
+    <h1 class="entry-title">
+      <a class="title-link" id="advent-of-code-2023-day-3-part-1" href="/posts/advent-of-code-2023-day-3-part-1.html" title="Read on separate page">
+        Advent of Code 2023 - Day 3, Part 1
+      </a>
+      <a href="#advent-of-code-2023-day-3-part-1" class="robaczek" title="Link to this place on current page">¶</a>
+    </h1>
+    
+      <h3 class="subtitle">A classic, buffer-based implementation this time</h3>
+    
+    <p class="meta">
+      Created: <time>&lt;2023-12-03 10:04:36&gt;</time>
+      
+    </p>
+  </header>
+
+  <p>
+I made it! I woke up early, drank 3 coffees, but in the end, I managed to solve
+the puzzle and post the solution before <a href="https://code.tvl.fyi/tree/users/tazjin/aoc2023">the</a> <a href="https://github.com/amno1/AOC2023/tree/main">others</a>! 🙂
+</p>
+
+<p>
+<a href="https://adventofcode.com/2023/day/3">The puzzle</a> this time is about extracting numbers from a 2D array of characters
+and checking whether the number neighbours any character other than a dot (".").
+</p>
+
+<p>
+In Emacs, all text is in a 2D array by default - that's (conceptually) what a
+buffer is, after all. So there's really not much to the solution this time,
+other than handling some corner cases (first and last lines, and treating
+newlines as dots - for numbers that are at the end of the line).
+</p>
+
+<p>
+Here's the solution:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span class="linenr"> 1: </span><span style="color: #99968b;">;; </span><span style="color: #00ffff; background-color: #8b7e66; font-weight: bold;">NOTE</span><span style="color: #99968b;">: lines are 140 characters wide (maybe verify this instead of assuming?)</span>
+<span class="linenr"> 2: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">with-current-buffer</span> <span style="color: #ff66ff;">(</span>get-buffer <span style="color: #95e454;">"input3.txt"</span><span style="color: #ff66ff;">)</span>
+<span class="linenr"> 3: </span>  <span style="color: #ff66ff;">(</span>goto-char <span style="color: #00eff0;">(</span>point-min<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span>
+<span class="linenr"> 4: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">let</span> <span style="color: #00eff0;">(</span><span style="color: #cae682;">numbers</span> <span style="color: #ff6b55;">(</span><span style="color: #cae682;">lines</span> <span style="color: #efef00;">(</span>count-lines <span style="color: #b6a0ff;">(</span>point-min<span style="color: #b6a0ff;">)</span> <span style="color: #b6a0ff;">(</span>point-max<span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span>
+<span class="linenr"> 5: </span>    <span style="color: #00eff0;">(</span><span style="color: #8ac6f2; font-weight: bold;">while</span> <span style="color: #ff6b55;">(</span>re-search-forward <span style="color: #efef00;">(</span><span style="color: #8ac6f2; font-weight: bold;">rx</span> <span style="color: #b6a0ff;">(</span>1+ num<span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span> nil t<span style="color: #ff6b55;">)</span>
+<span class="linenr"> 6: </span>      <span style="color: #ff6b55;">(</span><span style="color: #8ac6f2; font-weight: bold;">let*</span> <span style="color: #efef00;">(</span><span style="color: #b6a0ff;">(</span><span style="color: #cae682;">beg</span> <span style="color: #5f9ea0;">(</span>match-beginning 0<span style="color: #5f9ea0;">)</span><span style="color: #b6a0ff;">)</span>
+<span class="linenr"> 7: </span>             <span style="color: #b6a0ff;">(</span><span style="color: #cae682;">end</span> <span style="color: #5f9ea0;">(</span>match-end 0<span style="color: #5f9ea0;">)</span><span style="color: #b6a0ff;">)</span>
+<span class="linenr"> 8: </span>             <span style="color: #b6a0ff;">(</span><span style="color: #cae682;">surrounding</span> <span style="color: #5f9ea0;">(</span>concat 
+<span class="linenr"> 9: </span>                           <span style="color: #79a8ff;">(</span>string <span style="color: #f78fe7;">(</span>char-after <span style="color: #5f9ea0;">(</span>1- beg<span style="color: #5f9ea0;">)</span><span style="color: #f78fe7;">)</span><span style="color: #79a8ff;">)</span> <span style="color: #99968b;">; </span><span style="color: #99968b;">preceding char</span>
+<span class="linenr">10: </span>                           <span style="color: #79a8ff;">(</span>string <span style="color: #f78fe7;">(</span>char-after end<span style="color: #f78fe7;">)</span><span style="color: #79a8ff;">)</span>      <span style="color: #99968b;">; </span><span style="color: #99968b;">following char</span>
+<span class="linenr">11: </span>                           <span style="color: #99968b;">;; </span><span style="color: #99968b;">previous line</span>
+<span class="linenr">12: </span>                           <span style="color: #79a8ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">if</span> <span style="color: #f78fe7;">(</span>not <span style="color: #5f9ea0;">(</span>= 1 <span style="color: #ff66ff;">(</span>line-number-at-pos<span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span><span style="color: #f78fe7;">)</span>
+<span class="linenr">13: </span>                               <span style="color: #f78fe7;">(</span>buffer-substring-no-properties <span style="color: #5f9ea0;">(</span>- beg 142<span style="color: #5f9ea0;">)</span> <span style="color: #5f9ea0;">(</span>- end 140<span style="color: #5f9ea0;">)</span><span style="color: #f78fe7;">)</span>
+<span class="linenr">14: </span>                             <span style="color: #95e454;">"."</span><span style="color: #79a8ff;">)</span>
+<span class="linenr">15: </span>                           <span style="color: #99968b;">;; </span><span style="color: #99968b;">next line</span>
+<span class="linenr">16: </span>                           <span style="color: #79a8ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">if</span> <span style="color: #f78fe7;">(</span>not <span style="color: #5f9ea0;">(</span>= lines <span style="color: #ff66ff;">(</span>line-number-at-pos<span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span><span style="color: #f78fe7;">)</span>
+<span class="linenr">17: </span>                               <span style="color: #f78fe7;">(</span>buffer-substring-no-properties <span style="color: #5f9ea0;">(</span>+ beg 140<span style="color: #5f9ea0;">)</span> <span style="color: #5f9ea0;">(</span>+ end 142<span style="color: #5f9ea0;">)</span><span style="color: #f78fe7;">)</span>
+<span class="linenr">18: </span>                             <span style="color: #95e454;">"."</span><span style="color: #79a8ff;">)</span><span style="color: #5f9ea0;">)</span><span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span>
+<span class="linenr">19: </span>        <span style="color: #efef00;">(</span><span style="color: #8ac6f2; font-weight: bold;">unless</span> <span style="color: #b6a0ff;">(</span>cl-every <span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">lambda</span> <span style="color: #79a8ff;">(</span><span style="color: #cae682;">c</span><span style="color: #79a8ff;">)</span> <span style="color: #79a8ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">or</span> <span style="color: #f78fe7;">(</span>eq c ?\n<span style="color: #f78fe7;">)</span> <span style="color: #f78fe7;">(</span>eq c ?.<span style="color: #f78fe7;">)</span><span style="color: #79a8ff;">)</span><span style="color: #5f9ea0;">)</span> surrounding<span style="color: #b6a0ff;">)</span>
+<span class="linenr">20: </span>          <span style="color: #b6a0ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">push</span> <span style="color: #5f9ea0;">(</span>string-to-number <span style="color: #79a8ff;">(</span>match-string 0<span style="color: #79a8ff;">)</span><span style="color: #5f9ea0;">)</span> numbers<span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span>
+<span class="linenr">21: </span>    <span style="color: #00eff0;">(</span>apply #'<span style="color: #cae682;">+</span> numbers<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<pre class="example">
+507214
+</pre>
+
+
+<p>
+We just loop through the numbers in the buffer, fetch the characters that
+surround the number, and verify there are only dots (and newlines, as a special
+case) in these characters.
+</p>
+
+<p>
+I thought about using <code>save-excursion</code> and <code>forward-line</code> to get the preceding
+and following lines, then using <code>looking-at-p</code> to check for symbols - I think it
+would work and I wouldn't need to check line width in that case. By the time I
+thought of it, though, <code>buffer-substring</code>-based solution worked already, so I
+just left it as is.
+</p>
+
+<p>
+Unfortunately, I don't have the time to solve Part 2 of the puzzle. In part 2,
+you need to find all <code>*</code> symbols that have more than one number in its
+surroundings. It's more interesting than Part 1 because there are more ways of
+solving it. I'll see if I have the time to code the solution in the evening.
+</p>
+
+</article>
+
+  
+    <article>
+  <header>
+    <h1 class="entry-title">
+      <a class="title-link" id="advent-of-code-2023-day-2" href="/posts/advent-of-code-2023-day-2.html" title="Read on separate page">
+        Advent of Code 2023 - Day 2
+      </a>
+      <a href="#advent-of-code-2023-day-2" class="robaczek" title="Link to this place on current page">¶</a>
+    </h1>
+    
+      <h3 class="subtitle">Just Part 1, since I&#39;m late to the party again today...</h3>
+    
+    <p class="meta">
+      Created: <time>&lt;2023-12-02 13:27:57&gt;</time>
+      
+    </p>
+  </header>
+
+  <div id="outline-container-advent-of-code-2023---day-2_part-1" class="outline-2">
+<h2 id="advent-of-code-2023---day-2_part-1"><span class="section-number-2">1.</span> Part 1</h2>
+<div class="outline-text-2" id="text-advent-of-code-2023---day-2_part-1">
+<p>
+Here's the <a href="https://adventofcode.com/2023/day/2">link to the exercise</a> - as usual, we get some input data, and need to
+read it and check some of the properties. In this case, the question is as
+follows:
+</p>
+
+<blockquote>
+<p>
+Determine which games would have been possible if the bag had been loaded with
+only 12 red cubes, 13 green cubes, and 14 blue cubes.
+</p>
+</blockquote>
+
+<p>
+Okay - before we start, let's import the libraries we'll need. Strictly
+speaking, none if these are actually <b>needed</b> - you can see other
+implementations that don't use anything outside of <code>subr</code> and <code>simple</code> - but I
+want to showcase the tools modern Elisper has at their disposal.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span class="linenr">1: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">require</span> '<span style="color: #e5786d;">b</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">2: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">require</span> '<span style="color: #e5786d;">cl-lib</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">3: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">require</span> '<span style="color: #e5786d;">map</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">4: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">require</span> '<span style="color: #e5786d;">dash</span><span style="color: #5f9ea0;">)</span>  
+</pre>
+</div>
+
+<p>
+With that out of the way, we can take a stab at the task. First, let's assume we
+have the input in a buffer already, in <code>input.txt</code>. You could implement the
+task by imperatively traversing the buffer, which would be very Emacs-y way of
+doing this, but since there's an implementation <a href="https://github.com/amno1/AOC2023/blob/main/2.el">like that</a> already, I'll go for
+a more Python-like approach and split the input into a list of lines:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span class="linenr">5: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">defconst</span> <span style="color: #cae682;">aoc-games-played-input</span>
+<span class="linenr">6: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">-&gt;</span> <span style="color: #95e454;">"input.txt"</span> get-buffer b-string-no-properties s-trim s-lines<span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<p>
+We now have 100 lines of text, ready to be further processed:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #5f9ea0;">(</span>length aoc-games-played-input<span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<pre class="example">
+100
+</pre>
+
+
+<p>
+Here's how the lines look like:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #5f9ea0;">(</span>-take 2 aoc-games-played-input<span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<pre class="example">
+("Game 1: 12 blue, 15 red, 2 green; 17 red, 8 green, 5 blue; 8 red, 17 blue; 9 green, 1 blue, 4 red"
+ "Game 2: 6 red, 6 blue, 2 green; 1 blue, 1 red; 6 green, 1 red, 10 blue")
+</pre>
+
+
+<p>
+We need to verify that on each line all the "subsets" - separated by
+semicolons - have color values that <b>do not exceed the limits</b> quoted at the
+beginning. First, let's further split the lines into chunks, separating game ID
+from subsets, and then further separating subsets from each other:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">let</span> <span style="color: #ff66ff;">(</span><span style="color: #00eff0;">(</span><span style="color: #cae682;">line</span> <span style="color: #ff6b55;">(</span>car aoc-games-played-input<span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span>
+  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">pcase-let*</span>
+      <span style="color: #00eff0;">(</span><span style="color: #ff6b55;">(</span><span style="color: #ccaa8f;">`</span><span style="color: #efef00;">(</span><span style="color: #ccaa8f;">,</span>game <span style="color: #ccaa8f;">,</span>subsets<span style="color: #efef00;">)</span> <span style="color: #efef00;">(</span>s-split <span style="color: #b6a0ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">rx</span> <span style="color: #95e454;">": "</span><span style="color: #b6a0ff;">)</span> line<span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span>
+       <span style="color: #ff6b55;">(</span>subset-list <span style="color: #efef00;">(</span>s-split <span style="color: #b6a0ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">rx</span> <span style="color: #95e454;">"; "</span><span style="color: #b6a0ff;">)</span> subsets<span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span>
+       <span style="color: #ff6b55;">(</span>subsets <span style="color: #efef00;">(</span><span style="color: #8ac6f2; font-weight: bold;">--map</span> <span style="color: #b6a0ff;">(</span>s-split <span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">rx</span> <span style="color: #95e454;">", "</span><span style="color: #5f9ea0;">)</span> it<span style="color: #b6a0ff;">)</span> subset-list<span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span>
+    <span style="color: #00eff0;">(</span>cons
+     <span style="color: #ff6b55;">(</span>cl-second <span style="color: #efef00;">(</span>s-match <span style="color: #b6a0ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">rx</span> <span style="color: #95e454;">"Game "</span> <span style="color: #5f9ea0;">(</span>group <span style="color: #79a8ff;">(</span>1+ num<span style="color: #79a8ff;">)</span><span style="color: #5f9ea0;">)</span><span style="color: #b6a0ff;">)</span> game<span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span>
+     subsets<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<pre class="example">
+("1" ("12 blue" "15 red" "2 green") ("17 red" "8 green" "5 blue")
+ ("8 red" "17 blue") ("9 green" "1 blue" "4 red"))
+</pre>
+
+
+<p>
+It works, so let's refactor it a bit before moving on. As we're doing the
+refactor, we can also convert strings to numbers and symbols as appropriate, and
+subsets into alists:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span class="linenr"> 7: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-defun</span> <span style="color: #cae682;">get-game-id</span> <span style="color: #ff66ff;">(</span><span style="color: #cae682;">game-name</span><span style="color: #ff66ff;">)</span>
+<span class="linenr"> 8: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">let</span> <span style="color: #00eff0;">(</span><span style="color: #ff6b55;">(</span><span style="color: #cae682;">re</span> <span style="color: #efef00;">(</span><span style="color: #8ac6f2; font-weight: bold;">rx</span> <span style="color: #95e454;">"Game "</span> <span style="color: #b6a0ff;">(</span>group <span style="color: #5f9ea0;">(</span>1+ num<span style="color: #5f9ea0;">)</span><span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span>
+<span class="linenr"> 9: </span>    <span style="color: #00eff0;">(</span><span style="color: #8ac6f2; font-weight: bold;">-&gt;&gt;</span> game-name <span style="color: #ff6b55;">(</span>s-match re<span style="color: #ff6b55;">)</span> cl-second string-to-number<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">10: </span>
+<span class="linenr">11: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-defun</span> <span style="color: #cae682;">subset-&gt;alist</span> <span style="color: #ff66ff;">(</span><span style="color: #cae682;">colors</span><span style="color: #ff66ff;">)</span>
+<span class="linenr">12: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-loop</span> <span style="color: #e5786d;">for</span> <span style="color: #cae682;">color</span> <span style="color: #e5786d;">in</span> colors
+<span class="linenr">13: </span>           <span style="color: #e5786d;">for</span> <span style="color: #00eff0;">(</span>num color<span style="color: #00eff0;">)</span> <span style="color: #e5786d;">=</span> <span style="color: #00eff0;">(</span>s-split <span style="color: #ff6b55;">(</span><span style="color: #8ac6f2; font-weight: bold;">rx</span> <span style="color: #95e454;">" "</span><span style="color: #ff6b55;">)</span> color<span style="color: #00eff0;">)</span>
+<span class="linenr">14: </span>           <span style="color: #e5786d;">collect</span> <span style="color: #00eff0;">(</span>cons <span style="color: #ff6b55;">(</span>intern-soft color<span style="color: #ff6b55;">)</span> <span style="color: #ff6b55;">(</span>string-to-number num<span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">15: </span>
+<span class="linenr">16: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-defun</span> <span style="color: #cae682;">line-&gt;game</span> <span style="color: #ff66ff;">(</span><span style="color: #cae682;">line</span><span style="color: #ff66ff;">)</span>
+<span class="linenr">17: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">pcase-let*</span> <span style="color: #00eff0;">(</span><span style="color: #ff6b55;">(</span><span style="color: #ccaa8f;">`</span><span style="color: #efef00;">(</span><span style="color: #ccaa8f;">,</span>game <span style="color: #ccaa8f;">,</span>subsets<span style="color: #efef00;">)</span> <span style="color: #efef00;">(</span>s-split <span style="color: #b6a0ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">rx</span> <span style="color: #95e454;">": "</span><span style="color: #b6a0ff;">)</span> line<span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span>
+<span class="linenr">18: </span>               <span style="color: #ff6b55;">(</span>subset-list <span style="color: #efef00;">(</span>s-split <span style="color: #b6a0ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">rx</span> <span style="color: #95e454;">"; "</span><span style="color: #b6a0ff;">)</span> subsets<span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span>
+<span class="linenr">19: </span>               <span style="color: #ff6b55;">(</span>subsets <span style="color: #efef00;">(</span><span style="color: #8ac6f2; font-weight: bold;">--map</span> <span style="color: #b6a0ff;">(</span>s-split <span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">rx</span> <span style="color: #95e454;">", "</span><span style="color: #5f9ea0;">)</span> it<span style="color: #b6a0ff;">)</span> subset-list<span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span>
+<span class="linenr">20: </span>    <span style="color: #00eff0;">(</span>cons
+<span class="linenr">21: </span>     <span style="color: #ff6b55;">(</span>get-game-id game<span style="color: #ff6b55;">)</span>
+<span class="linenr">22: </span>     <span style="color: #ff6b55;">(</span>-map #'<span style="color: #cae682;">subset-&gt;alist</span> subsets<span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span>  <span style="color: #5f9ea0;">)</span>
+<span class="linenr">23: </span>
+<span class="linenr">24: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">let</span> <span style="color: #ff66ff;">(</span><span style="color: #00eff0;">(</span><span style="color: #cae682;">line</span> <span style="color: #ff6b55;">(</span>car aoc-games-played-input<span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span>
+<span class="linenr">25: </span>  <span style="color: #ff66ff;">(</span>line-&gt;game line<span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<pre class="example">
+(1 ((blue . 12) (red . 15) (green . 2)) ((red . 17) (green . 8) (blue . 5))
+   ((red . 8) (blue . 17)) ((green . 9) (blue . 1) (red . 4)))
+</pre>
+
+
+<p>
+So we have the data in a form that's convenient to work with. Now, what does it
+mean for a game to be possible? All subsets must have color values within a
+limit. Let's define a function for checking this:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span class="linenr">26: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">defconst</span> <span style="color: #cae682;">limits</span> '<span style="color: #ff66ff;">(</span><span style="color: #00eff0;">(</span>red . 12<span style="color: #00eff0;">)</span> <span style="color: #00eff0;">(</span>green . 13<span style="color: #00eff0;">)</span> <span style="color: #00eff0;">(</span>blue . 14<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">27: </span>
+<span class="linenr">28: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-defun</span> <span style="color: #cae682;">game-possible-p</span> <span style="color: #ff66ff;">(</span><span style="color: #cae682;">game</span><span style="color: #ff66ff;">)</span>
+<span class="linenr">29: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-loop</span> <span style="color: #e5786d;">for</span> <span style="color: #cae682;">subset</span> <span style="color: #e5786d;">in</span> <span style="color: #00eff0;">(</span>cdr game<span style="color: #00eff0;">)</span>
+<span class="linenr">30: </span>           <span style="color: #e5786d;">unless</span> <span style="color: #00eff0;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-loop</span> <span style="color: #e5786d;">for</span> <span style="color: #ff6b55;">(</span>color . limit<span style="color: #ff6b55;">)</span> <span style="color: #e5786d;">in</span> limits
+<span class="linenr">31: </span>                           <span style="color: #e5786d;">always</span> <span style="color: #ff6b55;">(</span>&lt;= <span style="color: #efef00;">(</span>map-elt subset color 0<span style="color: #efef00;">)</span> limit<span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span>
+<span class="linenr">32: </span>           <span style="color: #e5786d;">return</span> nil
+<span class="linenr">33: </span>           <span style="color: #e5786d;">finally</span> <span style="color: #e5786d;">return</span> t<span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">34: </span>
+<span class="linenr">35: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">defconst</span> <span style="color: #cae682;">line-impossible</span>
+<span class="linenr">36: </span>  <span style="color: #95e454;">"Game 1: 12 blue, 15 red, 2 green; 17 red, 8 green, 5 blue; 8 red, 17 blue; 9 green, 1 blue, 4 red"</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">37: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">defconst</span> <span style="color: #cae682;">line-possible</span>
+<span class="linenr">38: </span>  <span style="color: #95e454;">"Game 2: 6 red, 6 blue, 2 green; 1 blue, 1 red; 6 green, 1 red, 10 blue"</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">39: </span>
+<span class="linenr">40: </span><span style="color: #5f9ea0;">(</span>list <span style="color: #ff66ff;">(</span>game-possible-p <span style="color: #00eff0;">(</span>line-&gt;game line-possible<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span>
+<span class="linenr">41: </span>      <span style="color: #ff66ff;">(</span>game-possible-p <span style="color: #00eff0;">(</span>line-&gt;game line-impossible<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<pre class="example">
+(t nil)
+</pre>
+
+
+<p>
+The predicate seems to be working. The two things left to do are to filter out
+the games for which the predicate returns <code>t</code> and then sum the game IDs of those
+games:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span class="linenr">42: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-loop</span> <span style="color: #e5786d;">for</span> <span style="color: #cae682;">line</span> <span style="color: #e5786d;">in</span> aoc-games-played-input
+<span class="linenr">43: </span>         <span style="color: #e5786d;">for</span> <span style="color: #cae682;">game</span> <span style="color: #e5786d;">=</span> <span style="color: #ff66ff;">(</span>line-&gt;game line<span style="color: #ff66ff;">)</span>
+<span class="linenr">44: </span>         <span style="color: #e5786d;">if</span> <span style="color: #ff66ff;">(</span>game-possible-p game<span style="color: #ff66ff;">)</span>
+<span class="linenr">45: </span>         <span style="color: #e5786d;">sum</span> <span style="color: #ff66ff;">(</span>car game<span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<pre class="example">
+2716
+</pre>
+
+
+<p>
+And that's, according to the AoC page, the correct answer for my dataset, for
+part 1!
+</p>
+</div>
+</div>
+<div id="outline-container-advent-of-code-2023---day-2_part-2" class="outline-2">
+<h2 id="advent-of-code-2023---day-2_part-2"><span class="section-number-2">2.</span> Part 2</h2>
+<div class="outline-text-2" id="text-advent-of-code-2023---day-2_part-2">
+<p>
+For completeness sake, here's the answer to the second part of the puzzle. Here,
+we need to find the maximum values for each color across all subsets of a given
+game:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span class="linenr">46: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">defconst</span> <span style="color: #cae682;">maxes</span> '<span style="color: #ff66ff;">(</span><span style="color: #00eff0;">(</span>red . 0<span style="color: #00eff0;">)</span> <span style="color: #00eff0;">(</span>green . 0<span style="color: #00eff0;">)</span> <span style="color: #00eff0;">(</span>blue . 0<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">47: </span>
+<span class="linenr">48: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-macrolet</span>
+<span class="linenr">49: </span>    <span style="color: #ff66ff;">(</span><span style="color: #00eff0;">(</span>alist-maximize <span style="color: #ff6b55;">(</span>key acc alist<span style="color: #ff6b55;">)</span>
+<span class="linenr">50: </span>       <span style="color: #ccaa8f;">`</span><span style="color: #ff6b55;">(</span><span style="color: #8ac6f2; font-weight: bold;">setf</span> <span style="color: #efef00;">(</span>alist-get <span style="color: #ccaa8f;">,</span>key <span style="color: #ccaa8f;">,</span>acc<span style="color: #efef00;">)</span>
+<span class="linenr">51: </span>              <span style="color: #efef00;">(</span>max <span style="color: #b6a0ff;">(</span>alist-get <span style="color: #ccaa8f;">,</span>key <span style="color: #ccaa8f;">,</span>acc<span style="color: #b6a0ff;">)</span> <span style="color: #b6a0ff;">(</span>alist-get <span style="color: #ccaa8f;">,</span>key <span style="color: #ccaa8f;">,</span>alist 0<span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span>
+<span class="linenr">52: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-loop</span> <span style="color: #e5786d;">for</span> <span style="color: #cae682;">line</span> <span style="color: #e5786d;">in</span> aoc-games-played-input
+<span class="linenr">53: </span>           <span style="color: #e5786d;">for</span> <span style="color: #cae682;">game</span> <span style="color: #e5786d;">=</span> <span style="color: #00eff0;">(</span>line-&gt;game line<span style="color: #00eff0;">)</span>
+<span class="linenr">54: </span>           <span style="color: #e5786d;">sum</span> <span style="color: #00eff0;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-loop</span> <span style="color: #e5786d;">with</span> <span style="color: #cae682;">maxs</span> <span style="color: #e5786d;">=</span> <span style="color: #ff6b55;">(</span>copy-tree maxes<span style="color: #ff6b55;">)</span>
+<span class="linenr">55: </span>                        <span style="color: #e5786d;">for</span> <span style="color: #cae682;">x</span> <span style="color: #e5786d;">in</span> <span style="color: #ff6b55;">(</span>cdr game<span style="color: #ff6b55;">)</span>
+<span class="linenr">56: </span>                        <span style="color: #e5786d;">do</span> <span style="color: #ff6b55;">(</span><span style="color: #8ac6f2; font-weight: bold;">progn</span>
+<span class="linenr">57: </span>                             <span style="color: #efef00;">(</span>alist-maximize 'red maxs x<span style="color: #efef00;">)</span>  
+<span class="linenr">58: </span>                             <span style="color: #efef00;">(</span>alist-maximize 'green maxs x<span style="color: #efef00;">)</span>
+<span class="linenr">59: </span>                             <span style="color: #efef00;">(</span>alist-maximize 'blue maxs x<span style="color: #efef00;">)</span> <span style="color: #ff6b55;">)</span>
+<span class="linenr">60: </span>                        <span style="color: #e5786d;">finally</span> <span style="color: #e5786d;">return</span> <span style="color: #ff6b55;">(</span>apply #'<span style="color: #cae682;">*</span> <span style="color: #efef00;">(</span>map-values maxs<span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<pre class="example">
+72227
+</pre>
+
+
+<p>
+The result happens to be correct for my dataset, here too.
+</p>
+
+<p>
+The main highlight here is the <code>cl-macrolet</code> form, which defines local macros,
+valid only in the lexical scope of the form. It's great for getting syntactic
+clutter out of the way without polluting the global namespace.
+</p>
+
+<p>
+A honorary mention goes to <code>setf</code> - a versatile tool for updating contents of
+things. There are many "things" that you can set/update, and you can your own
+"places" and have <code>setf</code> work with them, too. The selling point of <code>setf</code> is the
+symmetry: most often, the "place" has the same syntactic form as the getter for
+a given thing. Here, <code>alist-get</code> is used with <code>setf</code> to update a value in an
+alist - it's way cleaner than <code>assoc</code> and <code>setcdr</code> to which it expands to.
+</p>
+
+<p>
+Notice also the <code>copy-tree</code> - it's important because of the mutability of
+Elisp's lists. It's obvious now when the alist is defined outside of the
+function, but the call to <code>copy-tree</code> would be needed even if the variable was
+inlined! That is, this:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-loop</span> <span style="color: #e5786d;">with</span> <span style="color: #cae682;">maxs</span> <span style="color: #e5786d;">=</span> '<span style="color: #ff66ff;">(</span><span style="color: #00eff0;">(</span>red . 0<span style="color: #00eff0;">)</span> <span style="color: #00eff0;">(</span>green . 0<span style="color: #00eff0;">)</span> <span style="color: #00eff0;">(</span>blue . 0<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span> ...<span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<p>
+Would still produce wrong output. An alternative to <code>copy-tree</code> would be
+constructing the list at runtime by calling <code>list</code> and <code>cons</code> functions. I'll
+leave the detail as to why this happens for a future post.
+</p>
+</div>
+</div>
+
+</article>
+
+  
+    <article>
+  <header>
+    <h1 class="entry-title">
+      <a class="title-link" id="advent-of-code-feeding-hungry-elves-with-elisp" href="/posts/advent-of-code-feeding-hungry-elves-with-elisp.html" title="Read on separate page">
+        Advent of Code - Feeding hungry Elves, with Elisp
+      </a>
+      <a href="#advent-of-code-feeding-hungry-elves-with-elisp" class="robaczek" title="Link to this place on current page">¶</a>
+    </h1>
+    
+      <h3 class="subtitle">Surprisingly fun exercise!</h3>
+    
+    <p class="meta">
+      Created: <time>&lt;2023-11-30 00:13:44&gt;</time>
+      
+        &middot; Updated: <time>&lt;2023-12-03 15:34&gt;</time>
+      
+    </p>
+  </header>
+
+  <p>
+Solutions to the previous (2022) year AoC <a href="https://adventofcode.com/2022/day/1">first puzzle</a>.
+</p>
+
+<p>
+Input looks like this:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-markdown">123
+324
+
+2
+
+4322
+3
+</pre>
+</div>
+
+<p>
+IOW, a list of lists of numbers. We need to sum the sublists and find the
+biggest sum.
+</p>
+
+<p>
+First solution uses Calc: it grabs one sublist and puts it on the stack as a
+vector. It then reduces the vector by applying <code>+</code> function, leaving only the
+sum on the stack. This repeats in a loop until we have a stack of sums. Finally,
+we pack the whole stack into a single vector and select the maximum element from
+it. That's it! 
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span class="linenr">1: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">save-excursion</span>
+<span class="linenr">2: </span>  <span style="color: #ff66ff;">(</span>calc-pop <span style="color: #00eff0;">(</span>calc-stack-size<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span>
+<span class="linenr">3: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">while</span> <span style="color: #00eff0;">(</span><span style="color: #8ac6f2; font-weight: bold;">progn</span> <span style="color: #ff6b55;">(</span>skip-chars-forward <span style="color: #95e454;">" \t\n"</span><span style="color: #ff6b55;">)</span> <span style="color: #ff6b55;">(</span>not <span style="color: #efef00;">(</span>eobp<span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span>
+<span class="linenr">4: </span>    <span style="color: #00eff0;">(</span><span style="color: #8ac6f2; font-weight: bold;">save-selected-window</span>
+<span class="linenr">5: </span>      <span style="color: #ff6b55;">(</span>calc-grab-region <span style="color: #efef00;">(</span>point<span style="color: #efef00;">)</span> <span style="color: #efef00;">(</span><span style="color: #8ac6f2; font-weight: bold;">progn</span> <span style="color: #b6a0ff;">(</span>forward-paragraph<span style="color: #b6a0ff;">)</span> <span style="color: #b6a0ff;">(</span>point<span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span> nil<span style="color: #ff6b55;">)</span>
+<span class="linenr">6: </span>      <span style="color: #ff6b55;">(</span>calc-eval <span style="color: #95e454;">"VR+"</span> 'macro<span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span>
+<span class="linenr">7: </span>  <span style="color: #ff66ff;">(</span>calc-pack <span style="color: #00eff0;">(</span>calc-stack-size<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span>
+<span class="linenr">8: </span>  <span style="color: #ff66ff;">(</span>calc-vector-max nil<span style="color: #ff66ff;">)</span>
+<span class="linenr">9: </span>  <span style="color: #ff66ff;">(</span>calc-top-n 1<span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<p>
+However, it's INCREDIBLY slow 🙂 There are many reasons for that, I think the
+major one is that we're scripting an actual Calc instance and we need to wait
+for it to update its display after every command.
+</p>
+
+<p>
+The second solution is instantaneous - it reads the whole buffer at once, splits
+the lines, converts textual representation to actual numbers, sums sublists,
+sorts them and returns the biggest element.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span class="linenr">1: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-labels</span>
+<span class="linenr">2: </span>    <span style="color: #ff66ff;">(</span><span style="color: #00eff0;">(</span>split-to-numbers <span style="color: #ff6b55;">(</span>lst<span style="color: #ff6b55;">)</span>
+<span class="linenr">3: </span>       <span style="color: #ff6b55;">(</span><span style="color: #8ac6f2; font-weight: bold;">--map</span> <span style="color: #efef00;">(</span><span style="color: #8ac6f2; font-weight: bold;">-&gt;&gt;</span> <span style="color: #b6a0ff;">(</span>s-split <span style="color: #95e454;">"\n"</span> it<span style="color: #b6a0ff;">)</span> <span style="color: #b6a0ff;">(</span>-map #'<span style="color: #cae682;">string-to-number</span><span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span> lst<span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span>
+<span class="linenr">4: </span>  <span style="color: #ff66ff;">(</span>skip-chars-forward <span style="color: #95e454;">" \t\n"</span><span style="color: #ff66ff;">)</span>
+<span class="linenr">5: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">let*</span> <span style="color: #00eff0;">(</span><span style="color: #ff6b55;">(</span><span style="color: #cae682;">input</span> <span style="color: #efef00;">(</span>buffer-substring-no-properties <span style="color: #b6a0ff;">(</span>point<span style="color: #b6a0ff;">)</span> <span style="color: #b6a0ff;">(</span>point-max<span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span>
+<span class="linenr">6: </span>         <span style="color: #ff6b55;">(</span><span style="color: #cae682;">subs</span> <span style="color: #efef00;">(</span><span style="color: #8ac6f2; font-weight: bold;">-&gt;&gt;</span> input s-trim <span style="color: #b6a0ff;">(</span>s-split <span style="color: #95e454;">"\n\n"</span><span style="color: #b6a0ff;">)</span> split-to-numbers<span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span>
+<span class="linenr">7: </span>         <span style="color: #ff6b55;">(</span><span style="color: #cae682;">sorted</span> <span style="color: #efef00;">(</span>cl-sort <span style="color: #b6a0ff;">(</span>-map #'<span style="color: #cae682;">-sum</span> subs<span style="color: #b6a0ff;">)</span> #'<span style="color: #cae682;">&gt;</span><span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span>
+<span class="linenr">8: </span>    <span style="color: #00eff0;">(</span>message <span style="color: #95e454;">"Winner: %s"</span> <span style="color: #ff6b55;">(</span>car sorted<span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<p>
+That's it for the last year. Let's see if I can play a little with the 2023
+edition! 🙂
+</p>
+
+</article>
+
+  
+    <article>
+  <header>
+    <h1 class="entry-title">
+      <a class="title-link" id="make-tab-select-the-other-dired-window" href="/posts/make-tab-select-the-other-dired-window.html" title="Read on separate page">
+        Make &lt;TAB&gt; select the other Dired window
+      </a>
+      <a href="#make-tab-select-the-other-dired-window" class="robaczek" title="Link to this place on current page">¶</a>
+    </h1>
+    
+      <h3 class="subtitle">Replicating the best feature of Sunrise Commander in plain Dired</h3>
+    
+    <p class="meta">
+      Created: <time>&lt;2023-11-26 10:00&gt;</time>
+      
+    </p>
+  </header>
+
+  <p>
+Some time ago, Sunrise Commander - a two-pane file manager for Emacs, built on
+top of Dired by Drew Adams - stopped working for me. The loss of familiar
+bindings was a little painful, but I mostly solved it with Hydra - the
+functionality is mostly still there in Dired.
+</p>
+
+<p>
+One thing I missed was swithcing to the other Dired window easily. With just two
+Dired windows occupying a whole frame just <code>M-x other-window</code> worked well, but
+with more windows, I had to fall back to <code>M-x windmove-*</code> and that was less
+convenient<sup><a id="fnr.1" class="footref" href="#fn.1" role="doc-backlink">1</a></sup>.
+</p>
+
+<p>
+I decided to fix it at some point, and here's the result:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span class="linenr"> 1: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">defun</span> <span style="color: #cae682;">my-select-other-dired-window</span> <span style="color: #ff66ff;">()</span>
+<span class="linenr"> 2: </span>  <span style="color: #95e454;">"Select the other dired window, if there is only one."</span>
+<span class="linenr"> 3: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">interactive</span><span style="color: #ff66ff;">)</span>
+<span class="linenr"> 4: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">let*</span> <span style="color: #00eff0;">(</span><span style="color: #ff6b55;">(</span><span style="color: #cae682;">selected-window</span> <span style="color: #efef00;">(</span>selected-window<span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span>
+<span class="linenr"> 5: </span>         <span style="color: #ff6b55;">(</span><span style="color: #cae682;">other-windows</span> <span style="color: #efef00;">(</span>cdr <span style="color: #b6a0ff;">(</span>window-list<span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span>
+<span class="linenr"> 6: </span>    <span style="color: #00eff0;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-loop</span> <span style="color: #e5786d;">for</span> <span style="color: #cae682;">w</span> <span style="color: #e5786d;">in</span> other-windows
+<span class="linenr"> 7: </span>             <span style="color: #e5786d;">if</span> <span style="color: #ff6b55;">(</span><span style="color: #8ac6f2; font-weight: bold;">with-current-buffer</span> <span style="color: #efef00;">(</span>window-buffer w<span style="color: #efef00;">)</span>
+<span class="linenr"> 8: </span>                  <span style="color: #efef00;">(</span>derived-mode-p 'dired-mode<span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span> 
+<span class="linenr"> 9: </span>             <span style="color: #e5786d;">collect</span> w <span style="color: #e5786d;">into</span> <span style="color: #cae682;">result</span>
+<span class="linenr">10: </span>             <span style="color: #e5786d;">finally</span>
+<span class="linenr">11: </span>             <span style="color: #ff6b55;">(</span><span style="color: #8ac6f2; font-weight: bold;">when</span> <span style="color: #efef00;">(</span>= 1 <span style="color: #b6a0ff;">(</span>length result<span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span>
+<span class="linenr">12: </span>               <span style="color: #efef00;">(</span>select-window <span style="color: #b6a0ff;">(</span>car result<span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">13: </span>
+<span class="linenr">14: </span><span style="color: #5f9ea0;">(</span>keymap-set dired-mode-map <span style="color: #95e454;">"&lt;tab&gt;"</span> #'<span style="color: #cae682;">my-select-other-dired-window</span><span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<p>
+Now I can select the other Dired buffer by pressing <code>&lt;TAB&gt;</code> in one of them, no
+matter how many other windows are there.
+</p>
+<div id="footnotes">
+<h2 class="footnotes">Footnotes: </h2>
+<div id="text-footnotes">
+
+<div class="footdef"><sup><a id="fn.1" class="footnum" href="#fnr.1" role="doc-backlink">1</a></sup> <div class="footpara" role="doc-footnote"><p class="footpara">
+Testing footnotes 
+</p></div></div>
+
+
+</div>
+</div>
+</article>
+
+  
+    <article>
+  <header>
+    <h1 class="entry-title">
+      <a class="title-link" id="how-badly-can-a-simple-kotlin-function-be-written" href="/posts/how-badly-can-a-simple-kotlin-function-be-written.html" title="Read on separate page">
+        How badly can a simple Kotlin function be written?
+      </a>
+      <a href="#how-badly-can-a-simple-kotlin-function-be-written" class="robaczek" title="Link to this place on current page">¶</a>
+    </h1>
+    
+      <h3 class="subtitle">An abomination lurking deep in a production codebase...</h3>
+    
+    <p class="meta">
+      Created: <time>&lt;2023-11-25&gt;</time>
+      
+    </p>
+  </header>
+
+  <p>
+This is a real gem, found in the middle of a fairly large codebase for more
+than two years:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-kotlin"><span class="linenr"> 1: </span><span style="color: #8ac6f2; font-weight: bold;">object</span> <span style="color: #92a65e; font-weight: bold;">SomeFileUtils</span> <span style="color: #5f9ea0;">{</span>
+<span class="linenr"> 2: </span>    <span style="color: #8ac6f2; font-weight: bold;">fun</span> <span style="color: #cae682;">getFilePath</span><span style="color: #ff66ff;">(</span>context: <span style="color: #92a65e; font-weight: bold;">Context</span>, fileName: <span style="color: #92a65e; font-weight: bold;">String</span>, @<span style="color: #92a65e; font-weight: bold;">RawRes</span> resId: <span style="color: #92a65e; font-weight: bold;">Int</span><span style="color: #ff66ff;">)</span>: <span style="color: #92a65e; font-weight: bold;">String</span> =
+<span class="linenr"> 3: </span>        <span style="color: #92a65e; font-weight: bold;">File</span><span style="color: #ff66ff;">(</span>context.filesDir, fileName<span style="color: #ff66ff;">)</span>
+<span class="linenr"> 4: </span>            .let <span style="color: #ff66ff;">{</span> file -&gt;
+<span class="linenr"> 5: </span>                <span style="color: #8ac6f2; font-weight: bold;">if</span> <span style="color: #00eff0;">(</span>file.canRead<span style="color: #ff6b55;">()</span> &amp;&amp; file.length<span style="color: #ff6b55;">()</span> &gt; 0<span style="color: #00eff0;">)</span> <span style="color: #00eff0;">{</span>
+<span class="linenr"> 6: </span>                    file.absolutePath
+<span class="linenr"> 7: </span>                <span style="color: #00eff0;">}</span> <span style="color: #8ac6f2; font-weight: bold;">else</span> <span style="color: #00eff0;">{</span>
+<span class="linenr"> 8: </span>                    context
+<span class="linenr"> 9: </span>                        .resources
+<span class="linenr">10: </span>                        .openRawResource<span style="color: #ff6b55;">(</span>resId<span style="color: #ff6b55;">)</span>
+<span class="linenr">11: </span>                        .use <span style="color: #ff6b55;">{</span> inputStream -&gt;
+<span class="linenr">12: </span>                            file
+<span class="linenr">13: </span>                                .outputStream<span style="color: #efef00;">()</span>
+<span class="linenr">14: </span>                                .use <span style="color: #efef00;">{</span> outputStream -&gt;
+<span class="linenr">15: </span>                                    inputStream.copyTo<span style="color: #b6a0ff;">(</span>outputStream<span style="color: #b6a0ff;">)</span>
+<span class="linenr">16: </span>                                <span style="color: #efef00;">}</span>
+<span class="linenr">17: </span>                            file.absolutePath
+<span class="linenr">18: </span>                        <span style="color: #ff6b55;">}</span>
+<span class="linenr">19: </span>                <span style="color: #00eff0;">}</span>
+<span class="linenr">20: </span>            <span style="color: #ff66ff;">}</span>
+<span class="linenr">21: </span><span style="color: #5f9ea0;">}</span>
+</pre>
+</div>
+
+<p>
+It's so wrong that it's almost beautiful&#x2026; <b>Almost</b>.
+</p>
+
+<p>
+The person who originally wrote this code must have been a little strange in the
+head, which isn't that unusual in this industry. The reviewer of this code who
+agreed to merge it - if they even existed - should probably reflect on how
+serious they are about doing their job, but well - it happens to the best of us.
+A single fuckup like this is nothing too unusual.
+</p>
+
+<p>
+The real tragedy starts after that, though. Code is read much more often than it
+is written, so it had to be read by other programmers in the time it existed.
+Especially since many different programmers worked on a project, most of them
+only for a short time. Now, not one of these people took it upon themselves to
+eradicate this monstrosity, even though it would be 5 minutes of work. Here's
+how could it have looked like:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-kotlin"><span class="linenr"> 1: </span><span style="color: #8ac6f2; font-weight: bold;">import</span> <span style="color: #95e454;">com.companyname.utils.using</span>
+<span class="linenr"> 2: </span><span style="color: #8ac6f2; font-weight: bold;">fun</span> <span style="color: #cae682;">createFileForResource</span><span style="color: #5f9ea0;">(</span>context: <span style="color: #92a65e; font-weight: bold;">Context</span>, fileName: <span style="color: #92a65e; font-weight: bold;">String</span>, @<span style="color: #92a65e; font-weight: bold;">RawRes</span> resId: <span style="color: #92a65e; font-weight: bold;">Int</span><span style="color: #5f9ea0;">)</span>: <span style="color: #92a65e; font-weight: bold;">File</span> <span style="color: #5f9ea0;">{</span>
+<span class="linenr"> 3: </span>    <span style="color: #8ac6f2; font-weight: bold;">val</span> <span style="color: #cae682;">file</span> = <span style="color: #92a65e; font-weight: bold;">File</span><span style="color: #ff66ff;">(</span>context.filesDir, fileName<span style="color: #ff66ff;">)</span>
+<span class="linenr"> 4: </span>    <span style="color: #8ac6f2; font-weight: bold;">if</span> <span style="color: #ff66ff;">(</span>file.canRead<span style="color: #00eff0;">()</span>.not<span style="color: #00eff0;">()</span> || file.length<span style="color: #00eff0;">()</span> == 0L<span style="color: #ff66ff;">)</span> <span style="color: #ff66ff;">{</span>
+<span class="linenr"> 5: </span>        <span style="color: #8ac6f2; font-weight: bold;">val</span> <span style="color: #cae682;">resource</span> = context.resources.openRawResource<span style="color: #00eff0;">(</span>resId<span style="color: #00eff0;">)</span>
+<span class="linenr"> 6: </span>        using<span style="color: #00eff0;">(</span>resource, file.outputStream<span style="color: #ff6b55;">()</span><span style="color: #00eff0;">)</span> <span style="color: #00eff0;">{</span> input, output -&gt;
+<span class="linenr"> 7: </span>            input.copyTo<span style="color: #ff6b55;">(</span>output<span style="color: #ff6b55;">)</span>
+<span class="linenr"> 8: </span>        <span style="color: #00eff0;">}</span>
+<span class="linenr"> 9: </span>    <span style="color: #ff66ff;">}</span>
+<span class="linenr">10: </span>    <span style="color: #8ac6f2; font-weight: bold;">return</span> file
+<span class="linenr">11: </span><span style="color: #5f9ea0;">}</span>
+</pre>
+</div>
+
+<p>
+I'll start by appealing to authority (because I'm just as lazy as those that
+will, no doubt, persecute me with Uncle Bob quotes):
+</p>
+
+<blockquote>
+<p>
+Sometimes, the elegant implementation is just a function. Not a method. Not a
+class. Not a framework. Just a function. – John Carmack
+</p>
+</blockquote>
+
+<p>
+I happen to agree, and it seemed like it was the case in this particular
+instance, so that's the first change to the code.
+</p>
+
+<p>
+Switching to the block body was obvious, since that's the only way to declare
+vals in direct function scope, and it looked like giving a name to a
+subexpression could be helpful.
+</p>
+
+<p>
+Flipping the condition not only highlighted the exact conditions (explicitly) in
+which the function does something special, but also allowed the use of just an
+<code>if</code> statement and dropping the use of <code>else</code> block. It's now clear that,
+no matter what happens, this function will return a File object - there's only
+one <code>return</code> statement, and it's explicit, making it really hard to miss.
+</p>
+
+<p>
+Simultaneously using more than one Closeable instance is a pretty
+common thing to do, and deserves its own helper function. You can find <code>using</code>
+implementation on Github - it's boring, schematic code, so writing it yourself
+wouldn't be too fun. It's a single file liberally licensed utility that you can
+just copy and paste to your utils module.
+</p>
+
+<p>
+Finally, since stringly-typed code is an abomination that should be eradicated
+from the face of the Earth, we return the <code>File</code> object itself, rather then just
+the path to it. The calling code knows better in what form it wants the file to
+be: if it's for printing, file path is OK, but if you wanted to read it, you'd
+have to create a new <code>File</code> object based on the returned path. It's always
+better to leave the representation decisions to the caller, and it pays off to
+return the most universal representation you have access to.
+</p>
+
+</article>
+
+  
+
+      </div>
+
+      <div class="blog-sidebar">
+
+        <div class="sidebar-module sidebar-module-inset">
+          You can now subscribe to an
+          <a nofolow="1" href="/statics/feed.xml">RSS feed</a>
+          <a nofolow="1" href="/statics/feed.xml"><img src="/statics/feed-icon-14x14.png" style="vertical-align: baseline;"/></a>.
+        </div>
+
+        <!-- <div class="sidebar-module sidebar-module-inset" id="posts-module"> -->
+        <!-- <h4 style="">Latest posts</h4> -->
+        <!-- <ol class="list-unstyled posts-links"></ol> -->
+        <!-- </div> -->
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Quote of the Year 2023</h4>
+          <blockquote>
+            One of the most surprising things I've witnessed in my lifetime is
+            the rebirth of the concept of heresy.
+            <footer>— <cite><a href="http://paulgraham.com/heresy.html">Paul Graham</a></cite></footer>
+          </blockquote>
+        </div>
+
+        <div class="sidebar-module sidebar-module-inset">
+          <h4>About me</h4>
+          <p>
+            I'm a programmer. I like learning programming languages. I've been
+            doing it for more than a decade.
+          </p>
+          <p>
+            Here's roughly <a href="/articles/about.html#history">what I learned</a>
+            to date.
+          </p>
+          <p>
+            <a href="/articles/contact.html">Contact me</a>
+          </p>
+        </div>
+
+        <div class="sidebar-module sidebar-module-inset" id="links-module">
+          <h4>Links</h4>
+
+          <ol class="links-list">
+            <li><a href="https://www.youtube.com/watch?v=m09RWtt5nd8">Video of my talk on FP</a></li>
+            <li><a href="/warsawjs-talk/">Slides</a> and <a href="/warsawjs-talk/code.html">Examples</a> for the talk</li>
+          </ol>
+
+          <ol class="links-list">
+            <li><a href="http://hashrocket.com/blog/posts/taking-advantage-of-the-polyglot-lifestyle">Polyglot Lifestyle</a></li>
+            <li><a href="https://hyperpolyglot.org/">HyperPolyglot - language comparisons</a></li>
+            <li><a href="https://programming-idioms.org/">Programming Idioms</a></li>
+            <li><a href="https://github.com/kanaka/mal/blob/master/process/guide.md">Make a Lisp</a></li>
+            <li><a href="http://rosettacode.org/wiki/Rosetta_Code">Rosetta Code</a></li>
+            <li><a href="http://pleac.sourceforge.net/">PLEAC - Programming Language Examples Alike Cookbook</a></li>
+            <li><a href="http://learnxinyminutes.com/">Learn X in Y Minutes</a></li>
+            <li><a href="http://hyperpolyglot.org/">Hyperpolyglot</a></li>
+            <li><a href="http://rigaux.org/language-study/syntax-across-languages/">PL syntaxes comparison</a></li>
+            <li><a href="https://github.com/kanaka/mal">Make a Lisp</a></li>
+            <li><a href="https://modern-sql.com/use-case/literate-sql">Literate SQL</a></li>
+            <li><a href="http://en.literateprograms.org/LiteratePrograms:Welcome">Literate Programs</a></li>
+            <li><a href="http://radar.oreilly.com/2013/11/polyglot-programming-what-is-it-and-why-should-you-be-using-it.html">Why Polyglot?</a></li>
+          </ol>
+        </div>
+
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Quote of the Year 2022</h4>
+          <blockquote>
+            It's amazing what you can talk yourself into liking
+            <footer>— <cite>Steve Yegge</cite></footer>
+          </blockquote>
+        </div>
+
+
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Quote of the Year 2020</h4>
+          <blockquote>
+            What can change the nature of a man?
+            <footer>— <cite>Ravel Puzzlewell</cite></footer>
+          </blockquote>
+        </div>
+
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Quote of the Year 2017</h4>
+          <blockquote>
+            One foot in the grave, the other in Hell.
+            <footer>— <cite>The Nameless One</cite></footer>
+          </blockquote>
+        </div>
+
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Catch phrase of the Year 2016</h4>
+          <blockquote>
+            It isn't ideal that...
+            <footer>— <cite>many different people</cite></footer>
+          </blockquote>
+        </div>
+
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Quote of the Year 2015</h4>
+          <blockquote>
+            You can't type-check being hit by a lightning, can you?
+            <footer>
+              — <cite>Joe Armstrong, creator of <a href="https://en.wikipedia.org/wiki/Erlang_(programming_language)">Erlang</a></cite>
+            </footer>
+          </blockquote>
+        </div>
+
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Quote of the Year 2014</h4>
+          <blockquote>
+            But you <i>do know</i> that non-programmers are
+            people, too?
+            <footer>— <cite>Michał Kłujszo</cite></footer>
+          </blockquote>
+        </div>
+      </div> <!-- /.blog-sidebar -->
+    </main>
+    <footer class="blog-footer">
+      <p><a href="#">Back to top</a> / <a href="">More posts</a> </p>
+    </footer>
+
+    <script src="/statics/bundle.js?cache_busting_cookie=4239"></script>
+  </body>
+</html>

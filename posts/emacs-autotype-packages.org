@@ -1,0 +1,26 @@
+#+TITLE: Why are there so many "autotype" packages out there?
+#+SUBTITLE: Insert obligatory XKCD with "competing standards" here...
+#+DATE: <2023-12-01 23:37:02>
+#+AUTHOR: Pior Klibert
+#+STATE: WIP
+
+Templates. There are thousands of those. Tell me this isn't madness!
+
+- abbrev.el: Abbreviation expansion, builtin
+- expand.el: Abbreviation expansion, builtin
+- [[info:autotype#Using Skeletons][skeleton.el]]: Lisp syntax for templates, builtin
+- [[info:autotype#Tempo][tempo.el]]: Lisp syntax for templates, builtin
+- [[https://github.com/xFA25E/skempo][skempo.el]]:
+- [[info:srecode#Top][srecode.el]]: CEDET template manager and code generator, builtin
+- aas.el: Auto activating snippets
+- cdlatex.el: Fast LaTeX insertion
+- laas.el: Latex auto activating snippets
+- [[https://github.com/jiahaoli95/muban.el][muban.el]]: Lightweight template expansion
+- [[https://github.com/oantolin/placeholder][placeholder.el]]: Treat buffers as templates
+- [[https://github.com/xFA25E/tempo-abbrev][tempo-abbrev.el]]: Abbrev integration for Tempo
+- snippet.el: Original snippet mode, with inline expansion (from EmacsWiki?)
+- [[https://github.com/emacsmirror/tempo-snippets/blob/master/tempo-snippets.el][tempo-snippets.el]]: Interface like snippet.el for Tempo
+- [[https://github.com/joaotavora/yasnippet][yasnippet.el]]: Template system inspired by Textmate snippets
+- [[https://github.com/clarete/templatel][templatel.el]]: Jinja2 subset
+- [[https://github.com/amno1/lite/tree/main][amno1/lite]]:
+- [[https://github.com/minad/tempel][tempel]]: Template package which uses the syntax of the Emacs Tempo library.

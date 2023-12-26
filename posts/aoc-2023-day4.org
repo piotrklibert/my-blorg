@@ -1,0 +1,64 @@
+#+TITLE: Advent of Code 2023 - Day 4
+#+SUBTITLE: I'll just stop adding "Part 1" to the title...
+#+DATE: <2023-12-04 14:11:41>
+#+AUTHOR: Pior Klibert
+#+STATE: DONE
+
+This [[https://adventofcode.com/2023/day/4][puzzle]] was way too easy, compared to yesterday's. Again, I won't do part 2
+due to lack of time - that's probably going to be the same for the following
+posts, too - but part 1 was trivial.
+
+In this puzzle, we're asked to find the size of the set intersection of two
+lists of numbers. After that, we need to compute the following:
+
+#+begin_quote
+The first match makes the card worth *one point* and each match after the first
+doubles the point value of that card.
+#+end_quote
+
+According to the explanation, the result for the example should be **13**.
+Here's the solution:
+
+#+begin_src emacs-lisp -n :exports both :result value pp
+  (defconst example-input
+    "Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53
+  Card 2: 13 32 20 16 61 | 61 30 68 82 17 32 24 19
+  Card 3:  1 21 53 59 44 | 69 82 63 72 16 21 14  1
+  Card 4: 41 92 73 84 69 | 59 84 76 51 58  5 54 83
+  Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36
+  Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11")
+
+  (cl-defun parse-input (data)
+    (cl-loop for card in (split-string data "\n")
+             for (name scores) = (split-string card ": +")
+             for nums = (split-string scores " +")
+             collect (-map #'read nums)))
+
+  (let ((scores (--map (-partition-by #'numberp it) (parse-input example-input))))
+    (cl-loop for (winning _ haves) in scores
+             for win-expt = (1- (length (-intersection winning haves)))
+             when (>= win-expt 0)        ; b/c `expt' works with negative numbers
+             sum (expt 2 win-expt)))
+#+end_src
+
+#+RESULTS:
+: 13
+
+It works! 🙂
+
+Interesting points:
+
+1. We use ~read~ instead of ~string-to-number~ on line 13 because the separator
+   (~|~) is a valid symbol, so we don't need to special-case it.
+2. The multiplication described in the task can be written as exponentiation
+   with base 2, with exponent being one less than the number of winning numbers
+   we have. However, ~expt~ works with negative exponents properly (instead of
+   throwing an error or returning 0), so we need to filter out cases where none
+   of the numbers we have are "winning". Otherwise, we'd get ~(expt 2 -1) ==
+   0.5~, which would be accumulated and we'd get the wrong result.
+3. As previously, ~split-string~ is the workhorse for parsing, and ~cl-loop~
+   along with a few functions from ~dash~ (esp. ~-partition-by~ and obviously
+   ~-intersection~) came in handy.
+
+Part 2 is a little more interesting, but unfortunately, I have to go to work, so
+maybe next time...

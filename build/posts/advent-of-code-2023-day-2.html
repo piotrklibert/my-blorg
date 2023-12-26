@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Piotr Klibert" />
+    <meta name="description" content="Exciting new programming Languages and Polyglot programming; also Emacs" />
+
+    <link rel="preload" as="font" href="/statics/fonts/Roboto-Regular.ttf" type="font/ttf" crossorigin="anonymous" />
+    <link rel="preload" as="font" href="/statics/fonts/Roboto-Italic.ttf" type="font/ttf" crossorigin="anonymous" />
+    <link rel="preload" as="font" href="/statics/fonts/Roboto-Black.ttf" type="font/ttf" crossorigin="anonymous" />
+    <link rel="preload" as="font" href="/statics/fonts/Roboto-Black.ttf" type="font/ttf" crossorigin="anonymous" />
+    <link rel="preload" href="/output/base.min.css?cache_busting_cookie=4333" as="style" />
+
+    <link rel="icon" type="image/x-icon" href="/statics/images/favicon.ico" />
+    <link href="/statics/base.min.css?cache_busting_cookie=4287" rel="stylesheet" />
+    <link href="/statics/styles/my-styles.css?cache_busting_cookie=4202" rel="stylesheet" />
+    <link href="/statics/highlight-code.min.css?cache_busting_cookie=4398" rel="stylesheet" />
+    <style type="text/css">.example { color: white; }</style>
+    <title>Advent of Code 2023 - Day 2 -- Piotr Klibert's blog</title>
+  </head>
+  <body>
+
+    <header id="blog-header">
+      <div id="blog-title">
+        <h1>The Right Lang for the Job</h1>
+        <div><p>Exploring the abbyss of non-mainstream programming languages</p></div>
+      </div>
+
+      <div id="top-menu-container">
+        <nav>
+          <a href="/">Blog</a>
+          <!-- <a href="/articles/archive.html">Archive</a> -->
+          <!-- <a href="/articles/programming_langs.html">Languages</a> -->
+          <!-- <a href="/articles/about.html">About</a> -->
+          <!-- <a href="/articles/contact.html">Contact</a> -->
+          <!-- <div id="blog-nav-rss"> -->
+          <!-- <a nofolow="1" href="/statics/feed.xml"> -->
+          <!-- <img src="/statics/icons/rss0.png" alt="RSS icon" /> -->
+          <!-- </a> -->
+          <!-- </div> -->
+        </nav>
+      </div>
+    </header>
+
+    <main id="blog-main">
+      <div class="blog-main">
+        
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a class="title-link" id="advent-of-code-2023-day-2" href="/posts/advent-of-code-2023-day-2.html" title="Read on separate page">
+          Advent of Code 2023 - Day 2
+        </a>
+        <a href="#advent-of-code-2023-day-2" class="robaczek" title="Link to this place on current page">¶</a>
+      </h1>
+      
+        <h3 class="subtitle">Just Part 1, since I&#39;m late to the party again today...</h3>
+      
+      <p class="meta">
+        Created: <time>&lt;2023-12-02 13:27:57&gt;</time>
+        
+      </p>
+    </header>
+
+    <div id="outline-container-advent-of-code-2023---day-2_part-1" class="outline-2">
+<h2 id="advent-of-code-2023---day-2_part-1"><span class="section-number-2">1.</span> Part 1</h2>
+<div class="outline-text-2" id="text-advent-of-code-2023---day-2_part-1">
+<p>
+Here's the <a href="https://adventofcode.com/2023/day/2">link to the exercise</a> - as usual, we get some input data, and need to
+read it and check some of the properties. In this case, the question is as
+follows:
+</p>
+
+<blockquote>
+<p>
+Determine which games would have been possible if the bag had been loaded with
+only 12 red cubes, 13 green cubes, and 14 blue cubes.
+</p>
+</blockquote>
+
+<p>
+Okay - before we start, let's import the libraries we'll need. Strictly
+speaking, none if these are actually <b>needed</b> - you can see other
+implementations that don't use anything outside of <code>subr</code> and <code>simple</code> - but I
+want to showcase the tools modern Elisper has at their disposal.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span class="linenr">1: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">require</span> '<span style="color: #e5786d;">b</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">2: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">require</span> '<span style="color: #e5786d;">cl-lib</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">3: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">require</span> '<span style="color: #e5786d;">map</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">4: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">require</span> '<span style="color: #e5786d;">dash</span><span style="color: #5f9ea0;">)</span>  
+</pre>
+</div>
+
+<p>
+With that out of the way, we can take a stab at the task. First, let's assume we
+have the input in a buffer already, in <code>input.txt</code>. You could implement the
+task by imperatively traversing the buffer, which would be very Emacs-y way of
+doing this, but since there's an implementation <a href="https://github.com/amno1/AOC2023/blob/main/2.el">like that</a> already, I'll go for
+a more Python-like approach and split the input into a list of lines:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span class="linenr">5: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">defconst</span> <span style="color: #cae682;">aoc-games-played-input</span>
+<span class="linenr">6: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">-&gt;</span> <span style="color: #95e454;">"input.txt"</span> get-buffer b-string-no-properties s-trim s-lines<span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<p>
+We now have 100 lines of text, ready to be further processed:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #5f9ea0;">(</span>length aoc-games-played-input<span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<pre class="example">
+100
+</pre>
+
+
+<p>
+Here's how the lines look like:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #5f9ea0;">(</span>-take 2 aoc-games-played-input<span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<pre class="example">
+("Game 1: 12 blue, 15 red, 2 green; 17 red, 8 green, 5 blue; 8 red, 17 blue; 9 green, 1 blue, 4 red"
+ "Game 2: 6 red, 6 blue, 2 green; 1 blue, 1 red; 6 green, 1 red, 10 blue")
+</pre>
+
+
+<p>
+We need to verify that on each line all the "subsets" - separated by
+semicolons - have color values that <b>do not exceed the limits</b> quoted at the
+beginning. First, let's further split the lines into chunks, separating game ID
+from subsets, and then further separating subsets from each other:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">let</span> <span style="color: #ff66ff;">(</span><span style="color: #00eff0;">(</span><span style="color: #cae682;">line</span> <span style="color: #ff6b55;">(</span>car aoc-games-played-input<span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span>
+  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">pcase-let*</span>
+      <span style="color: #00eff0;">(</span><span style="color: #ff6b55;">(</span><span style="color: #ccaa8f;">`</span><span style="color: #efef00;">(</span><span style="color: #ccaa8f;">,</span>game <span style="color: #ccaa8f;">,</span>subsets<span style="color: #efef00;">)</span> <span style="color: #efef00;">(</span>s-split <span style="color: #b6a0ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">rx</span> <span style="color: #95e454;">": "</span><span style="color: #b6a0ff;">)</span> line<span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span>
+       <span style="color: #ff6b55;">(</span>subset-list <span style="color: #efef00;">(</span>s-split <span style="color: #b6a0ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">rx</span> <span style="color: #95e454;">"; "</span><span style="color: #b6a0ff;">)</span> subsets<span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span>
+       <span style="color: #ff6b55;">(</span>subsets <span style="color: #efef00;">(</span><span style="color: #8ac6f2; font-weight: bold;">--map</span> <span style="color: #b6a0ff;">(</span>s-split <span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">rx</span> <span style="color: #95e454;">", "</span><span style="color: #5f9ea0;">)</span> it<span style="color: #b6a0ff;">)</span> subset-list<span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span>
+    <span style="color: #00eff0;">(</span>cons
+     <span style="color: #ff6b55;">(</span>cl-second <span style="color: #efef00;">(</span>s-match <span style="color: #b6a0ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">rx</span> <span style="color: #95e454;">"Game "</span> <span style="color: #5f9ea0;">(</span>group <span style="color: #79a8ff;">(</span>1+ num<span style="color: #79a8ff;">)</span><span style="color: #5f9ea0;">)</span><span style="color: #b6a0ff;">)</span> game<span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span>
+     subsets<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<pre class="example">
+("1" ("12 blue" "15 red" "2 green") ("17 red" "8 green" "5 blue")
+ ("8 red" "17 blue") ("9 green" "1 blue" "4 red"))
+</pre>
+
+
+<p>
+It works, so let's refactor it a bit before moving on. As we're doing the
+refactor, we can also convert strings to numbers and symbols as appropriate, and
+subsets into alists:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span class="linenr"> 7: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-defun</span> <span style="color: #cae682;">get-game-id</span> <span style="color: #ff66ff;">(</span><span style="color: #cae682;">game-name</span><span style="color: #ff66ff;">)</span>
+<span class="linenr"> 8: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">let</span> <span style="color: #00eff0;">(</span><span style="color: #ff6b55;">(</span><span style="color: #cae682;">re</span> <span style="color: #efef00;">(</span><span style="color: #8ac6f2; font-weight: bold;">rx</span> <span style="color: #95e454;">"Game "</span> <span style="color: #b6a0ff;">(</span>group <span style="color: #5f9ea0;">(</span>1+ num<span style="color: #5f9ea0;">)</span><span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span>
+<span class="linenr"> 9: </span>    <span style="color: #00eff0;">(</span><span style="color: #8ac6f2; font-weight: bold;">-&gt;&gt;</span> game-name <span style="color: #ff6b55;">(</span>s-match re<span style="color: #ff6b55;">)</span> cl-second string-to-number<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">10: </span>
+<span class="linenr">11: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-defun</span> <span style="color: #cae682;">subset-&gt;alist</span> <span style="color: #ff66ff;">(</span><span style="color: #cae682;">colors</span><span style="color: #ff66ff;">)</span>
+<span class="linenr">12: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-loop</span> <span style="color: #e5786d;">for</span> <span style="color: #cae682;">color</span> <span style="color: #e5786d;">in</span> colors
+<span class="linenr">13: </span>           <span style="color: #e5786d;">for</span> <span style="color: #00eff0;">(</span>num color<span style="color: #00eff0;">)</span> <span style="color: #e5786d;">=</span> <span style="color: #00eff0;">(</span>s-split <span style="color: #ff6b55;">(</span><span style="color: #8ac6f2; font-weight: bold;">rx</span> <span style="color: #95e454;">" "</span><span style="color: #ff6b55;">)</span> color<span style="color: #00eff0;">)</span>
+<span class="linenr">14: </span>           <span style="color: #e5786d;">collect</span> <span style="color: #00eff0;">(</span>cons <span style="color: #ff6b55;">(</span>intern-soft color<span style="color: #ff6b55;">)</span> <span style="color: #ff6b55;">(</span>string-to-number num<span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">15: </span>
+<span class="linenr">16: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-defun</span> <span style="color: #cae682;">line-&gt;game</span> <span style="color: #ff66ff;">(</span><span style="color: #cae682;">line</span><span style="color: #ff66ff;">)</span>
+<span class="linenr">17: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">pcase-let*</span> <span style="color: #00eff0;">(</span><span style="color: #ff6b55;">(</span><span style="color: #ccaa8f;">`</span><span style="color: #efef00;">(</span><span style="color: #ccaa8f;">,</span>game <span style="color: #ccaa8f;">,</span>subsets<span style="color: #efef00;">)</span> <span style="color: #efef00;">(</span>s-split <span style="color: #b6a0ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">rx</span> <span style="color: #95e454;">": "</span><span style="color: #b6a0ff;">)</span> line<span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span>
+<span class="linenr">18: </span>               <span style="color: #ff6b55;">(</span>subset-list <span style="color: #efef00;">(</span>s-split <span style="color: #b6a0ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">rx</span> <span style="color: #95e454;">"; "</span><span style="color: #b6a0ff;">)</span> subsets<span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span>
+<span class="linenr">19: </span>               <span style="color: #ff6b55;">(</span>subsets <span style="color: #efef00;">(</span><span style="color: #8ac6f2; font-weight: bold;">--map</span> <span style="color: #b6a0ff;">(</span>s-split <span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">rx</span> <span style="color: #95e454;">", "</span><span style="color: #5f9ea0;">)</span> it<span style="color: #b6a0ff;">)</span> subset-list<span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span>
+<span class="linenr">20: </span>    <span style="color: #00eff0;">(</span>cons
+<span class="linenr">21: </span>     <span style="color: #ff6b55;">(</span>get-game-id game<span style="color: #ff6b55;">)</span>
+<span class="linenr">22: </span>     <span style="color: #ff6b55;">(</span>-map #'<span style="color: #cae682;">subset-&gt;alist</span> subsets<span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span>  <span style="color: #5f9ea0;">)</span>
+<span class="linenr">23: </span>
+<span class="linenr">24: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">let</span> <span style="color: #ff66ff;">(</span><span style="color: #00eff0;">(</span><span style="color: #cae682;">line</span> <span style="color: #ff6b55;">(</span>car aoc-games-played-input<span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span>
+<span class="linenr">25: </span>  <span style="color: #ff66ff;">(</span>line-&gt;game line<span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<pre class="example">
+(1 ((blue . 12) (red . 15) (green . 2)) ((red . 17) (green . 8) (blue . 5))
+   ((red . 8) (blue . 17)) ((green . 9) (blue . 1) (red . 4)))
+</pre>
+
+
+<p>
+So we have the data in a form that's convenient to work with. Now, what does it
+mean for a game to be possible? All subsets must have color values within a
+limit. Let's define a function for checking this:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span class="linenr">26: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">defconst</span> <span style="color: #cae682;">limits</span> '<span style="color: #ff66ff;">(</span><span style="color: #00eff0;">(</span>red . 12<span style="color: #00eff0;">)</span> <span style="color: #00eff0;">(</span>green . 13<span style="color: #00eff0;">)</span> <span style="color: #00eff0;">(</span>blue . 14<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">27: </span>
+<span class="linenr">28: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-defun</span> <span style="color: #cae682;">game-possible-p</span> <span style="color: #ff66ff;">(</span><span style="color: #cae682;">game</span><span style="color: #ff66ff;">)</span>
+<span class="linenr">29: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-loop</span> <span style="color: #e5786d;">for</span> <span style="color: #cae682;">subset</span> <span style="color: #e5786d;">in</span> <span style="color: #00eff0;">(</span>cdr game<span style="color: #00eff0;">)</span>
+<span class="linenr">30: </span>           <span style="color: #e5786d;">unless</span> <span style="color: #00eff0;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-loop</span> <span style="color: #e5786d;">for</span> <span style="color: #ff6b55;">(</span>color . limit<span style="color: #ff6b55;">)</span> <span style="color: #e5786d;">in</span> limits
+<span class="linenr">31: </span>                           <span style="color: #e5786d;">always</span> <span style="color: #ff6b55;">(</span>&lt;= <span style="color: #efef00;">(</span>map-elt subset color 0<span style="color: #efef00;">)</span> limit<span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span>
+<span class="linenr">32: </span>           <span style="color: #e5786d;">return</span> nil
+<span class="linenr">33: </span>           <span style="color: #e5786d;">finally</span> <span style="color: #e5786d;">return</span> t<span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">34: </span>
+<span class="linenr">35: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">defconst</span> <span style="color: #cae682;">line-impossible</span>
+<span class="linenr">36: </span>  <span style="color: #95e454;">"Game 1: 12 blue, 15 red, 2 green; 17 red, 8 green, 5 blue; 8 red, 17 blue; 9 green, 1 blue, 4 red"</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">37: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">defconst</span> <span style="color: #cae682;">line-possible</span>
+<span class="linenr">38: </span>  <span style="color: #95e454;">"Game 2: 6 red, 6 blue, 2 green; 1 blue, 1 red; 6 green, 1 red, 10 blue"</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">39: </span>
+<span class="linenr">40: </span><span style="color: #5f9ea0;">(</span>list <span style="color: #ff66ff;">(</span>game-possible-p <span style="color: #00eff0;">(</span>line-&gt;game line-possible<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span>
+<span class="linenr">41: </span>      <span style="color: #ff66ff;">(</span>game-possible-p <span style="color: #00eff0;">(</span>line-&gt;game line-impossible<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<pre class="example">
+(t nil)
+</pre>
+
+
+<p>
+The predicate seems to be working. The two things left to do are to filter out
+the games for which the predicate returns <code>t</code> and then sum the game IDs of those
+games:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span class="linenr">42: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-loop</span> <span style="color: #e5786d;">for</span> <span style="color: #cae682;">line</span> <span style="color: #e5786d;">in</span> aoc-games-played-input
+<span class="linenr">43: </span>         <span style="color: #e5786d;">for</span> <span style="color: #cae682;">game</span> <span style="color: #e5786d;">=</span> <span style="color: #ff66ff;">(</span>line-&gt;game line<span style="color: #ff66ff;">)</span>
+<span class="linenr">44: </span>         <span style="color: #e5786d;">if</span> <span style="color: #ff66ff;">(</span>game-possible-p game<span style="color: #ff66ff;">)</span>
+<span class="linenr">45: </span>         <span style="color: #e5786d;">sum</span> <span style="color: #ff66ff;">(</span>car game<span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<pre class="example">
+2716
+</pre>
+
+
+<p>
+And that's, according to the AoC page, the correct answer for my dataset, for
+part 1!
+</p>
+</div>
+</div>
+<div id="outline-container-advent-of-code-2023---day-2_part-2" class="outline-2">
+<h2 id="advent-of-code-2023---day-2_part-2"><span class="section-number-2">2.</span> Part 2</h2>
+<div class="outline-text-2" id="text-advent-of-code-2023---day-2_part-2">
+<p>
+For completeness sake, here's the answer to the second part of the puzzle. Here,
+we need to find the maximum values for each color across all subsets of a given
+game:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span class="linenr">46: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">defconst</span> <span style="color: #cae682;">maxes</span> '<span style="color: #ff66ff;">(</span><span style="color: #00eff0;">(</span>red . 0<span style="color: #00eff0;">)</span> <span style="color: #00eff0;">(</span>green . 0<span style="color: #00eff0;">)</span> <span style="color: #00eff0;">(</span>blue . 0<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">47: </span>
+<span class="linenr">48: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-macrolet</span>
+<span class="linenr">49: </span>    <span style="color: #ff66ff;">(</span><span style="color: #00eff0;">(</span>alist-maximize <span style="color: #ff6b55;">(</span>key acc alist<span style="color: #ff6b55;">)</span>
+<span class="linenr">50: </span>       <span style="color: #ccaa8f;">`</span><span style="color: #ff6b55;">(</span><span style="color: #8ac6f2; font-weight: bold;">setf</span> <span style="color: #efef00;">(</span>alist-get <span style="color: #ccaa8f;">,</span>key <span style="color: #ccaa8f;">,</span>acc<span style="color: #efef00;">)</span>
+<span class="linenr">51: </span>              <span style="color: #efef00;">(</span>max <span style="color: #b6a0ff;">(</span>alist-get <span style="color: #ccaa8f;">,</span>key <span style="color: #ccaa8f;">,</span>acc<span style="color: #b6a0ff;">)</span> <span style="color: #b6a0ff;">(</span>alist-get <span style="color: #ccaa8f;">,</span>key <span style="color: #ccaa8f;">,</span>alist 0<span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span>
+<span class="linenr">52: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-loop</span> <span style="color: #e5786d;">for</span> <span style="color: #cae682;">line</span> <span style="color: #e5786d;">in</span> aoc-games-played-input
+<span class="linenr">53: </span>           <span style="color: #e5786d;">for</span> <span style="color: #cae682;">game</span> <span style="color: #e5786d;">=</span> <span style="color: #00eff0;">(</span>line-&gt;game line<span style="color: #00eff0;">)</span>
+<span class="linenr">54: </span>           <span style="color: #e5786d;">sum</span> <span style="color: #00eff0;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-loop</span> <span style="color: #e5786d;">with</span> <span style="color: #cae682;">maxs</span> <span style="color: #e5786d;">=</span> <span style="color: #ff6b55;">(</span>copy-tree maxes<span style="color: #ff6b55;">)</span>
+<span class="linenr">55: </span>                        <span style="color: #e5786d;">for</span> <span style="color: #cae682;">x</span> <span style="color: #e5786d;">in</span> <span style="color: #ff6b55;">(</span>cdr game<span style="color: #ff6b55;">)</span>
+<span class="linenr">56: </span>                        <span style="color: #e5786d;">do</span> <span style="color: #ff6b55;">(</span><span style="color: #8ac6f2; font-weight: bold;">progn</span>
+<span class="linenr">57: </span>                             <span style="color: #efef00;">(</span>alist-maximize 'red maxs x<span style="color: #efef00;">)</span>  
+<span class="linenr">58: </span>                             <span style="color: #efef00;">(</span>alist-maximize 'green maxs x<span style="color: #efef00;">)</span>
+<span class="linenr">59: </span>                             <span style="color: #efef00;">(</span>alist-maximize 'blue maxs x<span style="color: #efef00;">)</span> <span style="color: #ff6b55;">)</span>
+<span class="linenr">60: </span>                        <span style="color: #e5786d;">finally</span> <span style="color: #e5786d;">return</span> <span style="color: #ff6b55;">(</span>apply #'<span style="color: #cae682;">*</span> <span style="color: #efef00;">(</span>map-values maxs<span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<pre class="example">
+72227
+</pre>
+
+
+<p>
+The result happens to be correct for my dataset, here too.
+</p>
+
+<p>
+The main highlight here is the <code>cl-macrolet</code> form, which defines local macros,
+valid only in the lexical scope of the form. It's great for getting syntactic
+clutter out of the way without polluting the global namespace.
+</p>
+
+<p>
+A honorary mention goes to <code>setf</code> - a versatile tool for updating contents of
+things. There are many "things" that you can set/update, and you can your own
+"places" and have <code>setf</code> work with them, too. The selling point of <code>setf</code> is the
+symmetry: most often, the "place" has the same syntactic form as the getter for
+a given thing. Here, <code>alist-get</code> is used with <code>setf</code> to update a value in an
+alist - it's way cleaner than <code>assoc</code> and <code>setcdr</code> to which it expands to.
+</p>
+
+<p>
+Notice also the <code>copy-tree</code> - it's important because of the mutability of
+Elisp's lists. It's obvious now when the alist is defined outside of the
+function, but the call to <code>copy-tree</code> would be needed even if the variable was
+inlined! That is, this:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-loop</span> <span style="color: #e5786d;">with</span> <span style="color: #cae682;">maxs</span> <span style="color: #e5786d;">=</span> '<span style="color: #ff66ff;">(</span><span style="color: #00eff0;">(</span>red . 0<span style="color: #00eff0;">)</span> <span style="color: #00eff0;">(</span>green . 0<span style="color: #00eff0;">)</span> <span style="color: #00eff0;">(</span>blue . 0<span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span> ...<span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<p>
+Would still produce wrong output. An alternative to <code>copy-tree</code> would be
+constructing the list at runtime by calling <code>list</code> and <code>cons</code> functions. I'll
+leave the detail as to why this happens for a future post.
+</p>
+</div>
+</div>
+
+  </article>
+
+      </div>
+
+      <div class="blog-sidebar">
+
+        <div class="sidebar-module sidebar-module-inset">
+          You can now subscribe to an
+          <a nofolow="1" href="/statics/feed.xml">RSS feed</a>
+          <a nofolow="1" href="/statics/feed.xml"><img src="/statics/feed-icon-14x14.png" style="vertical-align: baseline;"/></a>.
+        </div>
+
+        <!-- <div class="sidebar-module sidebar-module-inset" id="posts-module"> -->
+        <!-- <h4 style="">Latest posts</h4> -->
+        <!-- <ol class="list-unstyled posts-links"></ol> -->
+        <!-- </div> -->
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Quote of the Year 2023</h4>
+          <blockquote>
+            One of the most surprising things I've witnessed in my lifetime is
+            the rebirth of the concept of heresy.
+            <footer>— <cite><a href="http://paulgraham.com/heresy.html">Paul Graham</a></cite></footer>
+          </blockquote>
+        </div>
+
+        <div class="sidebar-module sidebar-module-inset">
+          <h4>About me</h4>
+          <p>
+            I'm a programmer. I like learning programming languages. I've been
+            doing it for more than a decade.
+          </p>
+          <p>
+            Here's roughly <a href="/articles/about.html#history">what I learned</a>
+            to date.
+          </p>
+          <p>
+            <a href="/articles/contact.html">Contact me</a>
+          </p>
+        </div>
+
+        <div class="sidebar-module sidebar-module-inset" id="links-module">
+          <h4>Links</h4>
+
+          <ol class="links-list">
+            <li><a href="https://www.youtube.com/watch?v=m09RWtt5nd8">Video of my talk on FP</a></li>
+            <li><a href="/warsawjs-talk/">Slides</a> and <a href="/warsawjs-talk/code.html">Examples</a> for the talk</li>
+          </ol>
+
+          <ol class="links-list">
+            <li><a href="http://hashrocket.com/blog/posts/taking-advantage-of-the-polyglot-lifestyle">Polyglot Lifestyle</a></li>
+            <li><a href="https://hyperpolyglot.org/">HyperPolyglot - language comparisons</a></li>
+            <li><a href="https://programming-idioms.org/">Programming Idioms</a></li>
+            <li><a href="https://github.com/kanaka/mal/blob/master/process/guide.md">Make a Lisp</a></li>
+            <li><a href="http://rosettacode.org/wiki/Rosetta_Code">Rosetta Code</a></li>
+            <li><a href="http://pleac.sourceforge.net/">PLEAC - Programming Language Examples Alike Cookbook</a></li>
+            <li><a href="http://learnxinyminutes.com/">Learn X in Y Minutes</a></li>
+            <li><a href="http://hyperpolyglot.org/">Hyperpolyglot</a></li>
+            <li><a href="http://rigaux.org/language-study/syntax-across-languages/">PL syntaxes comparison</a></li>
+            <li><a href="https://github.com/kanaka/mal">Make a Lisp</a></li>
+            <li><a href="https://modern-sql.com/use-case/literate-sql">Literate SQL</a></li>
+            <li><a href="http://en.literateprograms.org/LiteratePrograms:Welcome">Literate Programs</a></li>
+            <li><a href="http://radar.oreilly.com/2013/11/polyglot-programming-what-is-it-and-why-should-you-be-using-it.html">Why Polyglot?</a></li>
+          </ol>
+        </div>
+
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Quote of the Year 2022</h4>
+          <blockquote>
+            It's amazing what you can talk yourself into liking
+            <footer>— <cite>Steve Yegge</cite></footer>
+          </blockquote>
+        </div>
+
+
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Quote of the Year 2020</h4>
+          <blockquote>
+            What can change the nature of a man?
+            <footer>— <cite>Ravel Puzzlewell</cite></footer>
+          </blockquote>
+        </div>
+
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Quote of the Year 2017</h4>
+          <blockquote>
+            One foot in the grave, the other in Hell.
+            <footer>— <cite>The Nameless One</cite></footer>
+          </blockquote>
+        </div>
+
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Catch phrase of the Year 2016</h4>
+          <blockquote>
+            It isn't ideal that...
+            <footer>— <cite>many different people</cite></footer>
+          </blockquote>
+        </div>
+
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Quote of the Year 2015</h4>
+          <blockquote>
+            You can't type-check being hit by a lightning, can you?
+            <footer>
+              — <cite>Joe Armstrong, creator of <a href="https://en.wikipedia.org/wiki/Erlang_(programming_language)">Erlang</a></cite>
+            </footer>
+          </blockquote>
+        </div>
+
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Quote of the Year 2014</h4>
+          <blockquote>
+            But you <i>do know</i> that non-programmers are
+            people, too?
+            <footer>— <cite>Michał Kłujszo</cite></footer>
+          </blockquote>
+        </div>
+      </div> <!-- /.blog-sidebar -->
+    </main>
+    <footer class="blog-footer">
+      <p><a href="#">Back to top</a> / <a href="">More posts</a> </p>
+    </footer>
+
+    <script src="/statics/bundle.js?cache_busting_cookie=4239"></script>
+  </body>
+</html>

@@ -1,0 +1,25 @@
+#+TITLE: M-x butterfly actually exists!
+#+SUBTITLE: What I found scrolling through misc.el
+#+DATE: <2023-11-29 10:50>
+#+AUTHOR: Pior Klibert
+#+STATE: WIP
+
+Many years ago I wrote a custom command for duplicating current line or region,
+if region is active. Much later, ~duplicate-dwim~ function was added to Emacs.
+I have a policy of dropping custom code and replacing it with built-ins as they
+come - it's not a high-priority task, so it took some time (read: a few years),
+but I finally did so recently. To make sure ~duplicate-dwim~ does what I want, I
+went to look at its code - that's when I discovered the
+~copy-from-above-command~, which is defined in the same file (~misc.el~).
+
+The dosctring says:
+
+#+begin_verse
+Copy characters from previous nonblank line, starting just above point.
+Copy ARG characters, but not past the end of that line.
+If no argument given, copy the entire rest of the line.
+The characters copied are inserted in the buffer before point.
+#+end_verse
+
+It's surprisingly handy when coupled with ~duplicate-line~ (or ~duplicate-dwim~
+with no active region).

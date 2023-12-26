@@ -1,0 +1,96 @@
+#+TITLE: How badly can a simple Kotlin function be written?
+#+SUBTITLE: An abomination lurking deep in a production codebase...
+#+DATE: <2023-11-25>
+# #+UPDATED: <2023-11-25>
+#+AUTHOR: Pior Klibert
+This is a real gem, found in the middle of a fairly large codebase for more
+than two years:
+
+#+begin_src kotlin -n
+  object SomeFileUtils {
+      fun getFilePath(context: Context, fileName: String, @RawRes resId: Int): String =
+          File(context.filesDir, fileName)
+              .let { file ->
+                  if (file.canRead() && file.length() > 0) {
+                      file.absolutePath
+                  } else {
+                      context
+                          .resources
+                          .openRawResource(resId)
+                          .use { inputStream ->
+                              file
+                                  .outputStream()
+                                  .use { outputStream ->
+                                      inputStream.copyTo(outputStream)
+                                  }
+                              file.absolutePath
+                          }
+                  }
+              }
+  }
+#+end_src
+
+It's so wrong that it's almost beautiful... *Almost*.
+
+The person who originally wrote this code must have been a little strange in the
+head, which isn't that unusual in this industry. The reviewer of this code who
+agreed to merge it - if they even existed - should probably reflect on how
+serious they are about doing their job, but well - it happens to the best of us.
+A single fuckup like this is nothing too unusual.
+
+The real tragedy starts after that, though. Code is read much more often than it
+is written, so it had to be read by other programmers in the time it existed.
+Especially since many different programmers worked on a project, most of them
+only for a short time. Now, not one of these people took it upon themselves to
+eradicate this monstrosity, even though it would be 5 minutes of work. Here's
+how could it have looked like:
+
+#+begin_src kotlin -n
+  import com.companyname.utils.using
+  fun createFileForResource(context: Context, fileName: String, @RawRes resId: Int): File {
+      val file = File(context.filesDir, fileName)
+      if (file.canRead().not() || file.length() == 0L) {
+          val resource = context.resources.openRawResource(resId)
+          using(resource, file.outputStream()) { input, output ->
+              input.copyTo(output)
+          }
+      }
+      return file
+  }
+#+end_src
+
+I'll start by appealing to authority (because I'm just as lazy as those that
+will, no doubt, persecute me with Uncle Bob quotes):
+
+#+begin_quote
+Sometimes, the elegant implementation is just a function. Not a method. Not a
+class. Not a framework. Just a function. – John Carmack
+#+end_quote
+
+I happen to agree, and it seemed like it was the case in this particular
+instance, so that's the first change to the code.
+
+Switching to the block body was obvious, since that's the only way to declare
+vals in direct function scope, and it looked like giving a name to a
+subexpression could be helpful.
+
+Flipping the condition not only highlighted the exact conditions (explicitly) in
+which the function does something special, but also allowed the use of just an
+~if~ statement and dropping the use of ~else~ block. It's now clear that,
+no matter what happens, this function will return a File object - there's only
+one ~return~ statement, and it's explicit, making it really hard to miss.
+
+Simultaneously using more than one Closeable instance is a pretty
+common thing to do, and deserves its own helper function. You can find ~using~
+implementation on Github - it's boring, schematic code, so writing it yourself
+wouldn't be too fun. It's a single file liberally licensed utility that you can
+just copy and paste to your utils module.
+
+Finally, since stringly-typed code is an abomination that should be eradicated
+from the face of the Earth, we return the ~File~ object itself, rather then just
+the path to it. The calling code knows better in what form it wants the file to
+be: if it's for printing, file path is OK, but if you wanted to read it, you'd
+have to create a new ~File~ object based on the returned path. It's always
+better to leave the representation decisions to the caller, and it pays off to
+return the most universal representation you have access to.
+

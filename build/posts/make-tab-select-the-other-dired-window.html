@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Piotr Klibert" />
+    <meta name="description" content="Exciting new programming Languages and Polyglot programming; also Emacs" />
+
+    <link rel="preload" as="font" href="/statics/fonts/Roboto-Regular.ttf" type="font/ttf" crossorigin="anonymous" />
+    <link rel="preload" as="font" href="/statics/fonts/Roboto-Italic.ttf" type="font/ttf" crossorigin="anonymous" />
+    <link rel="preload" as="font" href="/statics/fonts/Roboto-Black.ttf" type="font/ttf" crossorigin="anonymous" />
+    <link rel="preload" as="font" href="/statics/fonts/Roboto-Black.ttf" type="font/ttf" crossorigin="anonymous" />
+    <link rel="preload" href="/output/base.min.css?cache_busting_cookie=4333" as="style" />
+
+    <link rel="icon" type="image/x-icon" href="/statics/images/favicon.ico" />
+    <link href="/statics/base.min.css?cache_busting_cookie=4287" rel="stylesheet" />
+    <link href="/statics/styles/my-styles.css?cache_busting_cookie=4202" rel="stylesheet" />
+    <link href="/statics/highlight-code.min.css?cache_busting_cookie=4398" rel="stylesheet" />
+    <style type="text/css">.example { color: white; }</style>
+    <title>Make &lt;TAB&gt; select the other Dired window -- Piotr Klibert's blog</title>
+  </head>
+  <body>
+
+    <header id="blog-header">
+      <div id="blog-title">
+        <h1>The Right Lang for the Job</h1>
+        <div><p>Exploring the abbyss of non-mainstream programming languages</p></div>
+      </div>
+
+      <div id="top-menu-container">
+        <nav>
+          <a href="/">Blog</a>
+          <!-- <a href="/articles/archive.html">Archive</a> -->
+          <!-- <a href="/articles/programming_langs.html">Languages</a> -->
+          <!-- <a href="/articles/about.html">About</a> -->
+          <!-- <a href="/articles/contact.html">Contact</a> -->
+          <!-- <div id="blog-nav-rss"> -->
+          <!-- <a nofolow="1" href="/statics/feed.xml"> -->
+          <!-- <img src="/statics/icons/rss0.png" alt="RSS icon" /> -->
+          <!-- </a> -->
+          <!-- </div> -->
+        </nav>
+      </div>
+    </header>
+
+    <main id="blog-main">
+      <div class="blog-main">
+        
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a class="title-link" id="make-tab-select-the-other-dired-window" href="/posts/make-tab-select-the-other-dired-window.html" title="Read on separate page">
+          Make &lt;TAB&gt; select the other Dired window
+        </a>
+        <a href="#make-tab-select-the-other-dired-window" class="robaczek" title="Link to this place on current page">¶</a>
+      </h1>
+      
+        <h3 class="subtitle">Replicating the best feature of Sunrise Commander in plain Dired</h3>
+      
+      <p class="meta">
+        Created: <time>&lt;2023-11-26 10:00&gt;</time>
+        
+      </p>
+    </header>
+
+    <p>
+Some time ago, Sunrise Commander - a two-pane file manager for Emacs, built on
+top of Dired by Drew Adams - stopped working for me. The loss of familiar
+bindings was a little painful, but I mostly solved it with Hydra - the
+functionality is mostly still there in Dired.
+</p>
+
+<p>
+One thing I missed was swithcing to the other Dired window easily. With just two
+Dired windows occupying a whole frame just <code>M-x other-window</code> worked well, but
+with more windows, I had to fall back to <code>M-x windmove-*</code> and that was less
+convenient<sup><a id="fnr.1" class="footref" href="#fn.1" role="doc-backlink">1</a></sup>.
+</p>
+
+<p>
+I decided to fix it at some point, and here's the result:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span class="linenr"> 1: </span><span style="color: #5f9ea0;">(</span><span style="color: #8ac6f2; font-weight: bold;">defun</span> <span style="color: #cae682;">my-select-other-dired-window</span> <span style="color: #ff66ff;">()</span>
+<span class="linenr"> 2: </span>  <span style="color: #95e454;">"Select the other dired window, if there is only one."</span>
+<span class="linenr"> 3: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">interactive</span><span style="color: #ff66ff;">)</span>
+<span class="linenr"> 4: </span>  <span style="color: #ff66ff;">(</span><span style="color: #8ac6f2; font-weight: bold;">let*</span> <span style="color: #00eff0;">(</span><span style="color: #ff6b55;">(</span><span style="color: #cae682;">selected-window</span> <span style="color: #efef00;">(</span>selected-window<span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span>
+<span class="linenr"> 5: </span>         <span style="color: #ff6b55;">(</span><span style="color: #cae682;">other-windows</span> <span style="color: #efef00;">(</span>cdr <span style="color: #b6a0ff;">(</span>window-list<span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span>
+<span class="linenr"> 6: </span>    <span style="color: #00eff0;">(</span><span style="color: #8ac6f2; font-weight: bold;">cl-loop</span> <span style="color: #e5786d;">for</span> <span style="color: #cae682;">w</span> <span style="color: #e5786d;">in</span> other-windows
+<span class="linenr"> 7: </span>             <span style="color: #e5786d;">if</span> <span style="color: #ff6b55;">(</span><span style="color: #8ac6f2; font-weight: bold;">with-current-buffer</span> <span style="color: #efef00;">(</span>window-buffer w<span style="color: #efef00;">)</span>
+<span class="linenr"> 8: </span>                  <span style="color: #efef00;">(</span>derived-mode-p 'dired-mode<span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span> 
+<span class="linenr"> 9: </span>             <span style="color: #e5786d;">collect</span> w <span style="color: #e5786d;">into</span> <span style="color: #cae682;">result</span>
+<span class="linenr">10: </span>             <span style="color: #e5786d;">finally</span>
+<span class="linenr">11: </span>             <span style="color: #ff6b55;">(</span><span style="color: #8ac6f2; font-weight: bold;">when</span> <span style="color: #efef00;">(</span>= 1 <span style="color: #b6a0ff;">(</span>length result<span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span>
+<span class="linenr">12: </span>               <span style="color: #efef00;">(</span>select-window <span style="color: #b6a0ff;">(</span>car result<span style="color: #b6a0ff;">)</span><span style="color: #efef00;">)</span><span style="color: #ff6b55;">)</span><span style="color: #00eff0;">)</span><span style="color: #ff66ff;">)</span><span style="color: #5f9ea0;">)</span>
+<span class="linenr">13: </span>
+<span class="linenr">14: </span><span style="color: #5f9ea0;">(</span>keymap-set dired-mode-map <span style="color: #95e454;">"&lt;tab&gt;"</span> #'<span style="color: #cae682;">my-select-other-dired-window</span><span style="color: #5f9ea0;">)</span>
+</pre>
+</div>
+
+<p>
+Now I can select the other Dired buffer by pressing <code>&lt;TAB&gt;</code> in one of them, no
+matter how many other windows are there.
+</p>
+<div id="footnotes">
+<h2 class="footnotes">Footnotes: </h2>
+<div id="text-footnotes">
+
+<div class="footdef"><sup><a id="fn.1" class="footnum" href="#fnr.1" role="doc-backlink">1</a></sup> <div class="footpara" role="doc-footnote"><p class="footpara">
+Testing footnotes 
+</p></div></div>
+
+
+</div>
+</div>
+  </article>
+
+      </div>
+
+      <div class="blog-sidebar">
+
+        <div class="sidebar-module sidebar-module-inset">
+          You can now subscribe to an
+          <a nofolow="1" href="/statics/feed.xml">RSS feed</a>
+          <a nofolow="1" href="/statics/feed.xml"><img src="/statics/feed-icon-14x14.png" style="vertical-align: baseline;"/></a>.
+        </div>
+
+        <!-- <div class="sidebar-module sidebar-module-inset" id="posts-module"> -->
+        <!-- <h4 style="">Latest posts</h4> -->
+        <!-- <ol class="list-unstyled posts-links"></ol> -->
+        <!-- </div> -->
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Quote of the Year 2023</h4>
+          <blockquote>
+            One of the most surprising things I've witnessed in my lifetime is
+            the rebirth of the concept of heresy.
+            <footer>— <cite><a href="http://paulgraham.com/heresy.html">Paul Graham</a></cite></footer>
+          </blockquote>
+        </div>
+
+        <div class="sidebar-module sidebar-module-inset">
+          <h4>About me</h4>
+          <p>
+            I'm a programmer. I like learning programming languages. I've been
+            doing it for more than a decade.
+          </p>
+          <p>
+            Here's roughly <a href="/articles/about.html#history">what I learned</a>
+            to date.
+          </p>
+          <p>
+            <a href="/articles/contact.html">Contact me</a>
+          </p>
+        </div>
+
+        <div class="sidebar-module sidebar-module-inset" id="links-module">
+          <h4>Links</h4>
+
+          <ol class="links-list">
+            <li><a href="https://www.youtube.com/watch?v=m09RWtt5nd8">Video of my talk on FP</a></li>
+            <li><a href="/warsawjs-talk/">Slides</a> and <a href="/warsawjs-talk/code.html">Examples</a> for the talk</li>
+          </ol>
+
+          <ol class="links-list">
+            <li><a href="http://hashrocket.com/blog/posts/taking-advantage-of-the-polyglot-lifestyle">Polyglot Lifestyle</a></li>
+            <li><a href="https://hyperpolyglot.org/">HyperPolyglot - language comparisons</a></li>
+            <li><a href="https://programming-idioms.org/">Programming Idioms</a></li>
+            <li><a href="https://github.com/kanaka/mal/blob/master/process/guide.md">Make a Lisp</a></li>
+            <li><a href="http://rosettacode.org/wiki/Rosetta_Code">Rosetta Code</a></li>
+            <li><a href="http://pleac.sourceforge.net/">PLEAC - Programming Language Examples Alike Cookbook</a></li>
+            <li><a href="http://learnxinyminutes.com/">Learn X in Y Minutes</a></li>
+            <li><a href="http://hyperpolyglot.org/">Hyperpolyglot</a></li>
+            <li><a href="http://rigaux.org/language-study/syntax-across-languages/">PL syntaxes comparison</a></li>
+            <li><a href="https://github.com/kanaka/mal">Make a Lisp</a></li>
+            <li><a href="https://modern-sql.com/use-case/literate-sql">Literate SQL</a></li>
+            <li><a href="http://en.literateprograms.org/LiteratePrograms:Welcome">Literate Programs</a></li>
+            <li><a href="http://radar.oreilly.com/2013/11/polyglot-programming-what-is-it-and-why-should-you-be-using-it.html">Why Polyglot?</a></li>
+          </ol>
+        </div>
+
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Quote of the Year 2022</h4>
+          <blockquote>
+            It's amazing what you can talk yourself into liking
+            <footer>— <cite>Steve Yegge</cite></footer>
+          </blockquote>
+        </div>
+
+
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Quote of the Year 2020</h4>
+          <blockquote>
+            What can change the nature of a man?
+            <footer>— <cite>Ravel Puzzlewell</cite></footer>
+          </blockquote>
+        </div>
+
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Quote of the Year 2017</h4>
+          <blockquote>
+            One foot in the grave, the other in Hell.
+            <footer>— <cite>The Nameless One</cite></footer>
+          </blockquote>
+        </div>
+
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Catch phrase of the Year 2016</h4>
+          <blockquote>
+            It isn't ideal that...
+            <footer>— <cite>many different people</cite></footer>
+          </blockquote>
+        </div>
+
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Quote of the Year 2015</h4>
+          <blockquote>
+            You can't type-check being hit by a lightning, can you?
+            <footer>
+              — <cite>Joe Armstrong, creator of <a href="https://en.wikipedia.org/wiki/Erlang_(programming_language)">Erlang</a></cite>
+            </footer>
+          </blockquote>
+        </div>
+
+        <div class="quote-of-the-year sidebar-module sidebar-module-inset">
+          <h4 style="text-align: center">Quote of the Year 2014</h4>
+          <blockquote>
+            But you <i>do know</i> that non-programmers are
+            people, too?
+            <footer>— <cite>Michał Kłujszo</cite></footer>
+          </blockquote>
+        </div>
+      </div> <!-- /.blog-sidebar -->
+    </main>
+    <footer class="blog-footer">
+      <p><a href="#">Back to top</a> / <a href="">More posts</a> </p>
+    </footer>
+
+    <script src="/statics/bundle.js?cache_busting_cookie=4239"></script>
+  </body>
+</html>

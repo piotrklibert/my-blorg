@@ -1,0 +1,395 @@
+:PROPERTIES:
+:ID:       646acb7e-011e-42d1-ad24-92127338dfde
+:END:
+#+TITLE: Why do you say Emacs has no threading support?
+#+SUBTITLE: Concurrency in Emacs doesn't have to suck
+#+DATE: <2023-12-18 Mon 16:41>
+#+AUTHOR: Pior Klibert
+#+STATE: DONE
+
+# <browse-url-firefox "http://192.168.1.138:32769/posts/why-do-you-say-emacs-has-no-threading-support.html">
+
+* Intro
+
+#+begin_aside
+this is an aside Nam vestibulum accumsan nisl. Nulla facilisis, risus a rhoncus
+fermentum, tellus tellus lacinia purus, et dictum nunc justo sit amet elit.
+Nulla facilisis, risus a rhoncus fermentum, tellus tellus lacinia purus, et
+dictum nunc justo sit amet elit. Donec hendrerit tempor tellus. Praesent
+fermentum tempor tellus.
+#+end_aside
+
+The topic comes up every so often: there are no threads in Emacs! Quick, let's
+rewrite it in Scheme before users jump ship to VS Code or NVim![fn:1]
+
+Even just a month ago someone [[https://www.reddit.com/r/emacs/comments/17zoe3d/is_the_lack_of_multithreading_support_in_emacs_a/?utm_source=share&utm_medium=web2x&context=3][made a poll]] asking the following question:
+
+- asda
+- s asd as d
+
+  asdasd
+
+#+begin_quote
+Is the lack of multithreading support in emacs a dealbreaker for you?
+#+end_quote
+
+The problem: Emacs **does have** threading primitives implemented and exposed to
+Lisp programs.
+
+There are of course good reasons for why the perception of "no threads" is so
+pervasive. In this post, I will:
+
+1. Explain why the threads in Emacs are so useless most people are unaware
+   they're even there.
+2. Show that, limited as they are, they are a fine addition to Elisp's hacker
+   arsenal.
+
+[[attachment:screenshot_2023-11-17_1905.png]]
+
+#+begin_summary
+This is a summary
+#+end_summary
+
+** h2
+
+loremNunc porta vulputate tellus.  
+
+*** h3
+
+Etiam vel neque nec dui dignissim bibendum.
+
+**** h4
+
+Sed id ligula quis est convallis tempor.
+
+***** h5
+Phasellus lacus.
+
+* How do threads look in Emacs?
+
+[[attachment:Evolution of Emacs Lisp.pdf]]
+
+- lista
+- wy
+- punkt
+- owana
+
+#+HTML: <a id="tabelka"></a>
+#+BEGIN_SRC emacs-lisp :exports both :results value table
+  (let ((table (make-list 4 (-map #'number-to-string (number-sequence 1 10))))) ; (ref:1)
+    table)
+#+END_SRC
+
+[[(1)]] is because...
+
+#+RESULTS:
+| 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+| 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+| 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+| 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+
+
+#+begin_src sh
+  xset dpms 0 0 0
+  xset s off
+  xset dpms force on
+  firefox
+  sleep 30
+  xdotool key Control+l
+  sleep 3
+  xdotool type 'http://shiro/'
+  sleep 6
+  xdotool key Return
+  xdotool key F11
+#+end_src
+
+#+begin_quote
+Emacs Lisp is a fundamentally sequential language, and relies heavily on
+side-effects to a global state. Yet, its use in an interactive program has
+inevitably lead to a desire for concurrency to try and improve responsiveness.
+Concurrency appeared very early on: since Emacs 16.56, Emacs has included
+support for asynchronous processes, that is, the execution of separate programs
+whose output was processed by so-called process filters whenever the Emacs Lisp
+execution engine is idly waiting for the next user input.
+
+While this very limited form of cooperative concurrency was slightly improved in
+1994’s Lucid Emacs 19.9 and 1996’s Emacs 19.31 by adding native support for
+timers (timers had earlier been implemented as an asynchronous process sending
+Emacs output at the requested time), it has been the only form of concurrency
+available for most of Emacs’s life.
+
+Adding true shared-memory concurrency to Emacs Lisp is problematic because of
+the pervasive reliance on shared state in existing Emacs Lisp code. In some
+cases, shared state is not a problem and concurrency can be mimicked via
+asynchronous programming: When a program waits for an operation (such as an
+external program), instead of blocking, it registers a continuation callback and
+returns control to the main event loop. Yet many Emacs Lisp packages instead
+block, because slicing the execution via callbacks means effectively writing
+code in continuation-passing style which is poorly supported in Emacs Lisp,
+interacts badly with dynamic scoping, and requires significant surgery to
+retro-fit to existing code.
+
+So, shared-memory concurrency was largely considered as inapplicable to Emacs
+Lisp. Never- theless, in November 2008, Giuseppe Scrivano posted a first naive
+attempt at adding threads to Emacs Lisp. This effort did not go much further,
+but it inspired Tom Tromey to try his own luck. Proc. ACM Program. Lang., Vol.
+4, No. HOPL, Article 74. Publication date: June 2020.74:44 Stefan Monnier and
+Michael Sperber
+
+In 2010, he started to work on adding shared-memory cooperative concurrency
+primitives like make-thread to Emacs. Interaction with the implementation of
+dynamic scoping, which is based on a global state for speed, required
+experimentation with various approaches. Correctly handling buffer-local and
+frame-local bindings without a complete rewrite was particularly painful and
+most approaches were abandoned simply because it was too difficult to keep them
+up-to-date with the evolving Emacs codebase.
+
+A working approach was finally released in 2018, as part of Emacs 26.1. Context
+switches still take place only at a few known points where Emacs Lisp is idle
+(or via explicit calls to thread-yield). The current implementation of this
+feature makes context switches take time proportional to the current stack
+depth, because the dynamic bindings of the old thread need to be saved and
+removed, after which the dynamic bindings of the new thread need to be restored.
+Earlier implementation approaches tried to avoid this expensive form of context
+switching by making global variable lookups a bit more expensive instead, but
+these would have required more extensive and delicate changes to existing code.
+Therefore, while this approach may be reconsidered in the future, the current
+implementation favored a simpler and safer approach.
+
+The inclusion of such a form of shared-state concurrency was hotly debated
+between the main- tainers. They all agreed that Emacs Lisp needs to develop
+concurrency and parallelism in order to take advantage of the increasing number
+of CPU cores available, especially since single-core performance is not
+increasing significantly any more; but there was also a consensus that shared
+memory is a very bad fit to the current Emacs Lisp world. Tom Tromey’s patch was
+finally accepted only because it was non-invasive, and because there was a
+feeling that it was important to do something.
+
+This is still a fairly experimental feature, and two years after its appearance,
+its use appears to still be limited to experimental patches to a handful of
+packages such as the Gnus MUA. Arguably the main outcome so far has been to
+expose some latent bugs in some packages’s asynchronous processing.
+
+Over the years, other approaches to concurrency and parallelism have been
+developed as Emacs Lisp packages, most notably the async.el package [Wiegley
+2019] developed in 2012 that runs Emacs Lisp code in parallel in a separate
+Emacs subprocess. Its applicability is limited by the fact that the buffers’s
+contents need to be explicitly sent as needed between the two processes, forcing
+a very coarse grain of parallelism. Moreover, there is no guarantee that the
+configuration of the subprocess is consistent with that of the main processÐthe
+subprocess may even be another version of Emacs in some cases. Still, several
+third party packages make limited use of async.el.
+#+end_quote
+
+#+begin_quote
+Tom Tromey’s patch was finally accepted only because it was non-invasive, and
+because there was a feeling that it was important to do /something/.
+#+end_quote
+
+
+> Sadly, multithreading is an afterthought for Emacs
+
+
+It is, but it's usable. I'm actually amazed that, even after three major
+versions, the built-in threading is not used by the community.
+
+
+Yes, the threads currently are not usable for number crunching in the
+background. And yes, there are bugs, and trying to do many things from the
+background thread doesn't work, sometimes in unexpected ways. You can still
+block the main thread from the background thread since some things block the
+event loop, no matter where they were started.
+
+But, the threads do give you independent control flows. Whatever you cannot do
+in the background, you can offload to the main thread with a timer and a queue
+of lambdas.
+
+The built-in threads are very, very bare-bones - it's around 15 functions, for
+threads, mutexes, and condition variables. They are very limited by their
+"mostly cooperative" nature. However, with a bit of sugar, they are usable for
+at least one thing: async processes and network communication.
+
+In a background thread, you can "block" to wait for a child process to do
+something. It's natural and requires no macrology (async.el...). The same is
+true for network communication. You can block and wait for a response while the
+rest of Emacs does whatever. With just two functions, you can write code without
+blocking as if you used `call-process`. Sequential actions - call this, wait for
+it to finish, call that, wait for it to finish, etc. - can now be coded in a
+sequential way, without having to worry about callbacks, sentinels, and a
+poor-man FSM implementation that invariably appears in Elisp that doesn't use
+threads.
+
+The threads built into Emacs, currently, are closer to green threads or
+coroutines, functionally, than to OS-level threads. But that's still a huge help
+in a bunch of important and pervasive scenarios. It's really strange that nobody
+seems to realize this.
+
+With threads (as they are), the Continuation Passing Style compiler macro (in
+generator.el), and dynamic modules (for actual parallelism where needed) Emacs
+now has everything it needs to make it non-blocking by default. Of course, that
+would entail rewriting everything on top of these abstractions, so it's
+unrealistic - but for new code and packages? I think we're just one package
+(along the lines of dash, s, etc.) away from convenient concurrency and
+parallelism in Emacs. The problem, of course, is that someone needs to design
+and code that package...
+
+
+> Anyway, as I see it, the Emacs threads would not help for Affe
+
+You're right. I misspoke. I was thinking about the performance of sending large
+amounts of data through pipes versus accessing them through shared memory. I
+didn't consider the CPU-bound action of filtering the data. As we don't get
+parallelism with threads, the filtering itself would be most likely slower.
+
+> The net positive is that one can run multiple blocking IO operations in
+> parallel,
+
+First of all, you cannot (in Emacs, I mean), run "multiple blocking operations
+in parallel" just because you spawn a new thread. `call-process` and friends
+will block the main thread, and therefore the event loop, no matter which thread
+they were called from. It's far from the only case where a function invoked from
+a background thread will freeze Emacs. :)
+
+The threads as they currently are in Emacs **are basically useless** for running
+"multiple blocking" ops in parallel :D
+
+There's more: calling certain other functions from the background thread might
+mess up the display. Updating a buffer that's currently displayed in a visible
+window can make the display flicker, some modes toggle off and back on, and even
+search data might get corrupted.
+
+Add the lack of parallelism to this, along with the most bare-bones API
+provided, and you get threads that are not just "close to useless", but already
+past all redemption :D
+
+Or at least threads that cannot be used like "normal" threads would be in other
+contexts. But they *might be* a small part of a layer of library code that would
+make async programming convenient in Emacs.
+
+> but I think asynchronous, non-blocking IO is widely considered the more
+> efficient alternative, but is probably also more complicated.
+
+The real problem is that, I think, async and non-blocking programming in Emacs
+is incredibly inconvenient. It's a decade past the point where everyone and
+their cat decided that coroutines are good, and started implementing them. There
+are mature async stacks all around, yet Emacs still asks you to deal with
+filters, sentinels, and pipes!, when you want to do something async in the
+background.
+
+You end up performing CPS transformation on your code by hand, or you build a
+giant FSM with a `pcase` of all possible states in some entry-point defun.
+
+* ChatGPT to the rescue
+
+#+begin_quote
+### Create a function that will take a variable number of string arguments. Each
+string will be a shell command. The function needs to execute a command in an
+async background process, wait for the process to finish, and proceed to execute
+the rest of the arguments. The function cannot block.
+
+Pseudocode:
+
+1. Create the function: (defun my-shell-command-async (&rest commands)
+2. If the list of commands is empty, return nil.
+3. Given a command from the list:
+4. Use start-process-shell-command, providing it with a unique process name, nil for the buffer (we don't need to see output), and the command itself.
+5. Define a sentinel function. This function:
+   a. Takes a process argument and an event string.
+   b. The function uses the process to check if it has finished. If it hasn't, return early.
+   c. If the command list still contains commands, it recursively calls my-shell-command-async with the rest of the commands.
+6. Set the sentinel of the process to be this function.
+7. Return the process object.
+
+Emacs Lisp code:
+#+end_quote
+
+#+begin_src emacs-lisp
+(defun my-shell-command-async (&rest commands)
+  "Execute each command in COMMANDS in a sequential non-blocking
+  manner. Each command runs in a separate background process."
+  (if (not commands)
+      nil ; Return nil if there are no commands to run
+    (let* ((command (car commands))
+           (command-name (format "*my-async-shell-command-%s*" command))
+           (process (start-process-shell-command command-name nil command)))
+      (set-process-sentinel
+       process
+       (lambda (process event)
+         (when (string-match-p "finished" event)
+           (if (cdr commands)
+               (apply 'my-shell-command-async (cdr commands))
+             nil))))
+      process)))
+#+end_src
+
+#+begin_quote
+This function follows a recursive approach, using the sentinel function to
+trigger the next command once the current one has finished. Notice that "apply"
+is used to pass the rest of the commands to the recursive call. This essentially
+unpacks the list of commands so they remain separate function arguments.
+#+end_quote
+
+#+begin_quote
+### Refine the above solution. The function will take a variable number of
+arguments, as before, but the arguments will be either strings or integers.
+String arguments are handled as before, but when encountering a number, the
+function should wait a specified number of seconds before continuing with the
+next argument.
+
+Pseudocode:
+
+1. Create the function: (defun my-shell-command-async (&rest commands)
+2. If the list of commands is empty, return nil.
+3. Given a command from the list:
+4. If the command is a string, use start-process-shell-command, providing it with a unique process name, nil for the buffer (we don't need to see output), and the command. Set the sentinel of the process to this function, similar as before.
+5. If the command is a number, use (run-with-timer) function, providing it with the delay value equals to command and 
+   a. Define a timer function that recursively call my-shell-command-async with the rest of the commands.
+   b. Pass the lambda function as a timer function to (run-with-timer) function.
+6. Return the process object.
+
+Emacs Lisp code:
+#+end_quote
+
+#+begin_src emacs-lisp
+  (defun my-shell-command-async (&rest commands)
+    "Execute each command in COMMANDS in a sequential non-blocking
+    manner. Each command runs in a separate background process.
+    If command is a number, delay that many seconds before the
+    next command."
+    (if (not commands)
+        nil ; Return nil if there are no commands to run
+
+      (let ((command (car commands)))
+        (cond ((stringp command)
+               (let* ((command-name (format "*my-async-shell-command-%s*" command))
+                      (process (start-process-shell-command command-name nil command)))
+                 (set-process-sentinel
+                  process
+                  (lambda (process event)
+                    (when (string-match-p "finished" event)
+                      (if (cdr commands)
+                          (apply 'my-shell-command-async (cdr commands))
+                        nil))))
+                 process))
+
+              ((integerp command)
+               (let ((timer (run-at-time command nil
+                                         (lambda ()
+                                           (if (cdr commands)
+                                               (apply 'my-shell-command-async (cdr commands)))))))))))
+#+end_src
+
+#+begin_quote
+In the revised version, `(cond)` function is used to distinguish if command is a
+string or a number. If command is a string, build and run a process same as
+before. If command is a number, use `run-at-time` function to create a timer.
+`run-at-time` function takes time delay and a function to execute after delay as
+arguments. Here, `(apply 'my-shell-command-async (cdr commands))` is passed as
+function to run after delay. It calls `my-shell-command-async` recursively with
+rest of the commands.
+#+end_quote
+
+* Footnotes
+
+[fn:1] It's particularly entertaining since out of Scheme, JavaScript (VS Code),
+Lua (NVim), and Elisp the only one supporting threads is the last one.

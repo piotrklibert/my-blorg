@@ -1,0 +1,60 @@
+#+TITLE: Advent of Code 2023 - Day 3, Part 1
+#+SUBTITLE: A classic, buffer-based implementation this time
+#+DATE: <2023-12-03 10:04:36>
+#+AUTHOR: Pior Klibert
+#+STATE: DONE
+
+I made it! I woke up early, drank 3 coffees, but in the end, I managed to solve
+the puzzle and post the solution before [[https://code.tvl.fyi/tree/users/tazjin/aoc2023][the]] [[https://github.com/amno1/AOC2023/tree/main][others]]! 🙂
+
+[[https://adventofcode.com/2023/day/3][The puzzle]] this time is about extracting numbers from a 2D array of characters
+and checking whether the number neighbours any character other than a dot (".").
+
+In Emacs, all text is in a 2D array by default - that's (conceptually) what a
+buffer is, after all. So there's really not much to the solution this time,
+other than handling some corner cases (first and last lines, and treating
+newlines as dots - for numbers that are at the end of the line).
+
+Here's the solution:
+
+#+begin_src emacs-lisp -n :results value :exports both
+  ;; NOTE: lines are 140 characters wide (maybe verify this instead of assuming?)
+  (with-current-buffer (get-buffer "input3.txt")
+    (goto-char (point-min))
+    (let (numbers (lines (count-lines (point-min) (point-max))))
+      (while (re-search-forward (rx (1+ num)) nil t)
+        (let* ((beg (match-beginning 0))
+               (end (match-end 0))
+               (surrounding (concat 
+                             (string (char-after (1- beg))) ; preceding char
+                             (string (char-after end))      ; following char
+                             ;; previous line
+                             (if (not (= 1 (line-number-at-pos)))
+                                 (buffer-substring-no-properties (- beg 142) (- end 140))
+                               ".")
+                             ;; next line
+                             (if (not (= lines (line-number-at-pos)))
+                                 (buffer-substring-no-properties (+ beg 140) (+ end 142))
+                               "."))))
+          (unless (cl-every (lambda (c) (or (eq c ?\n) (eq c ?.))) surrounding)
+            (push (string-to-number (match-string 0)) numbers))))
+      (apply #'+ numbers)))
+#+end_src
+
+#+RESULTS:
+: 507214
+
+We just loop through the numbers in the buffer, fetch the characters that
+surround the number, and verify there are only dots (and newlines, as a special
+case) in these characters.
+
+I thought about using ~save-excursion~ and ~forward-line~ to get the preceding
+and following lines, then using ~looking-at-p~ to check for symbols - I think it
+would work and I wouldn't need to check line width in that case. By the time I
+thought of it, though, ~buffer-substring~-based solution worked already, so I
+just left it as is.
+
+Unfortunately, I don't have the time to solve Part 2 of the puzzle. In part 2,
+you need to find all ~*~ symbols that have more than one number in its
+surroundings. It's more interesting than Part 1 because there are more ways of
+solving it. I'll see if I have the time to code the solution in the evening.

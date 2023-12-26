@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title|default("Untitled") }} -- {{ super() }}{% endblock %}
+
+{% block content %}
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a class="title-link" id="{{ slug }}" href="{{ post_url }}" title="Read on separate page">
+          {{ title|default("Untitled") }}
+        </a>
+        <a href="#{{ slug }}" class="robaczek" title="Link to this place on current page">¶</a>
+      </h1>
+      {% if subtitle %}
+        <h3 class="subtitle">{{ subtitle }}</h3>
+      {% endif %}
+      <p class="meta">
+        Created: <time>{{ date }}</time>
+        {% if updated %}
+          &middot; Updated: <time>{{ updated }}</time>
+        {% endif %}
+      </p>
+    </header>
+
+    {{ content|safe }}
+  </article>
+{% endblock %}

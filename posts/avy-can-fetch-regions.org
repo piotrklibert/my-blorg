@@ -1,0 +1,15 @@
+#+TITLE: Avy can do anything - even fetch regions!
+#+SUBTITLE: With a little help from its friend, expand-region
+#+DATE: <2023-12-06 22:31:33>
+#+AUTHOR: Pior Klibert
+#+STATE: WIP
+
+#+begin_src emacs-lisp -n
+(defun my-avy-save-starting-point (&rest _)          
+  (interactive)                                      
+  (setq my-fetch-region--start-pos (cons (selected-window) (point)))
+  (named-timer-run :my-fetch-region                  
+    20 nil (lambda ()                                     
+             (setq my-fetch-region--start-pos nil)   
+             (named-timer-cancel :my-fetch-region))))
+#+end_src

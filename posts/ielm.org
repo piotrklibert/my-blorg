@@ -1,0 +1,239 @@
+:PROPERTIES:
+:ID:       ba61d0fa-c051-4d8b-9d8a-71cf33867960
+:END:
+#+TITLE: Supercharge your eval-expression with ielm!
+#+SUBTITLE: With some tinkering customization, ielm can be a capable replacement
+#+DATE: <2023-12-04 Mon 23:00>
+#+UPDATED: <2023-12-06 Wed 14:04>
+#+AUTHOR: Pior Klibert
+#+OPTIONS: toc:nil 
+#+STATE: DONE
+
+** TLDR: why and when
+:PROPERTIES:
+:CUSTOM_ID: supercharge-your-eval-expression-with-ielm!_tldr:-why-and-when
+:END:
+
+I often use ~straight-visit-package~ and ~find-library~ to read the READMEs and
+~;; Commentary:~ sections in Elisp files. On top of that, I use Info quite
+extensively - the manuals for [[info:elisp#Top][Elisp]] and [[info:org#Top][Org Mode]] are loaded with tons of useful
+Elisp snippets.
+
+The problem: while you can use ~C-x C-e~ almost everywhere, some of the places
+listed above are *read-only* buffers (Info, built-ins from ~/usr/lib/~), so if I
+want to evaluate it in a slightly changed form (longer than one line, since that
+would fit in ~eval-expression~), I need to switch to scratch buffer, which is
+pretty intrusive. With addition of IELM, my workflow looks like this:
+
+1. I'm reading code or docs in a read-only buffer.
+2. I find a piece of code I want to play with (modify and execute)
+3. If it's one line, I copy it to ~M-:~ (~eval-expression~)
+4. If it's up to 10 lines, I copy it to ~C-M-:~ (~ielm~)
+5. If it's longer, I copy it to ~*scratch*~ buffer
+
+In this post, I focus on pt. 4.
+
+UPDATE: Another [[https://old.reddit.com/user/deaddyfreddy][kind soul on Reddit (/u/deaddyfreddy)]] pointed at [[https://github.com/Fanael/edit-indirect][~edit-indirect~
+package]] that could be a good replacement for this. I will take a look!
+
+** eval-expression / ~M-:~
+:PROPERTIES:
+:CUSTOM_ID: supercharge-your-eval-expression-with-ielm!_eval-expression--~m-:~
+:END:
+
+Bound under ~M-:~ by default, ~eval-expression~ allows you to quickly type any
+Elisp and execute it in the context of current window and buffer. I think it's
+one of my most used key bindings, after ~M-x~. It supports ~TAB~-completion, and
+even shows help (function and macro signatures).
+
+[[attachment:screenshot_2023-12-04_2244.png]]
+
+The input takes place in the minibuffer, which means it automatically keeps
+history of pevious invokations. You can search through that history, using your
+preferred completion styles, for example with Orderless (and Vertico, here) you
+can use regular expressions to get what you want:
+
+[[attachment:screenshot_2023-12-04_2258.png]]
+
+Unfortunately, the minibuffer is not the best way to input more complex forms.
+Multiline is possible, but tedious. Lack of enabled ~paredit~ hurts (and
+enabling it messes up incomplete input handling). For these reasons, for trying
+out longer pieces of code, I normally switch to the ~*scratch*~ buffer. The
+downside of it is that I need to switch to a buffer, often losing sight of the
+buffer I worked with before that.
+
+Fortunately, there's a middle ground: ~ielm~! It's documented with a single page
+in the [[info:emacs#Lisp Interaction][Emacs manual]] and just a handful of customizable options. By default, as
+is usual for Emacs, it doesn't look or work too well, but with a bit of
+configuration, it gets **a lot** better. Here's how I use it.
+
+** ielm / ~C-M-:~
+:PROPERTIES:
+:CUSTOM_ID: supercharge-your-eval-expression-with-ielm!_ielm--~c-m-:~
+:END:
+
+First, let's make ~ielm~ look better. As a replacement for ~eval-expression~ it
+should display at the bottom of the frame. I also prefer it to reduce the
+clutter - the default headaer and the prompt could use some tweaking:
+
+#+begin_src emacs-lisp -n :exports code
+  (cl-defun my-make-right-arrow-icon ()
+    "Return a string that displays arrow icon  when inserted in a buffer."
+    (propertize (all-the-icons-octicon "arrow-right")
+      'face `(:family ,(all-the-icons-octicon-family) :height 1.2)
+      'display '(raise 0)))
+
+  ;; Make *ielm* buffer display in a side-window at the bottom of the frame
+  (add-to-list 'display-buffer-alist
+               '("*ielm*"
+                 (display-buffer-in-side-window)
+                 (side . bottom)
+                 (window-height . 10)))
+
+  (setq ielm-header "")
+  (setq ielm-prompt (concat (my-make-right-arrow-icon) " "))
+
+  (keymap-global-set "C-M-:" #'ielm)
+#+end_src
+
+We use ~display-buffer-alist~ to add a rule for where and how ~*ielm*~ buffers
+should show up, then remove the header (why waste a line?) and change the prompt
+to a shorter one. We get this as a result:
+
+[[attachment:screenshot_2023-12-05_2101.png]]
+
+Now, let's make the ~*ielm*~ buffer behave more like a normal Elisp buffer. I
+have *a lot* of config already in place for Elisp, and since the buffer is not a
+minibuffer, most of these will just work. So, I add a few hooks:
+
+#+begin_src emacs-lisp -n :exports code
+  ;; *ielm* buffer
+  (add-hook 'ielm-mode-hook 'my-elisp-mode-setup) ; (1)
+  (add-hook 'ielm-mode-hook 'my-ielm-mode-setup)
+  (keymap-set ielm-map "C-M-:" #'kill-buffer-and-window) ; (2)
+
+  ;; indirect buffer used by ielm to fontify elisp code
+  (add-hook 'ielm-indirect-setup-hook #'rainbow-delimiters-mode) ; (3)
+
+  (defun my-ielm-mode-setup ()
+    (paredit-mode)
+    (keymap-local-set "C-<return>" #'my-ielm-send-input) ; (4)
+    (let ((map (copy-keymap paredit-mode-map)))
+      (keymap-set map "<RET>" 'ielm-return)
+      (push `(paredit-mode . ,map) minor-mode-overriding-map-alist)))
+
+  (cl-defun my-ielm-send-input ()
+    (interactive)
+    ;; The pattern of: '<return> SHIT, I meant execute! C-/ C-<return>' repeats
+    ;; iself often enough that automation seems warranted... :)
+    (when (eq 'ielm-return last-command) (undo))
+    (ielm-send-input))
+#+end_src
+
+~my-elisp-mode-setup~ (at ~(1)~) is a hook I run in normal Elisp buffers. It
+enables tens of packages and messes with a lot of keybindings, you can see it [[https://gist.github.com/piotrklibert/44801d13513ac1c9aca5b4522bbbde79][on
+Github]]. ~my-ielm-mode-setup~ only overrides some key bindings - ~paredit~
+would normally hijack the ~RET~ key, so we use [[info:elisp#Controlling Active Maps][minor-mode-overriding-map-alist]]
+to tell it not to do that. With that, we have a nice multiline editing,
+structural editing with paredit, and fontification and indentation that work:
+
+[[attachment:screenshot_2023-12-05_2116.png]]
+
+With ~ielm-dynamic-multiline-inputs~ and ~ielm-dynamic-return~ set, we can now
+insert newlines normally as long as we're not at the very end of the input.
+Having to move point to the end to execute the code can be tedious, so I bound
+~C-<return>~ to send the input immediately, no matter where the point currently
+is.
+
+Since this is a normal Elisp buffer, we can also use ~C-M-x~ and ~C-x C-e~ to
+execute *parts* of the current input. That allows you to refine the input before
+actually executing it.
+
+Going further, one of the nice things about ~eval-expression~ is that it works
+in the context of the current window and buffer. I didn't want to mess with how
+IELM executes its input; instead, I made a little helper function:
+
+#+begin_src emacs-lisp -n
+  (keymap-global-set "C-M-:" #'my-run-ielm)
+
+  (cl-defun my-run-ielm (arg)
+    (interactive "P")
+    (let ((buf (buffer-name (current-buffer))))
+      (ielm)
+      (when arg
+        (insert
+         (prin1-to-string
+          (pcase arg
+            ('(4) `(with-selected-window (get-buffer-window ,buf)))
+            ('(16) `(with-current-buffer ,buf)))))
+        (forward-char -1)
+        (ielm-return))))
+#+end_src
+
+Now, when I want to execute some code in the context of a window or buffer I was
+before invoking IELM, I can press ~C-u C-M-:~ or ~C-u C-u C-M-:~. This is what I
+get in that case:
+
+[[attachment:screenshot_2023-12-05_2131.png]]
+
+I can now use things like ~re-search-forward~ in the context of the window I was
+in before switching to IELM - and see the point move as the command gets
+executed.
+
+Finally, remember the "help" that ~eval-expression~ offers? Since ~*ielm*~ is a
+normal buffer, it can do a lot more - for example, you can use it with Corfu:
+
+[[attachment:screenshot_2023-12-05_2143.png]]
+
+Of course, all the other goodies you have configured for ~emacs-lisp-mode~ will
+also work. This is the ultimate advantage of this solution over
+~eval-expression~, in my opinion.
+
+** Conclusion
+:PROPERTIES:
+:CUSTOM_ID: supercharge-your-eval-expression-with-ielm!_conclusion
+:END:
+
+One thing missing is saving and searching of the history of commands. It's kept
+in ~comint~, I think, and is not persistent. Recalling previous commands in a
+single IELM session (with ~C-<up>~) works, but ~C-r~ starts an ~isearch~ of
+the buffer instead of Orderless search with Vertico. This is something I still
+need to figure out.
+
+UPDATE: a kind soul [[https://old.reddit.com/user/FrankLeeMadear][over at Reddit (/u/FrankLeeMadear)]] provided the missing
+piece for me! Thank you, I will use it well! 🙂
+
+UPDATE: The code was a little buggy - it required some conversions between the
+ring and a list. It works now, including persistence between Emacs restarts.
+
+#+begin_src emacs-lisp -n
+  (defvar ielm-input-history nil
+    "History of input entered in ielm buffers. Persistent across sessions.")
+
+  (cl-defun my-ielm-get-history ()
+    (unless (get-buffer "*ielm*")
+      (cl-return-from my-ielm-get-history ielm-input-history))
+    (let* ((input-ring (if (eq major-mode 'inferior-emacs-lisp-mode)
+                           comint-input-ring
+                         (buffer-local-value 'comint-input-ring
+                                             (get-buffer "*ielm*"))))
+           (input-list (-map #'substring-no-properties (ring-elements input-ring))))
+      (-uniq (append input-list ielm-input-history))))
+
+  (cl-defun my-ielm-search-history ()
+    (interactive)
+    (insert (completing-read "History: " (my-ielm-get-history))))
+
+  (defun save-ielm-input-history ()
+    (setq ielm-input-history (my-ielm-get-history)))
+
+  (add-hook 'savehist-save-hook #'save-ielm-input-history)
+  (add-to-list 'savehist-additional-variables 'ielm-input-history)
+#+end_src
+
+Other than that, I think this config fits nicely between ~eval-expression~ and
+visiting an Elisp buffer (scratch or otherwise). I've been using this for a few
+weeks to experiment and play with new libraries. Being able to choose in which
+context the code will be executed is convenient, and the full power of
+structural editing and completion with Corfu even for throwaway snippets helps a
+lot when exploring and prototyping code.
