@@ -4,6 +4,7 @@
 
 (require 'b)
 (require 'f)
+(require 'async)
 (require 'map)
 (require 'templatel)
 (require 'weblorg)
@@ -11,11 +12,12 @@
 
 (defconst bl-blog-root "/home/cji/priv/blog/")
 (add-to-list 'load-path (f-join bl-blog-root "src/"))
+
 (require 'bl-statics)
 (require 'bl-export)
 (require 'bl-new-post)
 (require 'bl-nginx)
-(require 'my-threading)
+
 
 (defconst bl-template-paths (list (expand-file-name "templates" bl-blog-root))
   "List of directories that contain our templates.")
@@ -28,9 +30,9 @@
     (signal 'file-missing (list "" "File not found" user-msg))))
 
 ;; (bl-find-file-on-path bl-template-paths "base.html")
-;; (bl-find-file-on-path bl-template-paths "base.htmlasd")
 ;; (bl-find-file-on-path bl-template-paths "/home/cji/priv/blog/templates/base.html")
 ;; (bl-find-file-on-path '() "base.html")
+;; (bl-find-file-on-path bl-template-paths "base.htmlasd")
 (cl-defun bl-find-file-on-path (directories name)
   (when (f-absolute-p name)
     (cl-return-from bl-find-file-on-path name))
@@ -173,8 +175,12 @@
 
 (cl-defun bl-upload-files ()
   (interactive)
-  (mt-in-thread
-   (mt-shell "rsync -Lcrav %s/build/ linode:www" bl-blog-root)))
+  (let* ((src-root (f-join bl-blog-root "build/"))
+         (cmd (concat "rsync --dry-run -Lcrav " src-root " linode:www")))
+    ;; FIXME:                 ^^^^^^^^
+    (cl-labels ((done (res)
+                  (message "Upload done: %s" (b-string (process-buffer res)))))
+      (async-start-process "rsync-blog-upload" "bash" #'done "-c" cmd))))
 
 
 (cl-defun bl-render-all ()
@@ -185,23 +191,6 @@
   (bl-copy-data-files)
   (dolist (post (bl-get-post-list))
     (bl-render-post post)))
-
-(defvar bl-render-all-async-active nil)
-(cl-defun bl-render-all-async ()
-  "Render all posts and the index using a background Emacs process."
-  (interactive)
-  (save-some-buffers)
-  (unless bl-render-all-async-active
-    (setq bl-render-all-async-active t)
-    (mt-in-thread
-     (unwind-protect
-         (mt-process
-          '("nice" "-n" "19"
-            "emacs" "--iconic" "-l" "build.el"
-            "--eval" "(progn (bl-render-all) (kill-emacs))"))
-       (setq bl-render-all-async-active nil)
-       (mt-message "Export done.")))))
-
 
 (cl-defun bl-make-all ()
   (interactive)
