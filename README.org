@@ -1,0 +1,3 @@
+#+TITLE: Yet Another Static Site Generator
+
+This time in Emacs and Elisp, mostly.
