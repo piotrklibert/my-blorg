@@ -1,4 +1,7 @@
 awelistlint
+/*/#*#
+//#*#
 /#*#
 /.#*#
 /vendor/*
+/build/host.access.log
