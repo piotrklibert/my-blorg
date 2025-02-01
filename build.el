@@ -8,6 +8,7 @@
 (require 'map)
 (require 'templatel)
 (require 'weblorg)
+(require 'my-utils)
 (require 'my-org-custom-id)
 
 (defconst bl-blog-root "/home/cji/priv/blog/")
@@ -53,17 +54,24 @@
   (apply-partially #'bl-find-file-on-path bl-post-paths))
 
 
-(defun bl-template-import (env name)
-  "Import template NAME within environment ENV."
-  (->> (templatel-new-from-file (bl-find-template name))
-    (templatel-env-add-template env name)))
 
 (cl-defstruct bl-post-data
   path
   raw-content
   keywords
-  content)
+  content
+  ;; file-name
+  ;; publication-date
+  ;; last-modified-date
+  ;; title
+  ;; link
+  )
 ;; (make-bl-post-data :path nil :raw-content nil :keywords nil :content nil)
+
+(defun bl-template-import (env name)
+  "Import template NAME within environment ENV."
+  (->> (templatel-new-from-file (bl-find-template name))
+    (templatel-env-add-template env name)))
 
 ;; (bl-get-post-export "abomination-found-in-code.org")
 (defun bl-get-post-export (post-name)
@@ -73,6 +81,7 @@
              (keywords nil)
              (exported-buf (with-temp-buffer
                              ;; (setq-local buffer-file-name post)
+                             (org-mode)
                              (setq-local org-attach-id-dir (f-join bl-blog-root "posts/data/"))
                              (insert (f-read post))
                              (setq keywords (my-collect-org-keywords))
@@ -117,6 +126,14 @@
               (value (org-element-property :value element)))
           (push (cons key value) keywords))))
     keywords))
+
+(comment
+ (cl-loop for p in (bl-assemble-publishable-posts)
+          collect (with-temp-buffer
+                    (org-mode)
+                    (insert-file-contents p)
+                    (my-collect-org-keywords))))
+
 
 
 ;; (bl-render-post "abomination-found-in-code.org")
@@ -171,17 +188,8 @@
             posts))
     (setq posts (mapcar #'cdr (sort posts (lambda (a b) (string< (car b) (car a))))))
     (with-temp-file (f-join bl-blog-root "build/index.html")
-      (insert (templatel-env-render env template `(("posts" . ,posts)))))))
-
-
-(cl-defun bl-upload-files ()
-  (interactive)
-  (let* ((src-root (f-join bl-blog-root "build/"))
-         (cmd (concat "rsync --dry-run -Lcrav " src-root " linode:www")))
-    ;; FIXME:                 ^^^^^^^^
-    (cl-labels ((done (res)
-                  (message "Upload done: %s" (b-string (process-buffer res)))))
-      (async-start-process "rsync-blog-upload" "bash" #'done "-c" cmd))))
+      (insert (templatel-env-render env template `(("posts" . ,posts)))))
+    posts))
 
 
 (cl-defun bl-render-all ()
@@ -192,6 +200,7 @@
   (bl-copy-data-files)
   (dolist (post (bl-get-post-list))
     (bl-render-post post)))
+
 
 (cl-defun bl-make-all ()
   (interactive)
