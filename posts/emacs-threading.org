@@ -5,9 +5,9 @@
 #+SUBTITLE: Concurrency in Emacs doesn't have to suck
 #+DATE: <2023-12-18 Mon 16:41>
 #+AUTHOR: Pior Klibert
-#+STATE: DONE
+#+STATE: hidden
 
-# <browse-url-firefox "http://192.168.1.138:32769/posts/why-do-you-say-emacs-has-no-threading-support.html">
+# <browse-url-firefox "http://localhost/posts/why-do-you-say-emacs-has-no-threading-support.html">
 
 * Intro
 
