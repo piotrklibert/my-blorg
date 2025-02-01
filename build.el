@@ -86,6 +86,7 @@
 (cl-defun bl-map-post-buffers (fn)
   (let ((fn (lambda (post)
               (with-temp-buffer
+                (org-mode)
                 (insert-file-contents post)
                 (cons post (funcall fn))))))
     (mapcar fn (bl-get-post-list))))
