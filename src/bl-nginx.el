@@ -9,7 +9,7 @@
 (defconst bl-nginx-conf "/home/cji/priv/blog/server/server.conf")
 
 
-(cl-defun bl-nginx--format-volume (from to &optional (ro t))
+(cl-defun bl-docker--format-volume (from to &optional (ro t))
   (unless (f-absolute-p from)
     (setq from (f-join bl-blog-root from)))
   (format "%s:%s:%s" from to (if ro "ro" "rw")))
@@ -18,8 +18,8 @@
 (defconst bl-docker-run-cmd
   (list "docker" "run" "--rm" "--detach"
         "--name" bl-docker-container
-        "-v" (bl-nginx--format-volume bl-nginx-conf bl-docker-conf)
-        "-v" (bl-nginx--format-volume "build" bl-docker-mount nil)
+        "-v" (bl-docker--format-volume bl-nginx-conf bl-docker-conf)
+        "-v" (bl-docker--format-volume "build" bl-docker-mount nil)
         "-p" "80:80"
         bl-docker-image))
 
@@ -66,13 +66,6 @@
   "Restart the Docker container with Nginx - can take a few seconds."
   (interactive)
   (bl-nginx-restart-1))
-
-
-;; (bl-nginx-reload)
-;; (defun bl-nginx-reload ()  ;; doesn't work with the Docker image I'm using
-;;   (interactive)
-;;   (start-process-shell-command "reload-nginx" "*reload-nginx*"
-;;     (format "docker exec -ti %s nginx -s reload" bl-docker-container)))
 
 
 (provide 'bl-nginx)

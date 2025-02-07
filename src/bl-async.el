@@ -5,17 +5,9 @@
 (require 'my-utils)
 (require 'promise)
 
-
+;; Make all the load-path paths from current session available to the async
+;; process.
 (setf async-child-init "/home/cji/.emacs.d/config/async-setup.el")
-
-(defconst bl-build-script-path "/home/cji/priv/blog/build.el")
-
-
-(cl-defun bl-run-shell (command-line)
-  (setq command-line (cl-etypecase command-line
-                       (string command-line)
-                       (list (s-join " " command-line))))
-  (bl-run-program "bash" (list "-c" command-line)))
 
 
 ;; (bl-run-program "ls" '("-l"))
@@ -30,6 +22,13 @@
 
 (cl-defun bl-run-program* (program &rest args)
   (bl-run-program program args))
+
+
+(cl-defun bl-run-shell (command-line)
+  (setq command-line (cl-etypecase command-line
+                       (string command-line)
+                       (list (s-join " " command-line))))
+  (bl-run-program "bash" (list "-c" command-line)))
 
 
 
@@ -60,6 +59,9 @@
 
 
 
+(defvar bl-render-all-is-running-p nil)
+(defconst bl-build-script-path "/home/cji/priv/blog/build.el")
+
 (cl-defun bl-start-background-render ()
   "Start a background Emacs process to render all posts and the index. It starts
 minimized, but it cannot be headless, because then the colors (eg. for syntax
@@ -69,7 +71,7 @@ highlighting) are not rendered during export."
    "-l" bl-build-script-path
    "--eval" "(progn (bl-render-all) (kill-emacs))"))
 
-(defvar bl-render-all-is-running-p nil)
+
 (async-defun bl-render-all-async-1 ()
   (save-some-buffers)
   (unless bl-render-all-is-running-p
@@ -78,6 +80,7 @@ highlighting) are not rendered during export."
         (await (bl-start-background-render))
       (setq bl-render-all-is-running-p nil))
     (message "Rendered all posts and index.")))
+
 
 (cl-defun bl-render-all-async ()
   "Render all posts and the index using a background Emacs process."
