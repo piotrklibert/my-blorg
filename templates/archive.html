@@ -3,7 +3,9 @@
 {% block title %}The Right Lang for The Job ― Piotr Klibert's blog{% endblock %}
 
 {% block content %}
+  <ul>
   {% for post in posts %}
-    <section>{{ post|safe }}</section>
+    <li>{{ post.date }} {{ post.fname }} {{ post.content }}</li>
   {% endfor %}
+  </ul>
 {% endblock %}

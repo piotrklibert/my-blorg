@@ -14,11 +14,20 @@
 (defconst bl-blog-root "/home/cji/priv/blog/")
 (add-to-list 'load-path (f-join bl-blog-root "src/"))
 
+(require 'bl-async)
 (require 'bl-statics)
 (require 'bl-export)
 (require 'bl-new-post)
 (require 'bl-nginx)
 
+(defconst bl-data-quotes
+  '(("Quote of the Year 2023" "One of the most surprising things I've witnessed in my lifetime is the rebirth of the concept of heresy." "Paul Graham")
+    ("Quote of the Year 2022" "It's amazing what you can talk yourself into liking" "Steve Yegge")
+    ("Quote of the Year 2020" "What can change the nature of a man?" "Ravel Puzzlewell")
+    ("Quote of the Year 2017" "One foot in the grave, the other in Hell." "The Nameless One")
+    ("Catch phrase of the Year 2016" "It isn't ideal that..." "many different people")
+    ("Quote of the Year 2015" "You can't type-check being hit by a lightning, can you?" "Joe Armstrong, creator of Erlang")
+    ("Quote of the Year 2014" "But you *do know* that non-programmers are people, too?" "Michał Kłujszo")))
 
 (defconst bl-template-paths (list (expand-file-name "templates" bl-blog-root))
   "List of directories that contain our templates.")
@@ -128,11 +137,20 @@
     keywords))
 
 (comment
- (cl-loop for p in (bl-assemble-publishable-posts)
-          collect (with-temp-buffer
-                    (org-mode)
-                    (insert-file-contents p)
-                    (my-collect-org-keywords))))
+ (-uniq (cl-loop for p in (bl-assemble-publishable-posts)
+                 append (with-temp-buffer
+                          (org-mode)
+                          (insert-file-contents p)
+                          (map-keys (my-collect-org-keywords))))))
+
+(defconst bl-common-post-metadata  ;; as Org keywords
+  '("author"
+    "date"
+    "subtitle"
+    "title"
+    "state"
+    "options"
+    "updated"))
 
 
 
@@ -174,6 +192,7 @@
 
 ;; (bl-render-index)
 (cl-defun bl-render-index ()
+  (interactive)
   (let* ((env (templatel-env-new :importfn 'bl-template-import))
          (template "index.html")
          (template-body (templatel-new-from-file (bl-find-template template)))
@@ -192,14 +211,43 @@
     posts))
 
 
+(cl-defun bl-render-archive ()
+  (interactive)
+  (let* ((env (templatel-env-new :importfn 'bl-template-import))
+         (template "archive.html")
+         (template-body (templatel-new-from-file (bl-find-template template)))
+         (posts (mapcar #'plist->template-data
+                        '((:fname "asdasD" :content "asdasd" :date "2020-01-03")
+                          (:fname "asdasD" :content "asdasd" :date "2020-01-04")
+                          (:fname "asdasD" :content "asdasd" :date "2020-01-05")))))
+    (templatel-env-set-autoescape env t)
+    (templatel-env-add-template env template template-body)
+    (with-temp-file (f-join bl-blog-root "build/pages/archive.html")
+      (insert (templatel-env-render env template `(("posts" . ,posts)))))
+    posts))
+
+;; (bl-render-all)
 (cl-defun bl-render-all ()
   "Render all posts and the index."
   (interactive)
   (save-some-buffers)
-  (bl-render-index)
+  ;; (bl-render-index)
+  (bl-render-archive)
   (bl-copy-data-files)
-  (dolist (post (bl-get-post-list))
-    (bl-render-post post)))
+  ;; (dolist (post (bl-get-post-list))
+  ;;   (bl-render-post post))
+  )
+
+;; (plist->template-data (list :a 3 :b 4 :c 5))
+(cl-defun plist->template-data (plist)
+  (cl-loop for (key value) on plist by #'cddr
+           collect (cons (substring (symbol-name key) 1) value)))
+
+;; (template-data->plist (plist->template-data (list :a 3 :b 4 :c 5)))
+(cl-defun template-data->plist (data)
+  (let ((plist (ht->plist (ht<-alist data))))
+    (cl-loop for (key value) on plist by #'cddr
+             append (list (intern (concat ":" key)) value))))
 
 
 (cl-defun bl-make-all ()

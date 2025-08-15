@@ -39,7 +39,7 @@
     (lambda (res)
       (seq-let (stdout stderr) res
         (promise-resolve
-         (list :success t :message stdout :reason nil :cmd cmd))))
+         (list :success t :message (concat stdout (or stderr "")) :reason nil :cmd cmd))))
     (lambda (err)
       (seq-let (event stdout stderr) err
         (promise-resolve
@@ -50,12 +50,25 @@
 ;; (bl--async-rsync "posts/*.el" "build/posts/" :flags '("-v" "-a"))
 ;; (bl--async-rsync "posts/*.el" "build/posts/" :flags "-a")
 (cl-defun bl--async-rsync (source dest &key (flags '("-av")))
+  "Run rsync asynchronously. SOURCE can be a string or a list of strings
+interpreted as paths. DEST must be a single string. FLAGS can be a string or a
+list of strings.
+
+Returns a promise that resolves with a plist containing the keys:
+  :success - nil/t,
+  :message - stdout if :success is t
+  :reason - event that killed the process if :success is nil
+  :cmd - rsync args used in this call
+
+The promise is never rejected, failure is represented by the :success nil
+value."
   (cl-assert (not (listp dest)) t "can be only one destination")
   (let ((args (append (ensure-list flags)
                       (ensure-list source)
                       (list dest))))
     (-> (bl-run-shell (cons "rsync" args))
       (bl--async-wrap-rsync-result (prin1-to-string args)))))
+
 
 
 

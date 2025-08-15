@@ -97,8 +97,8 @@ h3:target::before {
 
 
 
-.blog-main ul {margin-bottom: 1rem;}
-.blog-main li {margin-bottom: 0;}
+/* .blog-main ul {margin-bottom: 1rem;} */
+/* .blog-main li {margin-bottom: 0;} */
 .blog-main p {
     /* color: rgb(74, 74, 74); */
     margin-bottom: 0.1rem;
@@ -336,19 +336,21 @@ article pre {
 }
 
 article ol {
-    margin-left: 2rem;
-    margin-bottom: 1rem;
-    padding-left: 2rem;
-    padding-right: 4rem;
+    /* margin-left: 2rem; */
+    /* margin-bottom: 1rem; */
+    /* padding-left: 2rem; */
+    /* padding-right: 4rem; */
 }
 
 article ol li:last-child {
     padding-bottom: 0;
 }
-article ol li, article ul li {
-    padding-bottom: 0.6rem;
-    line-height: 1.25em;
-    padding-left: 20px;
+
+article ol li,
+article ul li {
+    /* padding-bottom: 0.6rem; */
+    /* line-height: 1.25em; */
+    /* padding-left: 20px; */
 }
 
 article ul li {

@@ -1,0 +1,182 @@
+<article role="article">
+  <header>
+    <h1 class="entry-title">
+      Walkfiles - different languages, different approaches, same effect (mostly)
+    </h1>
+    <p class="meta"><time>2015-05-05</time></p>
+  </header>
+
+  --------------------
+
+  <notice>
+    <note class="outdated">this is a work in progress, it will be updated with all the details later.</note>
+    <note> this is going to be a series of posts </note>
+  </notice>
+
+
+
+  --------------------
+
+  <notice>
+    <note class="outdated">this is work in progress, it will be updated with all the details later.</note>
+    <note>this is going to be a series of posts instead</note>
+    <note>click on "&lt;-&gt;" to get <q>fullscreen</q></note>
+    <note>
+      The code is available
+      <a style="color: green"
+         href="https://github.com/piotrklibert/dirlist">
+        on GitHub
+      </a>
+    </note>
+
+  </notice>
+
+    <p>
+      I lost my Internet connection for full 3 days. Moreover, those were days
+      off from work. I was quickly becoming bored and tried to think of
+      something fun to do, which could be done without help of Google.
+      Unexpectedly it turned out that programming may be such a task... If
+      you've got the docs downloaded earlier, of course. I had a bunch, for
+      some reason, so I decided to - surprise! - learn some programming
+      languages.
+    </p>
+
+    <p>
+      Learning about differences and similarities between languages is the
+      most fun way of learning new languages, and it also helps you better
+      utilize the tools your main language gives you, so I went that route.
+    </p>
+
+    <h3>Implementation languages</h3>
+
+    <ul>
+      <li>Python</li>
+      <li>Nim</li>
+      <li>OCaml</li>
+      <li>Dylan</li>
+      <li>Haxe</li>
+      <li>Io, Pharo, LiveScript</li>
+    </ul>
+
+    <p>
+      I wanted to experiment with strongly, statically typed languages,
+      because of both performance and maintainability. I especially wanted to
+      try Nim and Haxe, then remembered about OCaml, so I included it too.
+      There are more languages on the list, they're there just for fun. Some
+      introduction to the languages, with reasons of why I chose them:
+    </p>
+
+    <dl>
+      <dt> <a href="http://python.org">Python</a> </dt>
+      <dd>
+        <p>
+          Currently my main language, so it was an obvious choice for a
+          reference implementation. There is one interesting thing about
+          this implementation: it's unexpectedly fast, faster than some of
+          the compiled solutions!
+        </p>
+      </dd>
+
+      <dt> <a href="http://nim-lang.com">Nim</a> </dt>
+      <dd>
+        <ul>
+          <li>compiled to single binary</li>
+          <li>able to link libraries statically</li>
+          <li>static typing with inference</li>
+          <li>supports macros</li>
+          <li>support for run-time polymorphism (multimethods)</li>
+          <li>garbage collected, memory safe, but with access to
+          unsafe operations</li>
+          <li>whitespace sensitive syntax</li>
+          <li>multiparadigm language with procedural programming at its core</li>
+        </ul>
+        <p>
+          Theoretically very interesting bag of features. In practice I
+          think it needs some more polish to make all the features fit
+          together better.
+        </p>
+      </dd>
+
+      <dt> <a href="http://ocaml.org">OCaml</a> </dt>
+      <dd>
+        <ul>
+          <li>compiled to single binary</li>
+          <li>static typing with full Hindley-Milner inference</li>
+          <li>supports structural subtyping via objects and polymorphic
+          variants</li>
+          <li>garbage collected, memory safe</li>
+          <li>multiparadigm: functional as base and imperative and OO
+          added to mix</li>
+        </ul>
+
+        <p>
+          It's an old and well-known language, but it is still evolving
+          with features being constantly added and new exciting tools
+          being created. For example there's now a package manager
+          (integrated with something similar to Python's virtualenv),
+          OPAM, which greatly simplifies building OCaml projects.
+        </p>
+      </dd>
+
+
+      <dt> <a href="http://opendylan.org/">Dylan</a> </dt>
+      <dd>
+        <ul>
+          <li>compiled to a single binary</li>
+          <li>optional static typing</li>
+          <li>garbage collected, memory safe</li>
+          <li>multiparadigm: functional and OO</li>
+          <li>uses multiple inheritance and multimethods</li>
+          <li>supports macros</li>
+          <li>
+            very dynamic nature of a language, with late binding of
+            everything
+          </li>
+        </ul>
+        <p>
+          Compiles to a native binary, but provides a huge amount of
+          dynamic runtime flexibility. This comes at the cost of being
+          somewhat slower than other compiled languages. Dylan is also
+          essentially an abandonware, with very little resources for
+          development, so go help if you can.
+        </p>
+      </dd>
+
+      <dt><a href="http://haxe.org">Haxe</a></dt>
+      <dd>
+        <ul>
+          <li>compiled to a single binary</li>
+          <li>a wide range of other compilation targets</li>
+          <li>static typing with full type inference</li>
+          <li>garbage collected, memory safe</li>
+          <li>multiparadigm: functional and OO</li>
+          <li>supports macros</li>
+          <li>great both compile and run-time flexibility</li>
+        </ul>
+
+        <p>
+          Its main focus is on developing for many platforms
+          simultaneously. This makes the compiler able to compile to many
+          different targets like C++ or PHP. The language itself is
+          interesting, although its designer chose to stick with the most
+          classical syntax possible.
+        </p>
+      </dd>
+      <dt><a href="https://iolanguage.org">Io</a>,
+      <a href="http://pharo.org">Pharo</a>,
+      <a href="http://livescript.net">LiveScript</a></dt>
+      <dd>
+        <p>
+          Just for fun and to have a comparison with the most dynamic and
+          flexible environments on the planet. They are slower, but Io
+          code is the shortest. Pharo code is hard to present properly, so
+          I will skip it.
+        </p>
+      </dd>
+    </dl>
+
+    <p>
+      That's it - next in the series: presenting one of the implementations.
+    </p>
+
+  </article>

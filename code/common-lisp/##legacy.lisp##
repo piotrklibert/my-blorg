@@ -1,0 +1,188 @@
+(defpackage :blog.legacy
+  (:use :cl :env.full)
+  (:import-from #:trivial-arguments #:arglist)
+  (:export :*legacy-blog* :*modern-blog*))
+
+(in-package :blog.legacy)
+(in-readtable :env.readtable)
+
+(defparameter *legacy-blog* "/home/cji/priv/klibert_pl/")
+(defparameter *modern-blog* "/home/cji/priv/blog/")
+
+(defun memstr (item lst)
+  (member item lst :test #'string=))
+(defun getfstr (lst item)
+  (cadr (memstr item lst)))
+
+(defun make-post-path (file)
+  (parse-namestring (str:concat *legacy-blog* "posts/" file)))
+
+
+(defun get-older-posts ()
+  (let* ((notes-yaml (str:concat *legacy-blog* "posts/.notes.yaml"))
+         (notes-list (yaml:parse (parse-namestring notes-yaml)))
+         (notes-to-posts
+          (lambda (x)
+            (let* ((x (hash-table-plist x))
+                   (file (make-post-path (getfstr x "file")))
+                   (title (->> file apply-xslt plump:parse (clss:select ".entry-title") (lquery-funcs:text))))
+              (:printv (aref title 0))
+              (list :file file :time (getfstr x "time") :title title)))))
+    (-> (map 'list notes-to-posts notes-list)
+      (sort-new #'string< :key (lambda (x) (getf x :time))))))
+
+
+(example
+  (get-older-posts)
+  #((:FILE #P"/home/cji/priv/klibert_pl/posts/welcome.html" :TIME "2014-12-19")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/warsawjs.html" :TIME "2015-01-18")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/internal-keyboard.html" :TIME "2015-01-22")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/dquery.html" :TIME "2015-02-01")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/pl_adoption.html" :TIME "2015-02-04")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/getting_old.html" :TIME "2015-02-21")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/make_a_lisp.html" :TIME "2015-02-28")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/lenses.html" :TIME "2015-03-01")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/sockets.html" :TIME "2015-04-24")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/redundancy.html" :TIME "2015-04-25")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/elements_of_style.html" :TIME "2015-04-27")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/walkfiles.html" :TIME "2015-05-05")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/meanwhile-in-walkfiles.html" :TIME "2015-05-10")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/walkfiles-introduction.html" :TIME "2015-05-13")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/walkfiles-part-1.html" :TIME "2015-05-17")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/walkfiles-ocaml.html" :TIME "2015-06-17")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/power_over_intuition.html" :TIME "2015-06-21")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/racket_quickie.html" :TIME "2015-07-08")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/stumpwm.html" :TIME "2015-07-18")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/stumpwm-better-modeline.html" :TIME "2015-07-30")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/blog-redesign.html" :TIME "2015-08-02")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/circular-linked-list-in-ls.html" :TIME "2015-08-07")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/stumpwm-battery-warning.html" :TIME "2015-08-16")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/light-table-is-dead.html" :TIME "2015-08-18")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/blog-changes.html" :TIME "2015-08-25")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/make-most-of-man.html" :TIME "2015-09-17")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/and-btw.html" :TIME "2015-09-18")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/literate_j.html" :TIME "2015-09-25")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/this_week_on_polyglot.html" :TIME "2015-09-29")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/lovely_scheme_for_python.html" :TIME "2015-10-06")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/jq_and_chrome_bookmarks.html" :TIME "2015-10-06")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/pharo-deps-fedora.html" :TIME "2015-10-11")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/avail-and-articulate-programming.html" :TIME "2015-10-31")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/txr-mode-for-emacs.html" :TIME "2015-11-01")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/code_mesh_2015.html" :TIME "2015-11-03")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/lenses-in-ls-again.html" :TIME "2015-11-08")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/emacs-keyword-finder.html" :TIME "2015-11-21")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/weekend_with_elixir.html" :TIME "2015-11-26")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/iedit_tip.html" :TIME "2015-12-23")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/python_interop.html" :TIME "2016-01-03")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/slock_in_nim.html" :TIME "2016-02-10")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/nginx_scripting_with_lua.html" :TIME "2016-03-03")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/polyconf_meetup.html" :TIME "2016-03-17")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/tools_for_lisp_syntax.html" :TIME "2016-08-07")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/rewriting_the_blog_again.html" :TIME "2017-04-09")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/upgrading_fedora.html" :TIME "2017-04-10")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/clojure_and_racket_history.html" :TIME "2017-04-15")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/adding_string_interpolation_to_racket.html" :TIME "2017-04-21")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/adding_destructuring_bind_to_io.html" :TIME "2017-08-21")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/awesomewm-3x3-desktops-widget.html" :TIME "2020-01-29")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/learning-scala.html" :TIME "2020-11-19")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/emacs-short-lambda.html" :TIME "2020-12-14")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/emacs-quick-ffip.html" :TIME "2021-01-10")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/meta-arrow-in-erlang-shell.html" :TIME "2021-03-28")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/smalltalk-ide-quickfix.html" :TIME "2022-05-06")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/write-elisp-like-a-pro.html" :TIME "2022-05-06"))
+
+  )
+
+(defparameter *legacy-posts* (parse-namestring
+                              (str:concat *legacy-blog*
+                                          "posts-next-gen/")))
+
+(defun get-newer-posts ()
+  (let*
+      ((posts (osicat:mapdir (compose #'namestring #'osicat:absolute-pathname) *legacy-posts*))
+       (published (filter (complement (curry #'str:ends-with-p ".org")) posts))
+       (plistified (mapcar (lambda (x)
+                             (let ((time (->> x parse-namestring plump:parse (clss:select "time"))))
+                               (list :file x :time (lquery-funcs:text (aref time 0)))))
+                           published)))
+    (sort-new plistified #'string< :key (lambda (x) (getf x :time)))))
+
+(example
+  (get-newer-posts)
+  #((:FILE "/home/cji/priv/klibert_pl/posts-next-gen/0001-kernel-panic-on-a-bus.html" :TIME "2022-09-27")
+    (:FILE "/home/cji/priv/klibert_pl/posts-next-gen/0002-readability.html" :TIME "2022-09-27")
+    (:FILE "/home/cji/priv/klibert_pl/posts-next-gen/0004-awesome-script-take-two.html" :TIME "2022-09-27")
+    (:FILE "/home/cji/priv/klibert_pl/posts-next-gen/0003-intellij-idea-update.html" :TIME "2022-09-27")
+    (:FILE "/home/cji/priv/klibert_pl/posts-next-gen/0006-memory-leak-postmortem.html" :TIME "2022-09-27")
+    (:FILE "/home/cji/priv/klibert_pl/posts-next-gen/0005-i-finally-made-the-flashcards.html" :TIME "2023-01-08")
+    (:FILE "/home/cji/priv/klibert_pl/posts-next-gen/0011-the-dreamlike-env-you-never-knew-you-need.html" :TIME "2023-02-12")
+    (:FILE "/home/cji/priv/klibert_pl/posts-next-gen/0010-developer-seniority.html" :TIME "2023-02-12")
+    (:FILE "/home/cji/priv/klibert_pl/posts-next-gen/0008-title.html" :TIME "2023-02-12")
+    (:FILE "/home/cji/priv/klibert_pl/posts-next-gen/0007-title.html" :TIME "2023-02-12")
+    (:FILE "/home/cji/priv/klibert_pl/posts-next-gen/0009-dependency-injection.html" :TIME "2023-04-13")))
+
+
+;; (list-sub-packages "uiop")
+(defun list-sub-packages (root-name)
+  (loop for pkg in (list-all-packages)
+        for name = (package-name pkg)
+        when (and (str:containsp "/" name) (str:starts-with-p (str:upcase root-name) name))
+        collect (list (str:downcase name) pkg)))
+
+(defconst +documentation-types+
+  '(function setf type variable compiler-macro method-combination))
+
+(with-output-to-string (*standard-output*)
+  (repl-utilities::doc 'uiop:call-function))
+
+(loop for (name pkg) in (list-sub-packages "uiop")
+      when (and (not (str:containsp "common-lisp" name))
+                (not (str:containsp "driver" name)))
+      do (progn (format t "~&~A~%" name)
+                (repl-utilities::summary%  pkg)))
+
+(rutils.list:zip (package-external-symbols pkg)
+                 (mapcar (lambda (x) (ignore-errors (let ((*package* (find-package pkg)))
+                                                 (fmt "~S" (arglist x)))))
+                         (package-external-symbols pkg))
+                 (mapcar (lambda (x)
+                           (or (documentation x 'function)
+                               (documentation x 'variable)
+                               (documentation x 'type)
+                               (documentation x 'structure)))
+                         (package-external-symbols pkg)))
+
+(let ((x (str:lines (str:trim (with-output-to-string (*standard-output*)
+                                (doc% 'uiop:call-function))))))
+  (format t "~~~A~~ ~A~%~{~A~%~}" (car x) (cadr x) (cddr x))
+  )
+
+(defun doc% (symbol)
+  (let ((*print-case* :downcase))
+    (dolist (type +documentation-types+)
+      (when (documentation symbol type)
+	    (if (member type '(compiler-macro function setf method-combination))
+	        (format t "~&(~:@(~A~)~@[~{ ~A~}~]) > ~A~% ~<~A~%~%~>"
+		            symbol
+		            (ensure-list (arglist symbol))
+		            (if (macro-function symbol) 'macro type)
+		            (documentation symbol type))
+	        (format t "~&~A > ~A~% ~<~A~%~%~>"
+		            symbol
+		            type
+		            (documentation symbol type)))))))
+
+(let ((pkg :uiop))
+  (deflex x ))
+
+(defun format-function-info (sym args doc)
+  (let* ((doc (str:trim doc))
+         (has-doc-p (and doc (not (string= doc ""))))
+         (has-args-p (and args (not (string= args "")))))
+    (format nil "** ~A - ~A ~A~%"
+            (serapeum:string+ "~"(string-downcase (symbol-name sym))"~")
+            (if has-args-p (serapeum:string+ "~" args "~ -") "")
+            (if has-doc-p doc "(no docs)")
+            ;; (str:join #?"\n" (rest (str:lines doc)) )
+            )))
+

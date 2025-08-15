@@ -10,7 +10,6 @@ body {
 #blog-header,
 #blog-main,
 .blog-footer {
-  width: 1534px;
   max-width: 94%;
   margin-left: 3%;
 }
@@ -142,9 +141,9 @@ body {
   background-repeat: no-repeat;
   height: 223px;
   width: 1534px;
-  /* margin-left: 45px; */
+  margin-left: 45px;
   color: #999;
   text-align: center;
-  /* background-color: #f9f9f9; */
+  background-color: #f9f9f9;
   clear: both;
 }

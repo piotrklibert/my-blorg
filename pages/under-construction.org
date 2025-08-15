@@ -8,7 +8,7 @@
 #+AUTHOR: Pior Klibert
 #+OPTIONS: toc:nil
 
-In short:
+In short, this blog is "under construction":
 
 #+begin_export html
 <div style="text-align: center">
@@ -16,81 +16,6 @@ In short:
 </div>
 #+end_export
 
-Longer version: this blog was previously generated with a custom Python-based
-generator. I wrote it as an excercise - at the time, I was fascinated with
-functional programming, and I used the blog generator to play with functional
-features in Python, leveraging mainly ~funcy~ library. The code turned out
-weird, but it worked, and I used it for years. However, the whole workflow was
-optimized for publishing loooong and complex blog posts, and for every post,
-setup time was substantial.
+...and like all such undertakings, this one went overtime and overbudget.
 
-I realized that I need to eliminate as many barriers to publishing posts as
-possible if I ever want to start publishing shorter content more often. I didn't
-care for a long time, but recently, finding time to finish those looong and
-complex posts became challenging. So, I decided to take a stab at integrating
-the generator into my normal workflow. In other words, I decided to rewrite the
-whole thing in Emacs Lisp.
-
-I researched a bunch of existing solutions, the ones that appeared maintained:
-
-- [[https://github.com/tumashu/org2web][org2web]]
-- [[https://orgify.pages.dev/][orgify]]
-- [[https://emacs.love/weblorg/][weblorg]]
-- [[https://github.com/bastibe/org-static-blog/][org-static-blog]]
-
-But none of them worked for me out of the box. Plus, my previous custom code did
-a bunch of smart things that I'm not yet sure how to replicate in Org, and of
-course none of the packages provide them.
-
-I took inspiration from ~weblorg~, mostly, and in under 100 loc I managed to
-write something that works just enough to post this information. It will take
-another weekend or two to bring back all the features I want, and then some more
-time to convert old posts, but it's going to happen.
-
-**Just** FYI, if you wondered where the content disappeared to: **it will be back!**
-
-** Mostly works
-:PROPERTIES:
-:CUSTOM_ID: under-construction!_mostly-works
-:END:
-
-- basic templating with [[https://github.com/clarete/templatel/][templatel]]
-- using Org keywords as metadata (~#+TITLE:~, ~#+SUBTITLE:~, ~#+DATE:~, etc.)
-- using Org keyword ~#+STATE~ to decide whether a post should be rendered
-- main page with all posts rendered, ordered by date
-- post pages, one post per page
-- after-save-hook re-renders edited post
-- automatically set ~CUSTOM_ID~ properties for the headlines, based on title
-- Docker with OpenRESTY for local development
-- tame ~org-attach~ so that the attached files are found after export
-- make ~info:~ links render as links to web version (worked out of the box)
-  
-** To be done
-:PROPERTIES:
-:CUSTOM_ID: under-construction!_to-be-done
-:END:
-
-- replace ~lambda~ with ~λ~ character on export in code blocks
-- make attached images not wider than main column and activate lightbox on them
-- add a copy button beside code blocks that will copy the contents of a block
-  but wrapped in some checks and instructions for users
-- add a special link type to link to Emacs sources (mirror on GH after export)
-- insert emacs version in the footer of source blocks
-- estimate post reading time: 200 and 250 wpm is the average adult reading speed
-- add ~--delete~ to ~rsync~ when uploading to the server (after *pages* work)
-- maintain a history of changing titles, delete previous versions but redirect
-  to new ones
-- various elements CSS fixes (footnotes, blockquotes, nested lists, etc)
-  - fix margins and padding in ~<ol>~ lists
-  - some things to steal: http://alhassy.com/repl-driven-development
-- start rendering pages (separately from posts)
-- avoid re-exporting unchanged posts
-- tangle code blocks into files on export
-- handle static files copying (and preprocessing where needed) automatically
-- update #+UPDATED: keyword on save
-- add a special link type to link to Emacs sources (mirror on GH after export,
-  checkout of the repo locally)
-- configure Nginx to allow URLs without file extensions and enable content
-  negotiation (as described in https://www.w3.org/Provider/Style/URI)
-  - since I write posts in Org now exclusively, I want to allow clients to get
-    the .org file if they want, instead of .html export
+UPDATE: after a year, it's finally getting somewhere! Stay tuned!

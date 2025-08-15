@@ -6,3 +6,5 @@ awelistlint
 /vendor/*
 /build/
 /build/*
+.venv
+node_modules

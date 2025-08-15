@@ -3,44 +3,32 @@
 (require 'async-await)
 (require 'promise)
 (require 'generator)
-
-(cl-defun bl--async-wrap-rsync-result (rsync-promise cmd)
-  (promise-then rsync-promise
-    (lambda (res)
-      (seq-let (stdout stderr) res
-        (promise-resolve
-         (list :success t :message stdout :reason nil :cmd cmd))))
-    (lambda (err)
-      (seq-let (event stdout stderr) err
-        (promise-resolve
-         (list :success nil :cmd cmd :reason (s-trim event) :message stdout))))))
-
-
-;; (bl--async-rsync (list "posts/*.el" "posts/*.css") "build/posts/")
-;; (bl--async-rsync "posts/*.el" "build/posts/" :flags '("-v" "-a"))
-;; (bl--async-rsync "posts/*.el" "build/posts/" :flags "-a")
-(cl-defun bl--async-rsync (source dest &key (flags '("-av")))
-  (cl-assert (not (listp dest)) t "can be only one destination")
-  (let ((args (append (ensure-list flags)
-                      (ensure-list source)
-                      (list dest))))
-    (-> (bl-run-shell (cons "rsync" args))
-      (bl--async-wrap-rsync-result (prin1-to-string args)))))
+(require 'bl-async)
 
 
 (defconst bl-copy-paths-spec
-  '(("posts/*.el" "build/posts/")
-    ("posts/data" "build/posts/")
-    ("statics" "build/")
-    ("../klibert_pl/articles/*.html" "build/pages/" "--exclude=*raw*")
-    ("../klibert_pl/output/" "build/legacy")
-    ("../klibert_pl/org/timeline.png" "build/statics/")
-    ("../klibert_pl/statics/smalltalk" "build/statics/")
-    ))
+  '(("posts/*.el"                      "build/posts/")
+    ;; glob ^^^^ patterns resolved by the shell
+    ("posts/data"                      "build/posts/")
+    ("statics"                         "build/")
+    ("../klibert_pl/articles/*.html"   "build/pages/" "-vac" "--exclude='*raw*'")
+    ;;                               optional flags:  ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ("../klibert_pl/output/"           "build/legacy")
+    ;;^^ paths relative to `bl-blog-root' (ie. /home/cji/priv/blog/)
+    ("../klibert_pl/org/timeline.png"  "build/statics/")
+    ("../klibert_pl/statics/smalltalk" "build/statics/")))
 
 (defvar bl-copy-data-verbose-logging t)
 
-(async-defun bl-copy-data-files-1 ()
+(comment
+ (let ((args (car bl-copy-paths-spec)))
+   (promise-chain (bl--async-rsync (car args) (cadr args) :flags "-crav")
+     (thena (message "res: %S" result))
+     (catcha (message "err: %S" reason)))))
+
+
+
+(async-defun bl-copy-data-files-sequential ()
   (let* ((paths bl-copy-paths-spec)
          (fails (cl-loop for (from to . flags) in paths
                          do (message "Copying %s to %s" from to)
@@ -48,11 +36,31 @@
                                            from to
                                            :flags (if flags flags "-crav")))
                          do (when bl-copy-data-verbose-logging
-                              (message "res: %S" (plist-get res :message)))
+                              (message "res: %s \n" (plist-get res :message)))
                          when (not (plist-get res :success))
                          collect res)))
     (if fails (promise-reject fails) (promise-resolve t))))
 
+(async-defun bl-copy-data-files-concurrent ()
+  (cl-labels ((make-rsync-promise (from to flags)
+                (promise-then (bl--async-rsync from to :flags flags)
+                  (lambda (res)
+                    (when bl-copy-data-verbose-logging
+                      (message "Copying %s to %s" from to)
+                      (message "res: %s \n" (or (map-elt res :message)
+                                                (map-elt res :reason))))
+                    res))))
+    (let* ((paths bl-copy-paths-spec)
+           (promises (cl-loop for (from to . flags) in paths
+                              for flags = (if flags flags "-rav")
+                              collect (make-rsync-promise from to flags)))
+           (results (await (promise-all promises)))
+           (fails (cl-loop for res in results
+                           when (not (plist-get res :success))
+                           collect res)))
+      (if fails (promise-reject fails) (promise-resolve t)))))
+
+
 
 (cl-defun bl-copy-data--format-error (fail)
   (message "  %s: %s\n\n%s\n    ======\n"
@@ -66,7 +74,7 @@
 (cl-defun bl-copy-data-files ()
   (interactive)
   (message "Copying data files...\n")
-  (promise-then (bl-copy-data-files-1)
+  (promise-then (bl-copy-data-files-concurrent)
     (lambda (_) (message "✅ All files transferred!"))
     (lambda (fails)
       (message "🧨 Failed to copy some data files: 🧨\n")

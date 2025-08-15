@@ -11,17 +11,14 @@
     <link rel="preload" as="font" href="/statics/fonts/Roboto-Italic.ttf" type="font/ttf" crossorigin="anonymous" />
     <link rel="preload" as="font" href="/statics/fonts/Roboto-Black.ttf" type="font/ttf" crossorigin="anonymous" />
     <link rel="preload" as="font" href="/statics/fonts/Roboto-Black.ttf" type="font/ttf" crossorigin="anonymous" />
+    <link rel="preload" href="/output/base.min.css?cache_busting_cookie=4333" as="style" />
 
     <link rel="icon" type="image/x-icon" href="/statics/images/favicon.ico" />
-    <!-- <link rel="stylesheet" href="/statics/styles/normalize.css?cache_busting_cookie=4287" /> -->
-    <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/purecss@3.0.0/build/pure-min.css" integrity="sha384-X38yfunGUhNzHpBaEBsWLO+A0HDYOQi8ufWDkZ0k9e0eXz/tH3II7uKZ9msv++Ls" crossorigin="anonymous"> -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
-    <link rel="stylesheet" href="/statics/styles/my-styles.css?cache_busting_cookie=4202" />
-    <link rel="stylesheet" href="/statics/highlight-code.min.css?cache_busting_cookie=4398" />
+    <link href="/output/base.min.css?cache_busting_cookie=4287" rel="stylesheet" />
+    <link href="/statics/styles/my-styles.css?cache_busting_cookie=4202" rel="stylesheet" />
+    <link href="/output/highlight-code.min.css?cache_busting_cookie=4398" rel="stylesheet" />
 
-    <style type="text/css">.example { color: white; }</style>
-
-    <title>{% block title %}Piotr Klibert's blog{% endblock %}</title>
+    <title>The Right Lang for the Job — Piotr Klibert</title>
   </head>
   <body>
 
@@ -34,10 +31,10 @@
       <div id="top-menu-container">
         <nav>
           <a href="/">Blog</a>
-          <a href="/pages/archive.html">Archive</a>
-          <a href="/pages/programming_langs.html">Languages</a>
-          <a href="/pages/about.html">About</a>
-          <a href="/pages/contact.html">Contact</a>
+          <a href="/articles/archive.html">Archive</a>
+          <a href="/articles/programming_langs.html">Languages</a>
+          <a href="/articles/about.html">About</a>
+          <a href="/articles/contact.html">Contact</a>
           <div id="blog-nav-rss">
             <a nofolow="1" href="/statics/feed.xml">
               <img src="/statics/icons/rss0.png" alt="RSS icon" />
@@ -48,9 +45,7 @@
     </header>
 
     <main id="blog-main">
-      <div class="blog-main">
-        {% block content %}{% endblock %}
-      </div>
+      <div class="blog-main"><!-- MAIN DIV BLOG POSTS --></div>
 
       <div class="blog-sidebar">
 
@@ -60,12 +55,12 @@
           <a nofolow="1" href="/statics/feed.xml"><img src="/statics/feed-icon-14x14.png" style="vertical-align: baseline;"/></a>.
         </div>
 
-        <!-- <div class="sidebar-module sidebar-module-inset" id="posts-module"> -->
-        <!-- <h4 style="">Latest posts</h4> -->
-        <!-- <ol class="list-unstyled posts-links"></ol> -->
-        <!-- </div> -->
+        <div class="sidebar-module sidebar-module-inset" id="posts-module">
+          <h4 style="">Latest posts</h4>
+          <ol class="list-unstyled posts-links"></ol>
+        </div>
         <div class="quote-of-the-year sidebar-module sidebar-module-inset">
-          <h4 style="text-align: center">Quote of the Year 2023</h4>
+          <h4 style="text-align: center">Quote of the Year 2022</h4>
           <blockquote>
             One of the most surprising things I've witnessed in my lifetime is
             the rebirth of the concept of heresy.
@@ -161,7 +156,7 @@
           <blockquote>
             But you <i>do know</i> that non-programmers are
             people, too?
-            <footer>— <cite>Michał Kłujszo</cite></footer>
+            <footer>— <cite>Michal Klujszo</cite></footer>
           </blockquote>
         </div>
       </div> <!-- /.blog-sidebar -->

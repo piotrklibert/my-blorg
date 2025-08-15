@@ -1,11 +1,23 @@
 #+TITLE: Yet Another Static Site Generator
+#+SUBTITLE: Overtime and overbudget
+#+DATE: <2024-01-07 Sun 23:00>
+#+UPDATED: <2025-02-15 Mon 23:00>
+#+AUTHOR: Pior Klibert
+#+OPTIONS: toc:nil 
+#+STATE: DONE
 
-This time in Emacs and Elisp... wait, actually, let's make it Common Lisp. Hm.
-At this point, why limit myself? Let's go with Elisp + CL + Python + XSLT +
-Lua + Fennel + JavaScript + TypeScript + LessCSS!
 
-Because... why not? :P Also, polyglot. I think I'll add Kotlin to the mix,
-somehow.
+
+TL;DR: as in the title, I'm making 🎉 **Yet Another Static Site Generator** 🎉
+
+This time in Emacs and Elisp... wait, actually, let's make it Elisp and Common
+Lisp. There's a significant Python component, too. Well... at this point, why
+limit myself? Let's go with:
+
+⭐ Elisp + CL + Python + XSLT + Lua + Fennel + JavaScript + TypeScript + LessCSS ⭐
+
+Because... why not? :P Also, polyglot fits thematically. I'd add Kotlin to the
+mix, if only I had some idea where to stuff it...
 
 
 * Motivation and introduction
@@ -98,6 +110,13 @@ February 2025, I'm undertaking another attempt to get the blog back up.
   - better/fuller Nginx config (from the server)
   - HTML parsing, cssselector, xpath, etc
   - a few XSLT transforms
+    - old-style header
+    - new-style <my-header>
+      - injecting last updated time
+    - auto anchors for <h3>s
+    - <my-img> - img + a + lightbox
+    - <notice><note>aaa</note></notice> for additional notes at the top of the post
+    - 
   - handling of footnotes
   - handling of markdown block
   - handling of code blocks with Python's Pygments

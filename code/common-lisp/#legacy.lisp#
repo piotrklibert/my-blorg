@@ -1,0 +1,205 @@
+(defpackage :blog.legacy
+  (:use :cl :env.full :esrap)
+  (:import-from #:trivial-arguments #:arglist)
+  (:export :*legacy-blog* :*modern-blog*))
+
+(in-package :blog.legacy)
+(in-readtable :env.readtable)
+
+(defparameter *legacy-blog* "/home/cji/priv/klibert_pl/")
+(defparameter *modern-blog* "/home/cji/priv/blog/")
+
+(defun memstr (item lst)
+  (member item lst :test #'string=))
+(defun getfstr (lst item)
+  (cadr (memstr item lst)))
+
+(defun make-post-path (file)
+  (parse-namestring (str:concat *legacy-blog* "posts/" file)))
+
+;; (apply-xslt #p"/home/cji/priv/klibert_pl/posts/walkfiles.html")
+(defun apply-xslt (filename)
+  ( xuriella:apply-stylesheet
+   #p"/home/cji/priv/klibert_pl/build/templates/transform.xsl"
+   (etypecase filename
+     (string filename)
+     (pathname (slurp filename)))))
+   
+;; (apply-xslt (html2xhtml #P"/home/cji/priv/klibert_pl/posts/sockets.html"))
+;; (apply-xslt #P"/home/cji/priv/klibert_pl/posts/sockets.html")
+
+hhhpars
+\\\\e_file(
+
+(defun html2xhtml (file)
+  (chtml:parse (pathname file) (cxml:make-string-sink)))
+
+
+(defun get-older-posts ()
+  (let* ((notes-yaml (str:concat *legacy-blog* "posts/.notes.yaml"))
+         (notes-list (yaml:parse (parse-namestring notes-yaml)))
+         (notes-to-posts
+          (lambda (x)
+            (let* ((x (ht->plist x))
+                   (file (make-post-path (getfstr x "file")))
+                   (title (->> file apply-xslt plump:parse (clss:select ".entry-title"))))
+              (:printv (list :file file :time (getfstr x "time") :title (plump:text (aref title 0))))))))
+    (-> (map 'list notes-to-posts notes-list)
+      (sort-new #'string< :key (lambda (x) (getf x :time))))))
+
+
+(->> #P"/home/cji/priv/klibert_pl/posts/stumpwm-battery-warning.html"
+     apply-xslt
+     plump:parse
+     (clss:select ".entry-title"))
+
+(example
+  (get-older-posts)
+  #((:FILE #P"/home/cji/priv/klibert_pl/posts/welcome.html" :TIME "2014-12-19")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/warsawjs.html" :TIME "2015-01-18")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/internal-keyboard.html" :TIME "2015-01-22")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/dquery.html" :TIME "2015-02-01")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/pl_adoption.html" :TIME "2015-02-04")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/getting_old.html" :TIME "2015-02-21")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/make_a_lisp.html" :TIME "2015-02-28")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/lenses.html" :TIME "2015-03-01")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/sockets.html" :TIME "2015-04-24")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/redundancy.html" :TIME "2015-04-25")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/elements_of_style.html" :TIME "2015-04-27")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/walkfiles.html" :TIME "2015-05-05")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/meanwhile-in-walkfiles.html" :TIME "2015-05-10")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/walkfiles-introduction.html" :TIME "2015-05-13")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/walkfiles-part-1.html" :TIME "2015-05-17")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/walkfiles-ocaml.html" :TIME "2015-06-17")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/power_over_intuition.html" :TIME "2015-06-21")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/racket_quickie.html" :TIME "2015-07-08")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/stumpwm.html" :TIME "2015-07-18")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/stumpwm-better-modeline.html" :TIME "2015-07-30")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/blog-redesign.html" :TIME "2015-08-02")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/circular-linked-list-in-ls.html" :TIME "2015-08-07")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/stumpwm-battery-warning.html" :TIME "2015-08-16")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/light-table-is-dead.html" :TIME "2015-08-18")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/blog-changes.html" :TIME "2015-08-25")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/make-most-of-man.html" :TIME "2015-09-17")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/and-btw.html" :TIME "2015-09-18")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/literate_j.html" :TIME "2015-09-25")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/this_week_on_polyglot.html" :TIME "2015-09-29")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/lovely_scheme_for_python.html" :TIME "2015-10-06")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/jq_and_chrome_bookmarks.html" :TIME "2015-10-06")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/pharo-deps-fedora.html" :TIME "2015-10-11")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/avail-and-articulate-programming.html" :TIME "2015-10-31")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/txr-mode-for-emacs.html" :TIME "2015-11-01")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/code_mesh_2015.html" :TIME "2015-11-03")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/lenses-in-ls-again.html" :TIME "2015-11-08")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/emacs-keyword-finder.html" :TIME "2015-11-21")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/weekend_with_elixir.html" :TIME "2015-11-26")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/iedit_tip.html" :TIME "2015-12-23")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/python_interop.html" :TIME "2016-01-03")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/slock_in_nim.html" :TIME "2016-02-10")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/nginx_scripting_with_lua.html" :TIME "2016-03-03")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/polyconf_meetup.html" :TIME "2016-03-17")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/tools_for_lisp_syntax.html" :TIME "2016-08-07")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/rewriting_the_blog_again.html" :TIME "2017-04-09")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/upgrading_fedora.html" :TIME "2017-04-10")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/clojure_and_racket_history.html" :TIME "2017-04-15")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/adding_string_interpolation_to_racket.html" :TIME "2017-04-21")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/adding_destructuring_bind_to_io.html" :TIME "2017-08-21")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/awesomewm-3x3-desktops-widget.html" :TIME "2020-01-29")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/learning-scala.html" :TIME "2020-11-19")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/emacs-short-lambda.html" :TIME "2020-12-14")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/emacs-quick-ffip.html" :TIME "2021-01-10")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/meta-arrow-in-erlang-shell.html" :TIME "2021-03-28")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/smalltalk-ide-quickfix.html" :TIME "2022-05-06")
+    (:FILE #P"/home/cji/priv/klibert_pl/posts/write-elisp-like-a-pro.html" :TIME "2022-05-06"))
+
+  )
+
+(defparameter *legacy-posts* (parse-namestring
+                              (str:concat *legacy-blog*
+                                          "posts-next-gen/")))
+
+(defun get-newer-posts ()
+  (let*
+      ((posts (osicat:mapdir (compose #'namestring #'osicat:absolute-pathname) *legacy-posts*))
+       (published (filter (complement (curry #'str:ends-with-p ".org")) posts))
+       (plistified (mapcar (lambda (x)
+                             (let ((time (->> x parse-namestring plump:parse (clss:select "time"))))
+                               (list :file x :time (lquery-funcs:text (aref time 0)))))
+                           published)))
+    (sort-new plistified #'string< :key (lambda (x) (getf x :time)))))
+
+(example
+  (get-newer-posts)
+  #((:FILE "/home/cji/priv/klibert_pl/posts-next-gen/0001-kernel-panic-on-a-bus.html" :TIME "2022-09-27")
+    (:FILE "/home/cji/priv/klibert_pl/posts-next-gen/0002-readability.html" :TIME "2022-09-27")
+    (:FILE "/home/cji/priv/klibert_pl/posts-next-gen/0004-awesome-script-take-two.html" :TIME "2022-09-27")
+    (:FILE "/home/cji/priv/klibert_pl/posts-next-gen/0003-intellij-idea-update.html" :TIME "2022-09-27")
+    (:FILE "/home/cji/priv/klibert_pl/posts-next-gen/0006-memory-leak-postmortem.html" :TIME "2022-09-27")
+    (:FILE "/home/cji/priv/klibert_pl/posts-next-gen/0005-i-finally-made-the-flashcards.html" :TIME "2023-01-08")
+    (:FILE "/home/cji/priv/klibert_pl/posts-next-gen/0011-the-dreamlike-env-you-never-knew-you-need.html" :TIME "2023-02-12")
+    (:FILE "/home/cji/priv/klibert_pl/posts-next-gen/0010-developer-seniority.html" :TIME "2023-02-12")
+    (:FILE "/home/cji/priv/klibert_pl/posts-next-gen/0008-title.html" :TIME "2023-02-12")
+    (:FILE "/home/cji/priv/klibert_pl/posts-next-gen/0007-title.html" :TIME "2023-02-12")
+    (:FILE "/home/cji/priv/klibert_pl/posts-next-gen/0009-dependency-injection.html" :TIME "2023-04-13")))
+
+
+(use-package :esrap)
+
+(defrule ws (* #\space)
+  (:constant nil))
+(defrule nl #\Newline
+  (:constant nil))
+
+(defrule line (and (* (not nl)) nl)
+  (:text t)
+  (:function str:trim-right)
+  (:function (lambda (x) (list :line x))))
+
+(defrule code-line (and (* (not (or nl "--/kod"))) #\Newline)
+  (:text t)
+  (:function str:trim-right))
+
+(defrule code-lang (+ (not nl)) (:text t))
+
+(defparameter code-pos nil)
+(loop for (f a b) in code-pos
+      do (format t "~a: ~a~%" f (subseq (slurp f) a b)))
+(defvar *parsed-file* nil)
+
+(defrule code-inner
+    (and "--kod=" code-lang nl
+         (+ code-line)
+         ws "--/kod")
+  (:lambda (prod &bounds b c)
+    (pushnew (list *parsed-file* b c) code-pos :test #'equal)
+    prod))
+(defrule code (and ws code-inner (* nl))
+  (:lambda (a &bounds b c)
+    (bind (((_ (_ lang _ lines _ _) _) a))
+      (list :code lang :lines lines))))
+;; (serapeum:slice)
+
+(defrule text (+ (or code line) ))
+
+(parse 'text "
+asda
+asd
+asd
+
+   --kod=lisp
+asdasd
+    asd
+asd
+    --/kod
+")
+
+
+
+(let ((*parsed-file* "/home/cji/priv/klibert_pl/posts/stumpwm-battery-warning.html"))
+  (parse 'text (slurp "/home/cji/priv/klibert_pl/posts/stumpwm-battery-warning.html")))
+
+;; (str:join #\Newline (getf (->>
+;;                               (parse 'text)
+;;                             (remove-if (lambda (x) (eq (car x) :line)))
+;;                             (car)
+;;                             ) :lines))

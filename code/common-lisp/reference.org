@@ -1,0 +1,4903 @@
+#+begin_src lisp :results value raw
+  (in-package :blog.legacy)
+  (->> (loop for (s a d) in x
+             collect (format-function-info s a d))
+    (str:join #?"\n"))
+#+end_src
+
+#+RESULTS:
+
+* ALEXANDRIA
+** ~ends-with-subseq~ - ~(SUFFIX SEQUENCE &KEY (TEST (FUNCTION EQL)))~ - Test whether SEQUENCE ends with SUFFIX. In other words: return true if
+the last (length SUFFIX) elements of SEQUENCE are equal to SUFFIX.
+
+** ~removef~ - ~(#:PLACE ITEM &REST KEYWORD-ARGUMENTS)~ - Modify-macro for REMOVE. Sets place designated by the first argument to
+the result of calling REMOVE with ITEM, place, and the KEYWORD-ARGUMENTS.
+
+** ~curry~ - ~(FUNCTION &REST ARGUMENTS)~ - Returns a function that applies ARGUMENTS and the arguments
+it is called with to FUNCTION.
+
+** ~read-stream-content-into-string~ - ~(STREAM &KEY (BUFFER-SIZE 4096))~ - Return the \"content\" of STREAM as a fresh string.
+
+** ~copy-hash-table~ - ~(TABLE &KEY KEY TEST SIZE REHASH-SIZE REHASH-THRESHOLD)~ - Returns a copy of hash table TABLE, with the same keys and values
+as the TABLE. The copy has the same properties as the original, unless
+overridden by the keyword arguments.
+
+Before each of the original values is set into the new hash-table, KEY
+is invoked on the value. As KEY defaults to CL:IDENTITY, a shallow
+copy is returned by default.
+
+** ~nconcf~ - ~(#:PLACE &REST LISTS)~ - Modify-macro for NCONC. Concatenates LISTS to place designated by the first
+argument.
+
+** ~non-negative-single-float-p~ - ~(N)~ - (no docs)
+
+** ~circular-list~ - ~(&REST ELEMENTS)~ - Creates a circular list of ELEMENTS.
+
+** ~simple-program-error~ - ~(MESSAGE &REST ARGS)~ - (no docs)
+
+** ~copy-array~ - ~(ARRAY &KEY (ELEMENT-TYPE (ARRAY-ELEMENT-TYPE ARRAY)) (FILL-POINTER (AND (ARRAY-HAS-FILL-POINTER-P ARRAY) (FILL-POINTER ARRAY))) (ADJUSTABLE (ADJUSTABLE-ARRAY-P ARRAY)))~ - Returns an undisplaced copy of ARRAY, with same fill-pointer and
+adjustability (if any) as the original, unless overridden by the keyword
+arguments.
+
+** ~subfactorial~ - ~(N)~ - Subfactorial of the non-negative integer N.
+
+** ~negative-rational~ -  Type specifier denoting the rational range from -inf to 0.
+
+** ~hash-table-keys~ - ~(TABLE)~ - Returns a list containing the keys of hash table TABLE.
+
+** ~nunionf~ - ~(#:PLACE LIST &REST ARGS)~ - Modify-macro for NUNION. Saves the union of LIST and the contents of the
+place designated by the first argument to the designated place. May modify
+either argument.
+
+** ~non-positive-double-float-p~ - ~(N)~ - (no docs)
+
+** ~alist-hash-table~ - ~(ALIST &REST HASH-TABLE-INITARGS)~ - Returns a hash table containing the keys and values of the association list
+ALIST. Hash table is initialized using the HASH-TABLE-INITARGS.
+
+** ~maphash-keys~ - ~(FUNCTION TABLE)~ - Like MAPHASH, but calls FUNCTION with each key in the hash table TABLE.
+** ~simple-reader-error~ - ~(STREAM MESSAGE &REST ARGS)~ - (no docs)
+
+** ~copy-file~ - ~(FROM TO &KEY (IF-TO-EXISTS :SUPERSEDE) (ELEMENT-TYPE (QUOTE (UNSIGNED-BYTE 8))) FINISH-OUTPUT)~ - (no docs)
+
+** ~once-only~ - ~(SPECS &BODY FORMS)~ - Constructs code whose primary goal is to help automate the handling of
+multiple evaluation within macros. Multiple evaluation is handled by introducing
+intermediate variables, in order to reuse the result of an expression.
+
+The returned value is a list of the form
+
+  (let ((<gensym-1> <expr-1>)
+        ...
+        (<gensym-n> <expr-n>))
+    <res>)
+
+where GENSYM-1, ..., GENSYM-N are the intermediate variables introduced in order
+to evaluate EXPR-1, ..., EXPR-N once, only. RES is code that is the result of
+evaluating the implicit progn FORMS within a special context determined by
+SPECS. RES should make use of (reference) the intermediate variables.
+
+Each element within SPECS is either a symbol SYMBOL or a pair (SYMBOL INITFORM).
+Bare symbols are equivalent to the pair (SYMBOL SYMBOL).
+
+Each pair (SYMBOL INITFORM) specifies a single intermediate variable:
+
+- INITFORM is an expression evaluated to produce EXPR-i
+
+- SYMBOL is the name of the variable that will be bound around FORMS to the
+  corresponding gensym GENSYM-i, in order for FORMS to generate RES that
+  references the intermediate variable
+
+The evaluation of INITFORMs and binding of SYMBOLs resembles LET. INITFORMs of
+all the pairs are evaluated before binding SYMBOLs and evaluating FORMS.
+
+Example:
+
+  The following expression
+
+  (let ((x '(incf y)))
+    (once-only (x)
+      `(cons ,x ,x)))
+
+  ;;; =>
+  ;;; (let ((#1=#:X123 (incf y)))
+  ;;;   (cons #1# #1#))
+
+  could be used within a macro to avoid multiple evaluation like so
+
+  (defmacro cons1 (x)
+    (once-only (x)
+      `(cons ,x ,x)))
+
+  (let ((y 0))
+    (cons1 (incf y)))
+
+  ;;; => (1 . 1)
+
+Example:
+
+  The following expression demonstrates the usage of the INITFORM field
+
+  (let ((expr '(incf y)))
+    (once-only ((var `(1+ ,expr)))
+      `(list ',expr ,var ,var)))
+
+  ;;; =>
+  ;;; (let ((#1=#:VAR123 (1+ (incf y))))
+  ;;;   (list '(incf y) #1# #1))
+
+  which could be used like so
+
+  (defmacro print-succ-twice (expr)
+    (once-only ((var `(1+ ,expr)))
+      `(format t \"Expr: ~s, Once: ~s, Twice: ~s~%\" ',expr ,var ,var)))
+
+  (let ((y 10))
+    (print-succ-twice (incf y)))
+
+  ;;; >>
+  ;;; Expr: (INCF Y), Once: 12, Twice: 12
+
+** ~non-negative-long-float-p~ - ~(N)~ - (no docs)
+
+** ~positive-single-float-p~ - ~(N)~ - (no docs)
+
+** ~maxf~ - ~(#:PLACE &REST NUMBERS)~ - Modify-macro for MAX. Sets place designated by the first argument to the
+maximum of its original value and NUMBERS.
+
+** ~conjoin~ - ~(PREDICATE &REST MORE-PREDICATES)~ - Returns a function that applies each of PREDICATE and MORE-PREDICATE
+functions in turn to its arguments, returning NIL if any of the predicates
+returns false, without calling the remaining predicates. If none of the
+predicates returns false, returns the primary value of the last predicate.
+
+** ~multiple-value-compose~ - ~(FUNCTION &REST MORE-FUNCTIONS)~ - Returns a function composed of FUNCTION and MORE-FUNCTIONS that applies
+its arguments to each in turn, starting from the rightmost of
+MORE-FUNCTIONS, and then calling the next one with all the return values of
+the last.
+
+** ~negative-single-float~ -  Type specifier denoting the single-float range from -inf to 0.0.
+
+** ~assoc-value~ - ~(ALIST KEY &KEY (TEST (QUOTE EQL)))~ - ASSOC-VALUE is an alist accessor very much like ASSOC, but it can
+be used with SETF.
+
+** ~ensure-function~ - ~(FUNCTION-DESIGNATOR)~ - Returns the function designated by FUNCTION-DESIGNATOR:
+if FUNCTION-DESIGNATOR is a function, it is returned, otherwise
+it must be a function name and its FDEFINITION is returned.
+
+** ~emptyp~ - ~(SEQUENCE)~ - Returns T if SEQUENCE is an empty sequence and NIL
+   otherwise. Signals an error if SEQUENCE is not a sequence.
+
+** ~non-negative-double-float-p~ - ~(N)~ - (no docs)
+
+** ~ensure-symbol~ - ~(NAME &OPTIONAL (PACKAGE *PACKAGE*))~ - Returns a symbol with name designated by NAME, accessible in package
+designated by PACKAGE. If symbol is not already accessible in PACKAGE, it is
+interned there. Returns a secondary value reflecting the status of the symbol
+in the package, which matches the secondary return value of INTERN.
+
+Example:
+
+  (ensure-symbol :cons :cl) => cl:cons, :external
+
+** ~first-elt~ - ~(SEQUENCE)~ - Returns the first element of SEQUENCE. Signals a type-error if SEQUENCE is
+not a sequence, or is an empty sequence.
+
+** ~non-negative-rational-p~ - ~(N)~ - (no docs)
+
+** ~positive-real~ -  Type specifier denoting the real range from 0 to +inf.
+
+** ~nth-value-or~ - ~(NTH-VALUE &BODY FORMS)~ - Evaluates FORM arguments one at a time, until the NTH-VALUE returned by one
+of the forms is true. It then returns all the values returned by evaluating
+that form. If none of the forms return a true nth value, this form returns
+NIL.
+
+** ~destructuring-ccase~ - ~(KEYFORM &BODY CLAUSES)~ - DESTRUCTURING-CASE, -CCASE, and -ECASE are a combination of CASE and DESTRUCTURING-BIND.
+KEYFORM must evaluate to a CONS.
+
+Clauses are of the form:
+
+  ((CASE-KEYS . DESTRUCTURING-LAMBDA-LIST) FORM*)
+
+The clause whose CASE-KEYS matches CAR of KEY, as if by CASE, CCASE, or ECASE,
+is selected, and FORMs are then executed with CDR of KEY is destructured and
+bound by the DESTRUCTURING-LAMBDA-LIST.
+
+Example:
+
+ (defun dcase (x)
+   (destructuring-case x
+     ((:foo a b)
+      (format nil \"foo: ~S, ~S\" a b))
+     ((:bar &key a b)
+      (format nil \"bar: ~S, ~S\" a b))
+     (((:alt1 :alt2) a)
+      (format nil \"alt: ~S\" a))
+     ((t &rest rest)
+      (format nil \"unknown: ~S\" rest))))
+
+  (dcase (list :foo 1 2))        ; => \"foo: 1, 2\"
+  (dcase (list :bar :a 1 :b 2))  ; => \"bar: 1, 2\"
+  (dcase (list :alt1 1))         ; => \"alt: 1\"
+  (dcase (list :alt2 2))         ; => \"alt: 2\"
+  (dcase (list :quux 1 2 3))     ; => \"unknown: 1, 2, 3\"
+
+ (defun decase (x)
+   (destructuring-case x
+     ((:foo a b)
+      (format nil \"foo: ~S, ~S\" a b))
+     ((:bar &key a b)
+      (format nil \"bar: ~S, ~S\" a b))
+     (((:alt1 :alt2) a)
+      (format nil \"alt: ~S\" a))))
+
+  (decase (list :foo 1 2))        ; => \"foo: 1, 2\"
+  (decase (list :bar :a 1 :b 2))  ; => \"bar: 1, 2\"
+  (decase (list :alt1 1))         ; => \"alt: 1\"
+  (decase (list :alt2 2))         ; => \"alt: 2\"
+  (decase (list :quux 1 2 3))     ; =| error
+
+** ~mappend~ - ~(FUNCTION &REST LISTS)~ - Applies FUNCTION to respective element(s) of each LIST, appending all the
+all the result list to a single list. FUNCTION must return a list.
+
+** ~unionf~ - ~(#:PLACE LIST &REST ARGS)~ - Modify-macro for UNION. Saves the union of LIST and the contents of the
+place designated by the first argument to the designated place.
+
+** ~maphash-values~ - ~(FUNCTION TABLE)~ - Like MAPHASH, but calls FUNCTION with each value in the hash table TABLE.
+
+** ~destructuring-case~ - ~(KEYFORM &BODY CLAUSES)~ - DESTRUCTURING-CASE, -CCASE, and -ECASE are a combination of CASE and DESTRUCTURING-BIND.
+KEYFORM must evaluate to a CONS.
+
+Clauses are of the form:
+
+  ((CASE-KEYS . DESTRUCTURING-LAMBDA-LIST) FORM*)
+
+The clause whose CASE-KEYS matches CAR of KEY, as if by CASE, CCASE, or ECASE,
+is selected, and FORMs are then executed with CDR of KEY is destructured and
+bound by the DESTRUCTURING-LAMBDA-LIST.
+
+Example:
+
+ (defun dcase (x)
+   (destructuring-case x
+     ((:foo a b)
+      (format nil \"foo: ~S, ~S\" a b))
+     ((:bar &key a b)
+      (format nil \"bar: ~S, ~S\" a b))
+     (((:alt1 :alt2) a)
+      (format nil \"alt: ~S\" a))
+     ((t &rest rest)
+      (format nil \"unknown: ~S\" rest))))
+
+  (dcase (list :foo 1 2))        ; => \"foo: 1, 2\"
+  (dcase (list :bar :a 1 :b 2))  ; => \"bar: 1, 2\"
+  (dcase (list :alt1 1))         ; => \"alt: 1\"
+  (dcase (list :alt2 2))         ; => \"alt: 2\"
+  (dcase (list :quux 1 2 3))     ; => \"unknown: 1, 2, 3\"
+
+ (defun decase (x)
+   (destructuring-case x
+     ((:foo a b)
+      (format nil \"foo: ~S, ~S\" a b))
+     ((:bar &key a b)
+      (format nil \"bar: ~S, ~S\" a b))
+     (((:alt1 :alt2) a)
+      (format nil \"alt: ~S\" a))))
+
+  (decase (list :foo 1 2))        ; => \"foo: 1, 2\"
+  (decase (list :bar :a 1 :b 2))  ; => \"bar: 1, 2\"
+  (decase (list :alt1 1))         ; => \"alt: 1\"
+  (decase (list :alt2 2))         ; => \"alt: 2\"
+  (decase (list :quux 1 2 3))     ; =| error
+
+** ~whichever~ - ~(&REST POSSIBILITIES)~ - Evaluates exactly one of POSSIBILITIES, chosen at random.
+
+** ~negative-double-float-p~ - ~(N)~ - (no docs)
+
+** ~write-byte-vector-into-file~ - ~(BYTES PATHNAME &KEY (IF-EXISTS :ERROR) IF-DOES-NOT-EXIST)~ - Write BYTES to PATHNAME.
+
+** ~non-positive-double-float~ -  Type specifier denoting the double-float range from -inf to 0.0d0.
+
+** ~compose~ - ~(FUNCTION &REST MORE-FUNCTIONS)~ - Returns a function composed of FUNCTION and MORE-FUNCTIONS that applies its
+arguments to to each in turn, starting from the rightmost of MORE-FUNCTIONS,
+and then calling the next one with the primary value of the last.
+
+** ~positive-double-float~ -  Type specifier denoting the double-float range from 0.0d0 to +inf.
+
+** ~non-positive-float~ -  Type specifier denoting the float range from -inf to 0.0.
+
+** ~parse-ordinary-lambda-list~ - ~(LAMBDA-LIST &KEY (NORMALIZE T) ALLOW-SPECIALIZERS (NORMALIZE-OPTIONAL NORMALIZE) (NORMALIZE-KEYWORD NORMALIZE) (NORMALIZE-AUXILARY NORMALIZE))~ - Parses an ordinary lambda-list, returning as multiple values:
+
+1. Required parameters.
+
+2. Optional parameter specifications, normalized into form:
+
+   (name init suppliedp)
+
+3. Name of the rest parameter, or NIL.
+
+4. Keyword parameter specifications, normalized into form:
+
+   ((keyword-name name) init suppliedp)
+
+5. Boolean indicating &ALLOW-OTHER-KEYS presence.
+
+6. &AUX parameter specifications, normalized into form
+
+   (name init).
+
+7. Existence of &KEY in the lambda-list.
+
+Signals a PROGRAM-ERROR is the lambda-list is malformed.
+
+** ~remove-from-plistf~ - ~(#:PLACE &REST KEYS)~ - Modify macro for REMOVE-FROM-PLIST.
+
+** ~make-gensym-list~ - ~(LENGTH &OPTIONAL (X \"G\"))~ - Returns a list of LENGTH gensyms, each generated as if with a call to MAKE-GENSYM,
+using the second (optional, defaulting to \"G\") argument.
+
+** ~format-symbol~ - ~(PACKAGE CONTROL &REST ARGUMENTS)~ - Constructs a string by applying ARGUMENTS to string designator CONTROL as
+if by FORMAT within WITH-STANDARD-IO-SYNTAX, and then creates a symbol named
+by that string.
+
+If PACKAGE is NIL, returns an uninterned symbol, if package is T, returns a
+symbol interned in the current package, and otherwise returns a symbol
+interned in the package designated by PACKAGE.
+
+** ~hash-table-plist~ - ~(TABLE)~ - Returns a property list containing the keys and values of hash table
+TABLE.
+
+** ~string-designator~ -  A string designator type. A string designator is either a string, a symbol,
+or a character.
+
+** ~copy-sequence~ - ~(TYPE SEQUENCE)~ - Returns a fresh sequence of TYPE, which has the same elements as
+SEQUENCE.
+
+** ~negative-double-float~ -  Type specifier denoting the double-float range from -inf to 0.0d0.
+
+** ~featurep~ - ~(FEATURE-EXPRESSION)~ - Returns T if the argument matches the state of the *FEATURES*
+list and NIL if it does not. FEATURE-EXPRESSION can be any atom
+or list acceptable to the reader macros #+ and #-.
+
+** ~delete-from-plistf~ - ~(#:PLACE &REST KEYS)~ - Modify macro for DELETE-FROM-PLIST.
+
+** ~make-gensym~ - ~(NAME)~ - If NAME is a non-negative integer, calls GENSYM using it. Otherwise NAME
+must be a string designator, in which case calls GENSYM using the designated
+string as the argument.
+
+** ~negative-integer~ -  Type specifier denoting the integer range from -inf to -1.
+
+** ~non-negative-rational~ -  Type specifier denoting the rational range from 0 to +inf.
+
+** ~lastcar~ - ~(LIST)~ - Returns the last element of LIST. Signals a type-error if LIST is not a
+proper list.
+
+** ~rassoc-value~ - ~(ALIST KEY &KEY (TEST (QUOTE EQL)))~ - RASSOC-VALUE is an alist accessor very much like RASSOC, but it can
+be used with SETF.
+
+** ~negative-real-p~ - ~(N)~ - (no docs)
+
+** ~minf~ - ~(#:PLACE &REST NUMBERS)~ - Modify-macro for MIN. Sets place designated by the first argument to the
+minimum of its original value and NUMBERS.
+
+** ~hash-table-alist~ - ~(TABLE)~ - Returns an association list containing the keys and values of hash table
+TABLE.
+
+** ~negative-float-p~ - ~(N)~ - (no docs)
+
+** ~lerp~ - ~(V A B)~ - Returns the result of linear interpolation between A and B, using the
+interpolation coefficient V.
+
+** ~symbolicate~ - ~(&REST THINGS)~ - Concatenate together the names of some strings and symbols,
+producing a symbol in the current package.
+
+** ~positive-real-p~ - ~(N)~ - (no docs)
+
+** ~rotate~ - ~(SEQUENCE &OPTIONAL (N 1))~ - Returns a sequence of the same type as SEQUENCE, with the elements of
+SEQUENCE rotated by N: N elements are moved from the end of the sequence to
+the front if N is positive, and -N elements moved from the front to the end if
+N is negative. SEQUENCE must be a proper sequence. N must be an integer,
+defaulting to 1.
+
+If absolute value of N is greater then the length of the sequence, the results
+are identical to calling ROTATE with
+
+  (* (signum n) (mod n (length sequence))).
+
+Note: the original sequence may be destructively altered, and result sequence may
+share structure with it.
+
+** ~positive-float-p~ - ~(N)~ - (no docs)
+
+** ~non-negative-real-p~ - ~(N)~ - (no docs)
+
+** ~ensure-gethash~ - ~(KEY HASH-TABLE &OPTIONAL DEFAULT)~ - Like GETHASH, but if KEY is not found in the HASH-TABLE saves the DEFAULT
+under key before returning it. Secondary return value is true if key was
+already in the table.
+
+** ~positive-fixnum-p~ - ~(N)~ - (no docs)
+
+** ~starts-with~ - ~(OBJECT SEQUENCE &KEY (TEST (FUNCTION EQL)) (KEY (FUNCTION IDENTITY)))~ - Returns true if SEQUENCE is a sequence whose first element is EQL to OBJECT.
+Returns NIL if the SEQUENCE is not a sequence or is an empty sequence.
+
+** ~non-negative-real~ -  Type specifier denoting the real range from 0 to +inf.
+
+** ~switch~ - ~((OBJECT &KEY (TEST (QUOTE EQL)) (KEY (QUOTE IDENTITY))) &BODY CLAUSES)~ - Evaluates first matching clause, returning its values, or evaluates and
+returns the values of T or OTHERWISE if no keys match.
+
+** ~plist-alist~ - ~(PLIST)~ - Returns an association list containing the same keys and values as the
+property list PLIST in the same order.
+
+** ~of-type~ - ~(TYPE)~ - Returns a function of one argument, which returns true when its argument is
+of TYPE.
+
+** ~ensure-cons~ - ~(CONS)~ - If CONS is a cons, it is returned. Otherwise returns a fresh cons with CONS
+  in the car, and NIL in the cdr.
+
+** ~binomial-coefficient~ - ~(N K)~ - Binomial coefficient of N and K, also expressed as N choose K. This is the
+number of K element combinations given N choises. N must be equal to or
+greater then K.
+
+** ~negative-long-float~ -  Type specifier denoting the long-float range from -inf to 0.0d0.
+
+** ~plist-hash-table~ - ~(PLIST &REST HASH-TABLE-INITARGS)~ - Returns a hash table containing the keys and values of the property list
+PLIST. Hash table is initialized using the HASH-TABLE-INITARGS.
+
+** ~mean~ - ~(SAMPLE)~ - Returns the mean of SAMPLE. SAMPLE must be a sequence of numbers.
+
+** ~negative-fixnum~ -  Type specifier denoting the fixnum range from MOST-NEGATIVE-FIXNUM to -1.
+
+** ~proper-list~ -  Type designator for proper lists. Implemented as a SATISFIES type, hence
+not recommended for performance intensive use. Main usefullness as a type
+designator of the expected type in a TYPE-ERROR.
+
+** ~positive-integer~ -  Type specifier denoting the integer range from 1 to +inf.
+
+** ~with-unique-names~ - ~(NAMES &BODY FORMS)~ - Alias for WITH-GENSYMS.
+
+** ~named-lambda~ - ~(NAME LAMBDA-LIST &BODY BODY)~ - Expands into a lambda-expression within whose BODY NAME denotes the
+corresponding function.
+
+** ~positive-fixnum~ -  Type specifier denoting the fixnum range from 1 to MOST-POSITIVE-FIXNUM.
+
+** ~array-index~ -  Type designator for an index into array of LENGTH: an integer between
+0 (inclusive) and LENGTH (exclusive). LENGTH defaults to one less than
+ARRAY-DIMENSION-LIMIT.
+
+** ~non-positive-long-float~ -  Type specifier denoting the long-float range from -inf to 0.0d0.
+
+** ~set-equal~ - ~(LIST1 LIST2 &KEY (TEST (FUNCTION EQL)) (KEY NIL KEYP))~ - Returns true if every element of LIST1 matches some element of LIST2 and
+every element of LIST2 matches some element of LIST1. Otherwise returns false.
+
+** ~non-positive-float-p~ - ~(N)~ - (no docs)
+
+** ~factorial~ - ~(N)~ - Factorial of non-negative integer N.
+
+** ~non-negative-short-float~ -  Type specifier denoting the short-float range from 0.0 to +inf.
+
+** ~non-positive-real~ -  Type specifier denoting the real range from -inf to 0.
+
+** ~when-let~ - ~(BINDINGS &BODY FORMS)~ - Creates new variable bindings, and conditionally executes FORMS.
+
+BINDINGS must be either single binding of the form:
+
+ (variable initial-form)
+
+or a list of bindings of the form:
+
+ ((variable-1 initial-form-1)
+  (variable-2 initial-form-2)
+  ...
+  (variable-n initial-form-n))
+
+All initial-forms are executed sequentially in the specified order. Then all
+the variables are bound to the corresponding values.
+
+If all variables were bound to true values, then FORMS are executed as an
+implicit PROGN.
+
+** ~length=~ - ~(&REST SEQUENCES)~ - Takes any number of sequences or integers in any order. Returns true iff
+the length of all the sequences and the integers are equal. Hint: there's a
+compiler macro that expands into more efficient code if the first argument
+is a literal integer.
+
+** ~map-iota~ - ~(FUNCTION N &KEY (START 0) (STEP 1))~ - Calls FUNCTION with N numbers, starting from START (with numeric contagion
+from STEP applied), each consequtive number being the sum of the previous one
+and STEP. START defaults to 0 and STEP to 1. Returns N.
+
+Examples:
+
+  (map-iota #'print 3 :start 1 :step 1.0) => 3
+    ;;; 1.0
+    ;;; 2.0
+    ;;; 3.0
+
+** ~negative-long-float-p~ - ~(N)~ - (no docs)
+
+** ~proper-list-length~ - ~(LIST)~ - Returns length of LIST, signalling an error if it is not a proper list.
+
+** ~circular-list-p~ - ~(OBJECT)~ - Returns true if OBJECT is a circular list, NIL otherwise.
+
+** ~negative-fixnum-p~ - ~(N)~ - (no docs)
+
+** ~positive-double-float-p~ - ~(N)~ - (no docs)
+
+** ~ensure-list~ - ~(LIST)~ - If LIST is a list, it is returned. Otherwise returns the list designated by LIST.
+
+** ~read-file-into-string~ - ~(PATHNAME &KEY (BUFFER-SIZE 4096) EXTERNAL-FORMAT)~ - Return the contents of the file denoted by PATHNAME as a fresh string.
+
+The EXTERNAL-FORMAT parameter will be passed directly to WITH-OPEN-FILE
+unless it's NIL, which means the system default.
+
+** ~non-positive-short-float-p~ - ~(N)~ - (no docs)
+
+** ~deletef~ - ~(#:PLACE ITEM &REST KEYWORD-ARGUMENTS)~ - Modify-macro for DELETE. Sets place designated by the first argument to
+the result of calling DELETE with ITEM, place, and the KEYWORD-ARGUMENTS.
+
+** ~setp~ - ~(OBJECT &KEY (TEST (FUNCTION EQL)) (KEY (FUNCTION IDENTITY)))~ - Returns true if OBJECT is a list that denotes a set, NIL otherwise. A list
+denotes a set if each element of the list is unique under KEY and TEST.
+
+** ~hash-table-values~ - ~(TABLE)~ - Returns a list containing the values of hash table TABLE.
+
+** ~eswitch~ - ~((OBJECT &KEY (TEST (QUOTE EQL)) (KEY (QUOTE IDENTITY))) &BODY CLAUSES)~ - Like SWITCH, but signals an error if no key matches.
+
+** ~positive-float~ -  Type specifier denoting the float range from 0.0 to +inf.
+
+** ~cswitch~ - ~((OBJECT &KEY (TEST (QUOTE EQL)) (KEY (QUOTE IDENTITY))) &BODY CLAUSES)~ - Like SWITCH, but signals a continuable error if no key matches.
+
+** ~negative-integer-p~ - ~(N)~ - (no docs)
+
+** ~positive-long-float~ -  Type specifier denoting the long-float range from 0.0d0 to +inf.
+
+** ~starts-with-subseq~ - ~(PREFIX SEQUENCE &REST ARGS &KEY (RETURN-SUFFIX NIL RETURN-SUFFIX-SUPPLIED-P) &ALLOW-OTHER-KEYS)~ - Test whether the first elements of SEQUENCE are the same (as per TEST) as the elements of PREFIX.
+
+If RETURN-SUFFIX is T the function returns, as a second value, a
+sub-sequence or displaced array pointing to the sequence after PREFIX.
+
+** ~median~ - ~(SAMPLE)~ - Returns median of SAMPLE. SAMPLE must be a sequence of real numbers.
+
+** ~type=~ - ~(TYPE1 TYPE2)~ - Returns a primary value of T if TYPE1 and TYPE2 are the same type,
+and a secondary value that is true is the type equality could be reliably
+determined: primary value of NIL and secondary value of T indicates that the
+types are not equivalent.
+
+** ~extremum~ - ~(SEQUENCE PREDICATE &KEY KEY (START 0) END)~ - Returns the element of SEQUENCE that would appear first if the subsequence
+bounded by START and END was sorted using PREDICATE and KEY.
+
+EXTREMUM determines the relationship between two elements of SEQUENCE by using
+the PREDICATE function. PREDICATE should return true if and only if the first
+argument is strictly less than the second one (in some appropriate sense). Two
+arguments X and Y are considered to be equal if (FUNCALL PREDICATE X Y)
+and (FUNCALL PREDICATE Y X) are both false.
+
+The arguments to the PREDICATE function are computed from elements of SEQUENCE
+using the KEY function, if supplied. If KEY is not supplied or is NIL, the
+sequence element itself is used.
+
+If SEQUENCE is empty, NIL is returned.
+
+** ~non-positive-rational-p~ - ~(N)~ - (no docs)
+
+** ~reversef~ - ~(#:PLACE)~ - Modify-macro for REVERSE. Copies and reverses the list stored in the given
+place and saves back the result into the place.
+
+** ~proper-list-p~ - ~(OBJECT)~ - Returns true if OBJECT is a proper list.
+
+** ~define-constant~ - ~(NAME INITIAL-VALUE &KEY (TEST (QUOTE (QUOTE EQL))) DOCUMENTATION)~ - Ensures that the global variable named by NAME is a constant with a value
+that is equal under TEST to the result of evaluating INITIAL-VALUE. TEST is a
+/function designator/ that defaults to EQL. If DOCUMENTATION is given, it
+becomes the documentation string of the constant.
+
+Signals an error if NAME is already a bound non-constant variable.
+
+Signals an error if NAME is already a constant variable whose value is not
+equal under TEST to result of evaluating INITIAL-VALUE.
+
+** ~map-permutations~ - ~(FUNCTION SEQUENCE &KEY (START 0) END LENGTH (COPY T))~ - Calls function with each permutation of LENGTH constructable
+from the subsequence of SEQUENCE delimited by START and END. START
+defaults to 0, END to length of the sequence, and LENGTH to the
+length of the delimited subsequence.
+
+** ~circular-tree-p~ - ~(OBJECT)~ - Returns true if OBJECT is a circular tree, NIL otherwise.
+
+** ~remove-from-plist~ - ~(PLIST &REST KEYS)~ - Returns a property-list with same keys and values as PLIST, except that keys
+in the list designated by KEYS and values corresponding to them are removed.
+The returned property-list may share structure with the PLIST, but PLIST is
+not destructively modified. Keys are compared using EQ.
+
+** ~last-elt~ - ~(SEQUENCE)~ - Returns the last element of SEQUENCE. Signals a type-error if SEQUENCE is
+not a proper sequence, or is an empty sequence.
+
+** ~non-positive-long-float-p~ - ~(N)~ - (no docs)
+
+** ~positive-short-float-p~ - ~(N)~ - (no docs)
+
+** ~appendf~ - ~(#:PLACE &REST LISTS)~ - Modify-macro for APPEND. Appends LISTS to the place designated by the first
+argument.
+
+** ~xor~ - ~(&REST DATUMS)~ - Evaluates its arguments one at a time, from left to right. If more than one
+argument evaluates to a true value no further DATUMS are evaluated, and NIL is
+returned as both primary and secondary value. If exactly one argument
+evaluates to true, its value is returned as the primary value after all the
+arguments have been evaluated, and T is returned as the secondary value. If no
+arguments evaluate to true NIL is returned as primary, and T as secondary
+value.
+
+** ~destructuring-ecase~ - ~(KEYFORM &BODY CLAUSES)~ - DESTRUCTURING-CASE, -CCASE, and -ECASE are a combination of CASE and DESTRUCTURING-BIND.
+KEYFORM must evaluate to a CONS.
+
+Clauses are of the form:
+
+  ((CASE-KEYS . DESTRUCTURING-LAMBDA-LIST) FORM*)
+
+The clause whose CASE-KEYS matches CAR of KEY, as if by CASE, CCASE, or ECASE,
+is selected, and FORMs are then executed with CDR of KEY is destructured and
+bound by the DESTRUCTURING-LAMBDA-LIST.
+
+Example:
+
+ (defun dcase (x)
+   (destructuring-case x
+     ((:foo a b)
+      (format nil \"foo: ~S, ~S\" a b))
+     ((:bar &key a b)
+      (format nil \"bar: ~S, ~S\" a b))
+     (((:alt1 :alt2) a)
+      (format nil \"alt: ~S\" a))
+     ((t &rest rest)
+      (format nil \"unknown: ~S\" rest))))
+
+  (dcase (list :foo 1 2))        ; => \"foo: 1, 2\"
+  (dcase (list :bar :a 1 :b 2))  ; => \"bar: 1, 2\"
+  (dcase (list :alt1 1))         ; => \"alt: 1\"
+  (dcase (list :alt2 2))         ; => \"alt: 2\"
+  (dcase (list :quux 1 2 3))     ; => \"unknown: 1, 2, 3\"
+
+ (defun decase (x)
+   (destructuring-case x
+     ((:foo a b)
+      (format nil \"foo: ~S, ~S\" a b))
+     ((:bar &key a b)
+      (format nil \"bar: ~S, ~S\" a b))
+     (((:alt1 :alt2) a)
+      (format nil \"alt: ~S\" a))))
+
+  (decase (list :foo 1 2))        ; => \"foo: 1, 2\"
+  (decase (list :bar :a 1 :b 2))  ; => \"bar: 1, 2\"
+  (decase (list :alt1 1))         ; => \"alt: 1\"
+  (decase (list :alt2 2))         ; => \"alt: 2\"
+  (decase (list :quux 1 2 3))     ; =| error
+
+** ~ensure-functionf~ - ~(&REST PLACES)~ - Multiple-place modify macro for ENSURE-FUNCTION: ensures that each of
+PLACES contains a function.
+
+** ~negative-single-float-p~ - ~(N)~ - (no docs)
+
+** ~make-circular-list~ - ~(LENGTH &KEY INITIAL-ELEMENT)~ - Creates a circular list of LENGTH with the given INITIAL-ELEMENT.
+
+** ~non-positive-fixnum~ -  Type specifier denoting the fixnum range from MOST-NEGATIVE-FIXNUM to 0.
+
+** ~non-positive-real-p~ - ~(N)~ - (no docs)
+
+** ~positive-short-float~ -  Type specifier denoting the short-float range from 0.0 to +inf.
+
+** ~random-elt~ - ~(SEQUENCE &KEY (START 0) END)~ - Returns a random element from SEQUENCE bounded by START and END. Signals an
+error if the SEQUENCE is not a proper non-empty sequence, or if END and START
+are not proper bounding index designators for SEQUENCE.
+
+** ~sequence-of-length-p~ - ~(SEQUENCE LENGTH)~ - Return true if SEQUENCE is a sequence of length LENGTH. Signals an error if
+SEQUENCE is not a sequence. Returns FALSE for circular lists.
+
+** ~non-negative-fixnum-p~ - ~(N)~ - (no docs)
+
+** ~array-length~ -  Type designator for a dimension of an array of LENGTH: an integer between
+0 (inclusive) and LENGTH (inclusive). LENGTH defaults to one less than
+ARRAY-DIMENSION-LIMIT.
+
+** ~unwind-protect-case~ - ~((&OPTIONAL ABORT-FLAG) PROTECTED-FORM &BODY CLAUSES)~ - Like CL:UNWIND-PROTECT, but you can specify the circumstances that
+the cleanup CLAUSES are run.
+
+  clauses ::= (:NORMAL form*)* | (:ABORT form*)* | (:ALWAYS form*)*
+
+Clauses can be given in any order, and more than one clause can be
+given for each circumstance. The clauses whose denoted circumstance
+occured, are executed in the order the clauses appear.
+
+ABORT-FLAG is the name of a variable that will be bound to T in
+CLAUSES if the PROTECTED-FORM aborted preemptively, and to NIL
+otherwise.
+
+Examples:
+
+  (unwind-protect-case ()
+       (protected-form)
+     (:normal (format t \"This is only evaluated if PROTECTED-FORM executed normally.~%\"))
+     (:abort  (format t \"This is only evaluated if PROTECTED-FORM aborted preemptively.~%\"))
+     (:always (format t \"This is evaluated in either case.~%\")))
+
+  (unwind-protect-case (aborted-p)
+       (protected-form)
+     (:always (perform-cleanup-if aborted-p)))
+
+** ~map-derangements~ - ~(FUNCTION SEQUENCE &KEY (START 0) END (COPY T))~ - Calls FUNCTION with each derangement of the subsequence of SEQUENCE denoted
+by the bounding index designators START and END. Derangement is a permutation
+of the sequence where no element remains in place. SEQUENCE is not modified,
+but individual derangements are EQ to each other. Consequences are unspecified
+if calling FUNCTION modifies either the derangement or SEQUENCE.
+
+** ~map-combinations~ - ~(FUNCTION SEQUENCE &KEY (START 0) END LENGTH (COPY T))~ - Calls FUNCTION with each combination of LENGTH constructable from the
+elements of the subsequence of SEQUENCE delimited by START and END. START
+defaults to 0, END to length of SEQUENCE, and LENGTH to the length of the
+delimited subsequence. (So unless LENGTH is specified there is only a single
+combination, which has the same elements as the delimited subsequence.) If
+COPY is true (the default) each combination is freshly allocated. If COPY is
+false all combinations are EQ to each other, in which case consequences are
+unspecified if a combination is modified by FUNCTION.
+
+** ~map-product~ - ~(FUNCTION LIST &REST MORE-LISTS)~ - Returns a list containing the results of calling FUNCTION with one argument
+from LIST, and one from each of MORE-LISTS for each combination of arguments.
+In other words, returns the product of LIST and MORE-LISTS using FUNCTION.
+
+Example:
+
+ (map-product 'list '(1 2) '(3 4) '(5 6))
+  => ((1 3 5) (1 3 6) (1 4 5) (1 4 6)
+      (2 3 5) (2 3 6) (2 4 5) (2 4 6))
+
+** ~disjoin~ - ~(PREDICATE &REST MORE-PREDICATES)~ - Returns a function that applies each of PREDICATE and MORE-PREDICATE
+functions in turn to its arguments, returning the primary value of the first
+predicate that returns true, without calling the remaining predicates.
+If none of the predicates returns true, NIL is returned.
+
+** ~gaussian-random~ - ~(&OPTIONAL MIN MAX)~ - Returns two gaussian random double floats as the primary and secondary value,
+optionally constrained by MIN and MAX. Gaussian random numbers form a standard
+normal distribution around 0.0d0.
+
+Sufficiently positive MIN or negative MAX will cause the algorithm used to
+take a very long time. If MIN is positive it should be close to zero, and
+similarly if MAX is negative it should be close to zero.
+
+** ~non-negative-integer-p~ - ~(N)~ - (no docs)
+
+** ~parse-body~ - ~(BODY &KEY DOCUMENTATION WHOLE)~ - Parses BODY into (values remaining-forms declarations doc-string).
+Documentation strings are recognized only if DOCUMENTATION is true.
+Syntax errors in body are signalled and WHOLE is used in the signal
+arguments when given.
+
+** ~negative-short-float-p~ - ~(N)~ - (no docs)
+
+** ~nreversef~ - ~(#:PLACE)~ - Modify-macro for NREVERSE. Reverses the list stored in the given place by
+destructively modifying it and saves back the result into the place.
+
+** ~simple-parse-error~ - ~(MESSAGE &REST ARGS)~ - (no docs)
+
+** ~non-negative-short-float-p~ - ~(N)~ - (no docs)
+
+** ~non-positive-single-float-p~ - ~(N)~ - (no docs)
+
+** ~non-positive-short-float~ -  Type specifier denoting the short-float range from -inf to 0.0.
+
+** ~non-negative-float-p~ - ~(N)~ - (no docs)
+
+** ~non-negative-integer~ -  Type specifier denoting the integer range from 0 to +inf.
+
+** ~non-negative-double-float~ -  Type specifier denoting the double-float range from 0.0d0 to +inf.
+
+** ~copy-stream~ - ~(INPUT OUTPUT &KEY (ELEMENT-TYPE (STREAM-ELEMENT-TYPE INPUT)) (BUFFER-SIZE 4096) (BUFFER (MAKE-ARRAY BUFFER-SIZE :ELEMENT-TYPE ELEMENT-TYPE)) (START 0) END FINISH-OUTPUT)~ - Reads data from INPUT and writes it to OUTPUT. Both INPUT and OUTPUT must
+be streams, they will be passed to READ-SEQUENCE and WRITE-SEQUENCE and must have
+compatible element-types.
+
+** ~when-let*~ - ~(BINDINGS &BODY BODY)~ - Creates new variable bindings, and conditionally executes BODY.
+
+BINDINGS must be either single binding of the form:
+
+ (variable initial-form)
+
+or a list of bindings of the form:
+
+ ((variable-1 initial-form-1)
+  (variable-2 initial-form-2)
+  ...
+  (variable-n initial-form-n))
+
+Each INITIAL-FORM is executed in turn, and the variable bound to the
+corresponding value. INITIAL-FORM expressions can refer to variables
+previously bound by the WHEN-LET*.
+
+Execution of WHEN-LET* stops immediately if any INITIAL-FORM evaluates to NIL.
+If all INITIAL-FORMs evaluate to true, then BODY is executed as an implicit
+PROGN.
+
+** ~positive-rational-p~ - ~(N)~ - (no docs)
+
+** ~proper-sequence~ -  Type designator for proper sequences, that is proper lists and sequences
+that are not lists.
+
+** ~clamp~ - ~(NUMBER MIN MAX)~ - Clamps the NUMBER into [min, max] range. Returns MIN if NUMBER is lesser then
+MIN and MAX if NUMBER is greater then MAX, otherwise returns NUMBER.
+
+** ~doplist~ - ~((KEY VAL PLIST &OPTIONAL VALUES) &BODY BODY)~ - Iterates over elements of PLIST. BODY can be preceded by
+declarations, and is like a TAGBODY. RETURN may be used to terminate
+the iteration early. If RETURN is not used, returns VALUES.
+
+** ~flatten~ - ~(TREE)~ - Traverses the tree in order, collecting non-null leaves into a list.
+
+** ~if-let~ - ~(BINDINGS &BODY (THEN-FORM &OPTIONAL ELSE-FORM))~ - Creates new variable bindings, and conditionally executes either
+THEN-FORM or ELSE-FORM. ELSE-FORM defaults to NIL.
+
+BINDINGS must be either single binding of the form:
+
+ (variable initial-form)
+
+or a list of bindings of the form:
+
+ ((variable-1 initial-form-1)
+  (variable-2 initial-form-2)
+  ...
+  (variable-n initial-form-n))
+
+All initial-forms are executed sequentially in the specified order. Then all
+the variables are bound to the corresponding values.
+
+If all variables were bound to true values, the THEN-FORM is executed with the
+bindings in effect, otherwise the ELSE-FORM is executed with the bindings in
+effect.
+
+** ~read-file-into-byte-vector~ - ~(PATHNAME)~ - Read PATHNAME into a freshly allocated (unsigned-byte 8) vector.
+
+** ~negative-real~ -  Type specifier denoting the real range from -inf to 0.
+
+** ~non-negative-float~ -  Type specifier denoting the float range from 0.0 to +inf.
+
+** ~iota~ - ~(N &KEY (START 0) (STEP 1))~ - Return a list of n numbers, starting from START (with numeric contagion
+from STEP applied), each consequtive number being the sum of the previous one
+and STEP. START defaults to 0 and STEP to 1.
+
+Examples:
+
+  (iota 4)                      => (0 1 2 3)
+  (iota 3 :start 1 :step 1.0)   => (1.0 2.0 3.0)
+  (iota 3 :start -1 :step -1/2) => (-1 -3/2 -2)
+
+** ~required-argument~ - ~(&OPTIONAL NAME)~ - Signals an error for a missing argument of NAME. Intended for
+use as an initialization form for structure and class-slots, and
+a default value for required keyword arguments.
+
+** ~non-negative-long-float~ -  Type specifier denoting the long-float range from 0.0d0 to +inf.
+
+** ~positive-rational~ -  Type specifier denoting the rational range from 0 to +inf.
+
+** ~positive-single-float~ -  Type specifier denoting the single-float range from 0.0 to +inf.
+
+** ~ignore-some-conditions~ - ~((&REST CONDITIONS) &BODY BODY)~ - Similar to CL:IGNORE-ERRORS but the (unevaluated) CONDITIONS
+list determines which specific conditions are to be ignored.
+
+** ~non-positive-fixnum-p~ - ~(N)~ - (no docs)
+
+** ~negative-float~ -  Type specifier denoting the float range from -inf to 0.0.
+
+** ~variance~ - ~(SAMPLE &KEY (BIASED T))~ - Variance of SAMPLE. Returns the biased variance if BIASED is true (the default),
+and the unbiased estimator of variance if BIASED is false. SAMPLE must be a
+sequence of numbers.
+
+** ~ends-with~ - ~(OBJECT SEQUENCE &KEY (TEST (FUNCTION EQL)) (KEY (FUNCTION IDENTITY)))~ - Returns true if SEQUENCE is a sequence whose last element is EQL to OBJECT.
+Returns NIL if the SEQUENCE is not a sequence or is an empty sequence. Signals
+an error if SEQUENCE is an improper list.
+
+** ~non-positive-integer-p~ - ~(N)~ - (no docs)
+
+** ~shuffle~ - ~(SEQUENCE &KEY (START 0) END)~ - Returns a random permutation of SEQUENCE bounded by START and END.
+Original sequence may be destructively modified.
+Signals an error if SEQUENCE is not a proper sequence.
+
+** ~delete-from-plist~ - ~(PLIST &REST KEYS)~ - Just like REMOVE-FROM-PLIST, but this version may destructively modify the
+provided PLIST.
+
+** ~non-positive-single-float~ -  Type specifier denoting the single-float range from -inf to 0.0.
+
+** ~read-stream-content-into-byte-vector~ - ~(STREAM &KEY ((%LENGTH LENGTH)) (INITIAL-SIZE 4096))~ - Return \"content\" of STREAM as freshly allocated (unsigned-byte 8) vector.
+
+** ~count-permutations~ - ~(N &OPTIONAL (K N))~ - Number of K element permutations for a sequence of N objects.
+K defaults to N
+
+** ~positive-long-float-p~ - ~(N)~ - (no docs)
+
+** ~write-string-into-file~ - ~(STRING PATHNAME &KEY (IF-EXISTS :ERROR) IF-DOES-NOT-EXIST EXTERNAL-FORMAT)~ - Write STRING to PATHNAME.
+
+The EXTERNAL-FORMAT parameter will be passed directly to WITH-OPEN-FILE
+unless it's NIL, which means the system default.
+
+** ~standard-deviation~ - ~(SAMPLE &KEY (BIASED T))~ - Standard deviation of SAMPLE. Returns the biased standard deviation if
+BIASED is true (the default), and the square root of the unbiased estimator
+for variance if BIASED is false (which is not the same as the unbiased
+estimator for standard deviation). SAMPLE must be a sequence of numbers.
+
+** ~non-negative-single-float~ -  Type specifier denoting the single-float range from 0.0 to +inf.
+
+** ~make-keyword~ - ~(NAME)~ - Interns the string designated by NAME in the KEYWORD package.
+
+** ~with-output-to-file~ - ~((STREAM-NAME FILE-NAME &REST ARGS &KEY (DIRECTION NIL) &ALLOW-OTHER-KEYS) &BODY BODY)~ - Evaluate BODY with STREAM-NAME to an output stream on the file
+FILE-NAME. ARGS is sent as is to the call to OPEN except EXTERNAL-FORMAT,
+which is only sent to WITH-OPEN-FILE when it's not NIL.
+
+** ~coercef~ - ~(#:PLACE TYPE-SPEC)~ - Modify-macro for COERCE.
+
+** ~rcurry~ - ~(FUNCTION &REST ARGUMENTS)~ - Returns a function that applies the arguments it is called
+with and ARGUMENTS to FUNCTION.
+
+** ~non-positive-rational~ -  Type specifier denoting the rational range from -inf to 0.
+
+** ~ensure-car~ - ~(THING)~ - If THING is a CONS, its CAR is returned. Otherwise THING is returned.
+
+** ~with-input-from-file~ - ~((STREAM-NAME FILE-NAME &REST ARGS &KEY (DIRECTION NIL) &ALLOW-OTHER-KEYS) &BODY BODY)~ - Evaluate BODY with STREAM-NAME to an input stream on the file
+FILE-NAME. ARGS is sent as is to the call to OPEN except EXTERNAL-FORMAT,
+which is only sent to WITH-OPEN-FILE when it's not NIL.
+
+** ~alist-plist~ - ~(ALIST)~ - Returns a property list containing the same keys and values as the
+association list ALIST in the same order.
+
+** ~non-positive-integer~ -  Type specifier denoting the integer range from -inf to 0.
+
+** ~negative-rational-p~ - ~(N)~ - (no docs)
+
+** ~simple-style-warning~ - ~(MESSAGE &REST ARGS)~ - (no docs)
+
+** ~negative-short-float~ -  Type specifier denoting the short-float range from -inf to 0.0.
+
+** ~with-gensyms~ - ~(NAMES &BODY FORMS)~ - Binds a set of variables to gensyms and evaluates the implicit progn FORMS.
+
+Each element within NAMES is either a symbol SYMBOL or a pair (SYMBOL
+STRING-DESIGNATOR). Bare symbols are equivalent to the pair (SYMBOL SYMBOL).
+
+Each pair (SYMBOL STRING-DESIGNATOR) specifies that the variable named by SYMBOL
+should be bound to a symbol constructed using GENSYM with the string designated
+by STRING-DESIGNATOR being its first argument.
+
+** ~non-negative-fixnum~ -  Type specifier denoting the fixnum range from 0 to MOST-POSITIVE-FIXNUM.
+
+** ~positive-integer-p~ - ~(N)~ - (no docs)
+
+** ~multiple-value-prog2~ - ~(FIRST-FORM SECOND-FORM &BODY FORMS)~ - Evaluates FIRST-FORM, then SECOND-FORM, and then FORMS. Yields as its value
+all the value returned by SECOND-FORM.
+
+
+
+* SERAPEUM
+** ~assocdr~ - ~(ITEM ALIST &REST ARGS &KEY &ALLOW-OTHER-KEYS)~ - Like (cdr (assoc ...))
+
+** ~octet-vector-p~ - ~(X)~ - Is X an octet vector?
+
+** ~octet~ -  (no docs)
+
+** ~file-size~ - ~(FILE &KEY (ELEMENT-TYPE (QUOTE (UNSIGNED-BYTE 8))))~ - The size of FILE, in units of ELEMENT-TYPE (defaults to bytes).
+
+The size is computed by opening the file and getting the length of the
+resulting stream.
+
+If all you want is to read the file's size in octets from its
+metadata, consider `trivial-file-size:file-size-in-octets' instead.
+
+** ~append1~ - ~(LIST ITEM)~ - Append an atom to a list.
+
+    (append1 list item)
+    ≡ (append list (list item))
+
+** ~prune~ - ~(LEAF TREE &KEY (KEY (FUNCTION IDENTITY)) (TEST (FUNCTION EQL)))~ - Remove LEAF from TREE wherever it occurs.
+See `prune-if' for more information.
+
+** ~nstring-upcase-initials~ - ~(STRING)~ - Destructive version of `string-upcase-initials'.
+
+** ~pairhash~ - ~(KEYS DATA &OPTIONAL HASH-TABLE)~ - Like `pairlis', but for a hash table.
+
+Unlike `pairlis', KEYS and DATA are only required to be sequences (of
+the same length), not lists.
+
+By default, the hash table returned uses `eql' as its tests. If you
+want a different test, make the table yourself and pass it as the
+HASH-TABLE argument.
+
+** ~lret~ - ~((&REST BINDINGS) &BODY BODY)~ - Return the initial value of the last binding in BINDINGS. The idea
+is to create something, initialize it, and then return it.
+
+    (lret ((x 1)
+           (y (make-array 1)))
+      (setf (aref y 0) x))
+    => #(1)
+
+Note that the value returned is the value initially bound. Subsequent
+assignments are ignored.
+
+    (lret ((x 1))
+      (setf x 2))
+    => 1
+
+Furthermore, on Lisps that support it, the variable may be made
+read-only, making assignment a compiler-time error.
+
+`lret' may seem trivial, but it fufills the highest purpose a macro
+can: it eliminates a whole class of bugs (initializing an object, but
+forgetting to return it).
+
+Cf. `aprog1' in Anaphora.
+
+** ~bound-value~ - ~(S &OPTIONAL DEFAULT)~ - If S is bound, return (values s t). Otherwise, return DEFAULT and nil.
+
+** ~flush-static-binding-group~ - ~(SERAPEUM/STATIC-LET::GROUP &KEY SERAPEUM/STATIC-LET::ARE-YOU-SURE-P)~ - Flushes all static binding values in binding group `group' and
+restores them to their uninitialized state, forcing any initforms
+for these static bindings to be reevaluated whenever control
+next reaches the respective `static-let'/`static-let*'. Returns the
+number of live bindings flushed that way.
+
+This operation is unsafe to perform while any other threads are
+trying to access these bindings; proper synchronization is left
+to the user. Therefore, a continuable error is signaled unless
+Lisp is running single-threaded or `are-you-sure-p' is true.
+
+Note that a static binding that was created as `:flushablep nil'
+will not be affected by this operation.
+
+** ~flip~ - ~(F)~ - Flip around the arguments of a binary function.
+
+That is, given a binary function, return another, equivalent function
+that takes its two arguments in the opposite order.
+
+From Haskell.
+
+** ~assuref~ - ~(PLACE TYPE-SPEC)~ - Like `(progn (check-type PLACE TYPE-SPEC) PLACE)`, but evaluates
+PLACE only once.
+
+** ~range~ - ~:UNKNOWN~ - Return a (possibly specialized) vector of real numbers, starting from START.
+
+With three arguments, return the integers in the interval [start,end)
+whose difference from START is divisible by STEP.
+
+START, STOP, and STEP can be any real number, except that if STOP is
+greater than START, STEP must be positive, and if START is greater
+than STOP, STEP must be negative.
+
+The vector returned has the smallest element type that can represent
+numbers in the given range. E.g. the range [0,256) will usually be
+represented by a vector of octets, while the range [-10.0,10.0) will
+be represented by a vector of single floats. The exact representation,
+however, depends on your Lisp implementation.
+
+STEP defaults to 1.
+
+With two arguments, return all the steps in the interval [start,end).
+
+With one argument, return all the steps in the interval [0,end).
+
+** ~non-wild-pathname~ -  A pathname without wild components.
+
+** ~string-invert-case~ - ~(STRING)~ - Invert the case of STRING.
+This does the same thing as a case-inverting readtable:
+- If the string is uppercase, downcase the string.
+- If the string is lowercase, upcase the string.
+- If the string is mixed-case, leave it alone.
+
+** ~length<~ - ~(&REST SEQS)~ - Is each length-designator in SEQS shorter than the next?
+A length designator may be a sequence or an integer.
+
+** ~mvlet~ - ~((&REST BINDINGS) &BODY BODY)~ - Parallel (`let'-like) version of `mvlet*'.
+
+** ~with-simple-vector-dispatch~ - ~((&REST TYPES) (VAR START END) &BODY BODY)~ - Like `with-vector-dispatch' but on implementations that support it, the underlying simple vector of a displaced array is first dereferenced, so the type is guaranteed to be a subtype of simple-array (but not actually `simple-vector`).
+
+START and END are the offset of the original vector's data in the array it is displaced to.
+
+** ~callf~ - ~(FUNCTION PLACE &REST ARGS)~ - Set PLACE to the value of calling FUNCTION on PLACE, with ARGS.
+
+** ~typecase-of~ - ~(TYPE X &BODY CLAUSES)~ - Like `etypecase-of', but may, and must, have an `otherwise' clause
+in case X is not of TYPE.
+
+** ~select~ - ~(KEYFORM &BODY CLAUSES)~ - Like `case', but with evaluated keys.
+
+Note that, like `case', `select' interprets a list as the first
+element of a clause as a list of keys. To use a form as a key, you
+must add an extra set of parentheses.
+
+     (select 2
+       ((+ 2 2) t))
+     => T
+
+     (select 4
+       (((+ 2 2)) t))
+     => T
+
+From Zetalisp.
+
+** ~throttle~ - ~(FN WAIT &KEY SYNCHRONIZED MEMOIZED)~ - Wrap FN so it can be called no more than every WAIT seconds.
+If FN was called less than WAIT seconds ago, return the values from the
+last call. Otherwise, call FN normally and update the cached values.
+
+WAIT, of course, may be a fractional number of seconds.
+
+The throttled function is not thread-safe by default; use SYNCHRONIZED
+to get a version with a lock.
+
+You can pass MEMOIZED if you want the function to remember values
+between calls.
+
+** ~bisect-right~ - ~(VEC ITEM PRED &KEY KEY (START 0) (END (LENGTH VEC)))~ - Return the index in VEC to insert ITEM and keep VEC sorted.
+
+If a value equivalent to ITEM already exists in VEC, then the index
+returned is to the right of that existing item.
+
+** ~clear-queue~ - ~(QUEUE)~ - Return QUEUE's contents and reset it.
+
+** ~invalid-number-value~ - ~(CONDITION)~ - (no docs)
+
+** ~econd~ - ~(&REST CLAUSES)~ - Like `cond', but signal an error of type `econd-failure' if no
+clause succeeds.
+
+** ~ordering~ - ~(SEQ &KEY UNORDERED-TO-END FROM-END (TEST (QUOTE EQL)) (KEY (FUNCTION IDENTITY)))~ - Given a sequence, return a function that, when called with `sort',
+restores the original order of the sequence.
+
+That is, for any SEQ (without duplicates), it is always true that
+
+     (equal seq (sort (reshuffle seq) (ordering seq)))
+
+FROM-END controls what to do in case of duplicates. If FROM-END is
+true, the last occurrence of each item is preserved; otherwise, only
+the first occurrence counts.
+
+TEST controls identity; it should be a valid test for a hash table. If
+the items cannot be compared that way, you can use KEY to transform
+them.
+
+UNORDERED-TO-END controls where to sort items that are not present in
+the original ordering. By default they are sorted first but, if
+UNORDERED-TO-END is true, they are sorted last. In either case, they
+are left in no particular order.
+
+** ~mapconcat~ - ~(FUN SEQ SEPARATOR &KEY STREAM END)~ - Build a string by mapping FUN over SEQ.
+Separate each value with SEPARATOR.
+
+Equivalent to
+        (reduce #'concat (intersperse SEP SEQ) :key FUN)
+but more efficient.
+
+STREAM can be used to specify a stream to write to. It is resolved
+like the first argument to `format'.
+
+From Emacs Lisp.
+
+** ~expand-macro~ - ~(FORM &OPTIONAL ENV)~ - Like `macroexpand-1', but also expand compiler macros.
+From Swank.
+
+** ~if-not~ - ~(TEST THEN &OPTIONAL ELSE)~ - If TEST evaluates to NIL, evaluate THEN and return its values,
+otherwise evaluate ELSE and return its values. ELSE defaults to NIL.
+
+** ~local*~ - ~(&BODY SERAPEUM/INTERNAL-DEFINITIONS::BODY)~ - Like `local', but leave the last form in BODY intact.
+
+     (local*
+       (defun aux-fn ...)
+       (defun entry-point ...))
+     =>
+     (labels ((aux-fn ...))
+       (defun entry-point ...))
+
+** ~define-post-modify-macro~ - ~(NAME LAMBDA-LIST FUNCTION &OPTIONAL DOCUMENTATION)~ - Like `define-modify-macro', but arranges to return the original value.
+
+** ~recursion-forbidden~ -  (no docs)
+
+** ~leaf-map~ - ~(FN TREE)~ - Call FN on each leaf of TREE.
+Return a new tree possibly sharing structure with TREE.
+
+** ~standard/context~ -  (no docs)
+
+** ~true~ - ~(X)~ - Coerce X to a boolean.
+That is, if X is null, return `nil'; otherwise return `t'.
+
+Based on an idea by Eric Naggum.
+
+** ~mvconstantly~ - ~(&REST VALUES)~ - Like `constantly', but returns all of VALUES as multiple values.
+If there are not VALUES, returns nothing.
+
+** ~with-collector~ - ~((COLLECTOR) &BODY BODY)~ - Within BODY, bind COLLECTOR to a function of one argument that
+accumulates all the arguments it has been called with in order, like
+the collect clause in `loop', finally returning the collection.
+
+To see the collection so far, call COLLECTOR with no arguments.
+
+Note that this version binds COLLECTOR to a closure, not a macro: you
+can pass the collector around or return it like any other function.
+
+** ~ascii-char-p~ - ~(CHAR)~ - Is CHAR an ASCII char?
+
+** ~leaf-walk~ - ~(FUN TREE)~ - Call FUN on each leaf of TREE.
+
+** ~@~ - ~(TABLE &REST KEYS)~ - A concise way of doing lookups in (potentially nested) hash tables.
+
+    (@ (dict :x 1) :x) => 1
+    (@ (dict :x (dict :y 2)) :x :y)  => 2
+
+** ~ecase-using~ - ~(PRED KEYFORM &BODY CLAUSES)~ - Exhaustive variant of `case-using'.
+
+** ~heap-insert~ - ~(HEAP NEW-ITEM)~ - Insert NEW-ITEM into HEAP.
+
+** ~static-load-time-value-error~ -  (no docs)
+
+** ~ravel~ - ~(ARRAY &KEY (SERAPEUM/GENERALIZED-ARRAYS::DISPLACE T))~ - Return the items of ARRAY as a sequence.
+
+Array theory calls this operation `list', but the MOA operation is
+identical and has a more distinctive name.
+
+** ~string-contains-p~ - ~(SUBSTRING STRING &KEY (START1 0) END1 (START2 0) END2)~ - Like `string*=', but case-insensitive.
+
+** ~with-open-files~ - ~((&REST ARGS) &BODY BODY)~ - A simple macro to open one or more files providing the streams for the BODY. The ARGS is a list of `(stream filespec options*)` as supplied to WITH-OPEN-FILE.
+
+** ~dispatch-case~ - ~((&REST SERAPEUM/DISPATCH-CASE::EXPRS-AND-TYPES) &BODY SERAPEUM/DISPATCH-CASE::CLAUSES)~ - Dispatch on the types of multiple expressions, exhaustively.
+
+Say you are working on a project where you need to handle timestamps
+represented both as universal times, and as instances of
+`local-time:timestamp'. You start by defining the appropriate types:
+
+    (defpackage :dispatch-case-example
+      (:use :cl :alexandria :serapeum :local-time)
+      (:shadow :time))
+    (in-package :dispatch-case-example)
+
+    (deftype universal-time ()
+      '(integer 0 *))
+
+    (deftype time ()
+      '(or universal-time timestamp))
+
+Now you want to write a `time=' function that works on universal
+times, timestamps, and any combination thereof.
+
+You can do this using `etypecase-of':
+
+    (defun time= (t1 t2)
+      (etypecase-of time t1
+        (universal-time
+         (etypecase-of time t2
+           (universal-time
+            (= t1 t2))
+           (timestamp
+            (= t1 (timestamp-to-universal t2)))))
+        (timestamp
+         (etypecase-of time t2
+           (universal-time
+            (time= t2 t1))
+           (timestamp
+            (timestamp= t1 t2))))))
+
+This has the advantage of efficiency and exhaustiveness checking, but
+the serious disadvantage of being hard to read: to understand what
+each branch matches, you have to backtrack to the enclosing branch.
+This is bad enough when the nesting is only two layers deep.
+
+Alternately, you could do it with `defgeneric':
+
+    (defgeneric time= (t1 t2)
+      (:method ((t1 integer) (t2 integer))
+        (= t1 t2))
+      (:method ((t1 timestamp) (t2 timestamp))
+        (timestamp= t1 t2))
+      (:method ((t1 integer) (t2 timestamp))
+        (= t1 (timestamp-to-universal t2)))
+      (:method ((t1 timestamp) (t2 integer))
+        (time= t2 t1)))
+
+This is easy to read, but it has three potential disadvantages. (1)
+There is no exhaustiveness checking. If, at some point in the future,
+you want to add another representation of time to your project, the
+compiler will not warn you if you forget to update `time='. (This is
+bad enough with only two objects to dispatch on, but with three or
+more it gets rapidly easier to miss a case.) (2) You cannot use the
+`universal-time' type you just defined; it is a type, not a class, so
+you cannot specialize methods on it. (3) You are paying a run-time
+price for extensibility -- the inherent overhead of a generic function
+-- when extensibility is not what you want.
+
+Using `dispatch-case' instead gives you the readability of
+`defgeneric' with the efficiency and safety of `etypecase-of'.
+
+    (defun time= (t1 t2)
+      (dispatch-case ((t1 time)
+                      (t2 time))
+        ((universal-time universal-time)
+         (= t1 t2))
+        ((timestamp timestamp)
+         (timestamp= t1 t2))
+        ((universal-time timestamp)
+         (= t1 (timestamp-to-universal t2)))
+        ((timestamp universal-time)
+         (time= t2 t1))))
+
+The syntax of `dispatch-case' is much closer to `defgeneric' than it
+is to `etypecase'. The order in which clauses are defined does not
+matter, and you can define fallthrough clauses in the same way you
+would define fallthrough methods in `defgeneric'.
+
+Suppose you wanted to write a `time=' function like the one above, but
+always convert times to timestamps before comparing them. You could
+write that using `dispatch-case' like so:
+
+    (defun time= (x y)
+      (dispatch-case ((x time)
+                      (y time))
+        ((* universal-time)
+         (time= x (universal-to-timestamp y)))
+        ((universal-time *)
+         (time= (universal-to-timestamp x) y))
+        ((timestamp timestamp)
+         (timestamp= x y))))
+
+(In the list of types, you can use as asterisk as a shorthand for the
+type of the corresponding argument to `dispatch-case'; in that above,
+`time'.)
+
+Note that this requires only three clauses, where writing it out using
+nested `etypecase-of' forms would require four clauses. This is a
+small gain; but with more subtypes to dispatch on, or more objects,
+such fallthrough clauses become more useful.
+
+** ~slot-value-safe~ - ~(INSTANCE SLOT-NAME &OPTIONAL DEFAULT)~ - Like `slot-value', but doesn't signal errors.
+Returns three values:
+1. The slot's value (or nil),
+2. A boolean that is T if the slot exists and *was* bound,
+3. A boolean that is T if the slot exists.
+
+Note that this function does call `slot-value' (if the slot exists),
+so if there is a method on `slot-unbound' for the class it will be
+invoked. In this case the second value will still be `nil', however.
+
+** ~scan~ - ~(FN SEQ &REST ARGS &KEY FROM-END (START 0) (END (LENGTH SEQ)) (INITIAL-VALUE NIL INITIAL-VALUE-SUPPLIED?) &ALLOW-OTHER-KEYS)~ - Return the partial reductions of SEQ.
+
+Each element of the result sequence is the result of calling `reduce'
+on the elements of the sequence up to that point (inclusively).
+
+    (reduce #'+ '(1))       => 1
+    (reduce #'+ '(1 2))     => 3
+    (reduce #'+ '(1 2 3))   => 6
+    (reduce #'+ '(1 2 3 4)) => 10
+    (scan   #'+ '(1 2 3 4)) => '(1 3 6 10)
+
+The result of calling `scan` on an empty sequence is always an empty
+sequence, however.
+
+    (reduce #'+ '()) => 0
+    (scan   #'+ '()) => '()
+
+This is sometimes called a \"prefix sum\", \"cumulative sum\", or
+\"inclusive scan\".
+
+From APL.
+
+** ~proper-subtype-p~ - ~(SUBTYPE TYPE &OPTIONAL ENV)~ - Is SUBTYPE a proper subtype of TYPE?
+
+This is, is it true that SUBTYPE is a subtype of TYPE, but not the
+same type?
+
+** ~boolean-when~ - ~(BRANCH &BODY BODY)~ - Includes some forms based on whether a macroexpand-time branch is true. The
+first argument must be a symbol naming a branch in the lexically enclosing
+WITH-BOOLEAN form.
+
+It is an error to use this macro outside the lexical environment established by
+WITH-BOOLEAN.
+
+** ~path-join~ - ~(&REST PATHNAMES)~ - Build a pathname by merging from right to left.
+With `path-join' you can pass the elements of the pathname being built
+in the order they appear in it:
+
+    (path-join (user-homedir-pathname) config-dir config-file)
+    ≡ (uiop:merge-pathnames* config-file
+       (uiop:merge-pathnames* config-dir
+        (user-homedir-pathname)))
+
+Note that `path-join' does not coerce the parts of the pathname into
+directories; you have to do that yourself.
+
+    (path-join \"dir1\" \"dir2\" \"file\") -> #p\"file\"
+    (path-join \"dir1/\" \"dir2/\" \"file\") -> #p\"dir1/dir2/file\"
+
+Cf. `base-path-join' for a similar function with more intuitive
+behavior.
+
+** ~find-external-symbol~ - ~(STRING PACKAGE &KEY ((:ERROR ERRORP) NIL))~ - If PACKAGE exports a symbol named STRING, return it.
+If PACKAGE does not contain such a symbol, or if the symbol is not
+exported, then `nil' is returned, unless ERROR is non-nil, in which
+case an error is signaled.
+
+** ~mapply~ - ~(FN LIST &REST LISTS)~ - `mapply' is a cousin of `mapcar'.
+
+If you think of `mapcar' as using `funcall':
+
+    (mapcar #'- '(1 2 3))
+    ≅ (loop for item in '(1 2 3)
+            collect (funcall #'- item))
+
+Then `mapply' does the same thing, but with `apply' instead.
+
+    (loop for item in '((1 2 3) (4 5 6))
+            collect (apply #'+ item))
+    => (6 15)
+
+    (mapply #'+ '((1 2 3) (4 5 6)))
+    => (6 15)
+
+In variadic use, `mapply' acts as if `append' had first been used:
+
+    (mapply #'+ xs ys)
+    ≡ (mapply #'+ (mapcar #'append xs ys))
+
+But the actual implementation is more efficient.
+
+`mapply' can convert a list of two-element lists into an alist:
+
+    (mapply #'cons '((x 1) (y 2))
+    => '((x . 1) (y . 2))
+
+** ~char-ecase~ - ~(KEYFORM &BODY CLAUSES)~ - Like `ecase', but specifically for characters.
+Expands into `tree-case'.
+
+** ~drop-prefix~ - ~(PREFIX SEQ &KEY (TEST (FUNCTION EQL)))~ - If SEQ starts with PREFIX, remove it.
+
+** ~qlen~ - ~(QUEUE)~ - The number of items in QUEUE.
+
+** ~nand~ - ~(&REST FORMS)~ - Equivalent to (not (and ...)).
+
+** ~shrinkf~ - ~(#:PLACE N)~ - Shrink the value in a place by a factor.
+
+** ~vector-conc-extend~ - ~(VECTOR NEW-ELEMENTS &OPTIONAL (EXTENSION 0))~ - Add NEW-ELEMENTS to the end of VECTOR, an adjustable array with a fill-pointer.
+This is the practical equivalent to calling `vector-push-extend' on
+each element on NEW-ELEMENTS, but should be faster.
+
+Returns VECTOR.
+
+** ~blankp~ - ~(SEQ)~ - SEQ is either empty, or consists entirely of characters that
+satisfy `whitespacep'.
+
+** ~ecase-of~ - ~(TYPE X &BODY BODY)~ - Like `ecase' but, given a TYPE (which should be defined as `(member
+...)'), warn, at compile time, unless the keys in BODY are all of TYPE
+and, taken together, they form an exhaustive partition of TYPE.
+
+** ~null-if~ - ~(ARG1 ARG2 &KEY (TEST (FUNCTION EQL)))~ - Return nil if arguments are equal under TEST, ARG1 otherwise.
+Return a second value of nil if the arguments were equal, T
+otherwise.
+
+From SQL.
+
+** ~vector=~ - ~(SERAPEUM/VECTOR=::VEC1 SERAPEUM/VECTOR=::VEC2 &KEY (SERAPEUM/VECTOR=::TEST (FUNCTION EQL)) (SERAPEUM/VECTOR=::START1 0) (SERAPEUM/VECTOR=::START2 0) SERAPEUM/VECTOR=::END1 SERAPEUM/VECTOR=::END2)~ - Like `string=' for any vector.
+If no TEST is supplied, elements are tested with `eql'.
+
+** ~shorter~ - ~(X Y)~ - Return the shorter of X and Y.
+
+** ~maphash-return~ - ~(FN HASH-TABLE)~ - Like MAPHASH, but collect and return the values from FN.
+From Zetalisp.
+
+** ~rassocdr~ - ~(ITEM ALIST &REST ARGS &KEY &ALLOW-OTHER-KEYS)~ - Like (cdr (rassoc ...))
+
+** ~ensure-suffix~ - ~(SEQ SUFFIX &KEY (TEST (FUNCTION EQL)))~ - Return a sequence like SEQ, but ending with SUFFIX.
+If SEQ already ends with SUFFIX, return SEQ.
+
+** ~letrec-restriction-violation~ -  Violation of the letrec restriction.
+
+The \"letrec restriction\" means that the expressions being bound in a
+`letrec' cannot refer to the value of other bindings in the same
+`letrec'.
+
+For `fbindrec', the restriction applies everywhere. For `fbindrec*',
+it only applies to functions not yet bound.
+
+** ~run-hooks~ - ~(&REST HOOKS)~ - Run all the hooks in HOOKS, without arguments.
+The variable `*hook*' is bound to the name of each hook as it is being
+run.
+
+** ~parse-float~ - ~(STRING &KEY (START 0) (END (LENGTH STRING)) JUNK-ALLOWED (TYPE *READ-DEFAULT-FLOAT-FORMAT* TYPE-SUPPLIED-P))~ - Parse STRING as a float of TYPE.
+
+The type of the float is determined by, in order:
+- TYPE, if it is supplied;
+- The type specified in the exponent of the string;
+- or `*read-default-float-format*'.
+
+     (parse-float \"1.0\") => 1.0s0
+     (parse-float \"1.0d0\") => 1.0d0
+     (parse-float \"1.0s0\" :type 'double-float) => 1.0d0
+
+Of course you could just use `parse-number', but sometimes only a
+float will do.
+
+** ~flip-hash-table~ - ~(TABLE &REST HASH-TABLE-ARGS &KEY (FILTER (CONSTANTLY T)) (KEY (FUNCTION IDENTITY)) TEST SIZE REHASH-SIZE REHASH-THRESHOLD)~ - Return a table like TABLE, but with keys and values flipped.
+
+     (gethash :y (flip-hash-table (dict :x :y)))
+     => :x, t
+
+TEST allows you to filter which keys to set.
+
+     (def number-names (dictq 1 one 2 two 3 three))
+
+     (def name-numbers (flip-hash-table number-names))
+     (def name-odd-numbers (flip-hash-table number-names :filter #'oddp))
+
+     (gethash 'two name-numbers) => 2, t
+     (gethash 'two name-odd-numbers) => nil, nil
+
+KEY allows you to transform the keys in the old hash table.
+
+     (def negative-number-names (flip-hash-table number-names :key #'-))
+     (gethash 'one negative-number-names) => -1, t
+
+KEY defaults to `identity'.
+
+** ~tree-case~ - ~(KEYFORM &BODY CASES)~ - A variant of `case' optimized for when every key is an integer.
+
+Comparison is done using `eql'.
+
+** ~etypecase-let~ - ~((VAR EXPR) &BODY CASES)~ - Like (let ((VAR EXPR)) (etypecase VAR ...)), with VAR read-only.
+
+** ~heap-extract-maximum~ - ~(HEAP)~ - Destructively extract the greatest element of HEAP.
+
+** ~do-each~ - ~((VAR SEQ &OPTIONAL RETURN) &BODY BODY)~ - Iterate over the elements of SEQ, a sequence.
+If SEQ is a list, this is equivalent to `dolist'.
+
+** ~push-end-new~ - ~(ITEM PLACE &REST KWARGS &KEY KEY TEST TEST-NOT)~ - Pushes ITEM to the end of place (like `push-end') but only if it not already a member of PLACE (like `pushnew').
+
+For the use of KEY, TEST, and TEST-NOT, see `pushnew'.
+
+** ~string$=~ - ~(SUFFIX STRING &KEY (START1 0) END1 (START2 0) END2)~ - Is SUFFIX a suffix of STRING?
+
+** ~static-let~ - ~((&REST SERAPEUM/STATIC-LET::BINDINGS) &BODY SERAPEUM/STATIC-LET::BODY)~ - Like `let', except the variables are only initialized once and
+retain their values between different invocations of `body'.
+
+Every static binding is similar to a `let' binding, except it can have
+additional keyword arguments:
+
+- `type' Denotes the type of the variable.
+- `once' If true, then binding initialization and mutation will be
+         thread-safe.
+- `flush' If true, this binding will be flushable. Defaults to true.
+- `in' Denotes the static binding group in which the binding will be
+       placed for flushing. Defaults to the value of `*package'.
+- `read-only' If true, then the binding cannot be mutated with `setf'.
+
+Static bindings can be flushed via `flush-static-binding-group' and
+`flush-all-static-binding-groups'; the latter is automatically pushed
+into `uiop:*dump-image-hooks*' by Serapeum.
+
+An unflushable static binding will carry its value over into dumped
+Lisp binaries.
+
+** ~run-hook-until-success~ - ~(HOOK &REST ARGS)~ - Like `run-hook-with-args', but quit once a function returns
+non-nil.
+
+** ~words~ - ~(STRING &KEY (START 0) END)~ - Split STRING into words.
+
+The definition of a word is the same as that used by
+`string-capitalize': a run of alphanumeric characters.
+
+    (words \"Four score and seven years\")
+    => (\"Four\" \"score\" \"and\" \"seven\" \"years\")
+
+    (words \"2 words\")
+    => (\"2\" \"words\")
+
+    (words \"two_words\")
+    => (\"two\" \"words\")
+
+    (words \"\\\"I'm here,\\\" Tom said presently.\")
+    => (\"I\" \"m\" \"here\" \"Tom\" \"said\" \"presently\")
+
+Cf. `tokens'.
+
+** ~string+~ - ~(&REST ARGS)~ - Optimized function for building small strings.
+
+Roughly equivalent to
+
+    (let ((*print-pretty* nil))
+     (format nil \"~@{~a}\" args...))
+
+But may be more efficient when the arguments of certain simple
+types (such as strings, characters, symbols, pathnames, and fixnums).
+
+Note that unlike `princ', `string+' treats `nil' as the same as the
+empty string:
+
+    (string+ nil)
+    => \"\"
+
+    (string+ \"x\" nil)
+    => \"x\"
+
+This utility is inspired by the utility of the same name in Allegro.
+
+** ~export-always~ - ~(SYMBOLS &OPTIONAL (PACKAGE NIL))~ - Like `export', but also evaluated at compile time.
+
+** ~monitor~ - ~(OBJECT)~ - Return a unique lock associated with OBJECT.
+
+** ~drop~ - ~(N SEQ)~ - Return all but the first N elements of SEQ.
+The sequence returned is a new sequence of the same type as SEQ.
+
+If N is greater than the length of SEQ, returns an empty sequence of
+the same type.
+
+If N is negative, then |N| elements are dropped from the end of SEQ.
+
+** ~local~ - ~(&BODY SERAPEUM/INTERNAL-DEFINITIONS::ORIG-BODY)~ - Make internal definitions using top-level definition forms.
+
+Within `local' you can use top-level definition forms and have them
+create purely local definitions, like `let', `labels', and `macrolet':
+
+     (fboundp 'plus) ; => nil
+
+     (local
+       (defun plus (x y)
+         (+ x y))
+       (plus 2 2))
+     ;; => 4
+
+     (fboundp 'plus) ; => nil
+
+Each form in BODY is subjected to partial expansion (with
+`macroexpand-1') until either it expands into a recognized definition
+form (like `defun') or it can be expanded no further.
+
+(This means that you can use macros that expand into top-level
+definition forms to create local definitions.)
+
+Just as at the real top level, a form that expands into `progn' (or an
+equivalent `eval-when') is descended into, and definitions that occur
+within it are treated as top-level definitions.
+
+(Support for `eval-when' is incomplete: `eval-when' is supported only
+when it is equivalent to `progn').
+
+The recognized definition forms are:
+
+- `def', for lexical variables (as with `letrec')
+- `define-values', for multiple lexical variables at once
+- `defun', for local functions (as with `labels')
+- `defalias', to bind values in the function namespace (like `fbindrec*')
+- `declaim', to make declarations (as with `declare')
+- `defconstant' and `defconst', which behave exactly like symbol macros
+- `define-symbol-macro', to bind symbol macros (as with `symbol-macrolet')
+
+Also, with serious restrictions, you can use:
+
+- `defmacro', for local macros (as with `macrolet')
+
+(Note that the top-level definition forms defined by Common Lisp
+are (necessarily) supplemented by three from Serapeum: `def',
+`define-values', and `defalias'.)
+
+The exact order in which the bindings are made depends on how `local'
+is implemented at the time you read this. The only guarantees are that
+variables are bound sequentially; functions can always close over the
+bindings of variables, and over other functions; and macros can be
+used once they are defined.
+
+     (local
+       (def x 1)
+       (def y (1+ x))
+       y)
+     => 2
+
+     (local
+       (defun adder (y)
+         (+ x y))
+       (def x 2)
+       (adder 1))
+     => 3
+
+Perhaps surprisingly, `let' forms (as well as `let*' and
+`multiple-value-bind') *are* descended into; the only difference is
+that `defun' is implicitly translated into `defalias'. This means you
+can use the top-level idiom of wrapping `let' around `defun'.
+
+    (local
+      (let ((x 2))
+        (defun adder (y)
+          (+ x y)))
+      (adder 2))
+    => 4
+
+Support for macros is sharply limited. (Symbol macros, on the other
+hand, are completely supported.)
+
+1. Macros defined with `defmacro' must precede all other expressions.
+
+2. Macros cannot be defined inside of binding forms like `let'.
+
+3. `macrolet' is not allowed at the top level of a `local' form.
+
+These restrictions are undesirable, but well justified: it is
+impossible to handle the general case both correctly and portably, and
+while some special cases could be provided for, the cost in complexity
+of implementation and maintenance would be prohibitive.
+
+The value returned by the `local' form is that of the last form in
+BODY. Note that definitions have return values in `local' just like
+they do at the top level. For example:
+
+     (local
+       (plus 2 2)
+       (defun plus (x y)
+         (+ x y)))
+
+Returns `plus', not 4.
+
+The `local' macro is loosely based on Racket's support for internal
+definitions.
+
+** ~soft-list-of~ -  A soft constraint for the elements of a list.
+
+The elements are restricted only as far as is practical, which is not
+very far, using heuristics which will not be specified here because
+they may improve over time. That said, since the goal of this type is
+to be practically useful, it will avoid any checks that would be O(n)
+in the length of the list.
+
+** ~fuel~ - ~(LEVEL)~ - Return a function to count 'fuel' consumption down from the initial level.
+
+The function takes one argument and subtracts its value from the
+current fuel level.
+
+The two return values are a boolean indicating whether the available
+fuel has been exceeded followed by the current fuel level (which may
+be negative.)
+
+** ~wholenum~ -  A whole number. Equivalent to `(integer 0 *)'.
+
+** ~make-octet-vector~ - ~(SIZE)~ - Make an octet vector of SIZE elements.
+
+** ~cond-let~ - ~(VAR &BODY CLAUSES)~ - Cross between COND and LET.
+
+     (cond-let x ((test ...)))
+     ≡ (let (x)
+         (cond ((setf x test) ...)))
+
+Cf. `acond' in Anaphora.
+
+** ~with-member-test~ - ~((TEST-FN &KEY KEY TEST TEST-NOT) &BODY BODY)~ - Emit BODY multiple times with specialized, inline versions of
+`member' bound to TEST-FN.
+
+** ~universal-to-unix~ - ~(TIME)~ - Convert a universal time to a Unix time.
+
+** ~defplace~ - ~(NAME ARGS &BODY BODY)~ - Define NAME and (SETF NAME) in one go.
+
+BODY is a list of forms, starting with an optional docstring. The last
+form in BODY, however, must be a single, setf-able expression.
+
+** ~filter~ - ~(PRED SEQ &REST ARGS &KEY COUNT &ALLOW-OTHER-KEYS)~ - Almost, but not quite, an alias for `remove-if-not'.
+
+The difference is the handling of COUNT: for `filter', COUNT is the
+number of items to *keep*, not remove.
+
+     (remove-if-not #'oddp '(1 2 3 4 5) :count 2)
+     => '(1 3 5)
+
+     (filter #'oddp '(1 2 3 4 5) :count 2)
+     => '(1 3)
+
+** ~assort~ - ~(SEQ &KEY (KEY (FUNCTION IDENTITY)) (TEST (FUNCTION EQL)) (START 0) END HASH &AUX (ORIG-TEST TEST))~ - Return SEQ assorted by KEY.
+
+     (assort (iota 10)
+             :key (lambda (n) (mod n 3)))
+     => '((0 3 6 9) (1 4 7) (2 5 8))
+
+Groups are ordered as encountered. This property means you could, in
+principle, use `assort' to implement `remove-duplicates' by taking the
+first element of each group:
+
+     (mapcar #'first (assort list))
+     ≡ (remove-duplicates list :from-end t)
+
+However, if TEST is ambiguous (a partial order), and an element could
+qualify as a member of more than one group, then it is not guaranteed
+that it will end up in the leftmost group that it could be a member
+of.
+
+    (assort '(1 2 1 2 1 2) :test #'<=)
+    => '((1 1) (2 2 1 2))
+
+The default algorithm used by `assort' is, in the worst case, O(n) in
+the number of groups. If HASH is specified, then a hash table is used
+instead. However TEST must be acceptable as the `:test' argument to
+`make-hash-table'.
+
+** ~fdec~ - ~(#:REF0 &OPTIONAL (DELTA 1))~ - Like `decf', but returns the old value instead of the new.
+
+** ~fixnump~ - ~(N)~ - Same as `(typep N 'fixnum)'.
+
+** ~pophash~ - ~(KEY HASH-TABLE)~ - Lookup KEY in HASH-TABLE, return its value, and remove it.
+
+This is only a shorthand. It is not in itself thread-safe.
+
+From Zetalisp.
+
+** ~gcp~ - ~(SEQS &KEY (TEST (FUNCTION EQL)))~ - The greatest common prefix of SEQS.
+
+If there is no common prefix, return NIL.
+
+** ~enq~ - ~(ITEM QUEUE)~ - Insert ITEM at the end of QUEUE.
+
+** ~sort-values~ - ~(PRED &REST VALUES)~ - Sort VALUES with PRED and return as multiple values.
+
+Equivalent to
+
+    (values-list (sort (list VALUES...) pred))
+
+But with less consing, and potentially faster.
+
+** ~vref~ - ~(VEC INDEX)~ - When used globally, same as `aref'.
+
+Inside of a with-type-dispatch form, calls to `vref' may be bound to
+different accessors, such as `char' or `schar', or `bit' or `sbit',
+depending on the type being specialized on.
+
+** ~take-while~ - ~(PRED SEQ)~ - Return the prefix of SEQ for which PRED returns true.
+
+** ~find-keyword~ - ~(STRING)~ - If STRING has been interned as a keyword, return it.
+
+Like `make-keyword', but preferable in most cases, because it doesn't
+intern a keyword -- which is usually both unnecessary and unwise.
+
+** ~heap-maximum~ - ~(HEAP)~ - Return (without extracting) the greatest element in HEAP.
+
+** ~fork2~ - ~(G F H)~ - Dyadic fork.
+
+The dyadic fork of f, g, and h is defined as:
+
+    x (f g h) y <-> (x f y) g (x h y)
+
+For example, say you wanted a \"plus or minus\" operator. Given
+numbers x and y, it returns a list of x+y and x-y. This can easily be
+written as a dyadic fork.
+
+    (fork2 #'list #'+ #'-)
+    (funcall * 10 2)
+    => '(12 8)
+
+From J.
+
+** ~maybe-invoke-restart~ - ~(RESTART &REST VALUES)~ - When RESTART is active, invoke it with VALUES.
+
+** ~case-failure~ - ~(EXPR KEYS)~ - Signal an error of type `case-failure'.
+
+** ~pad-start~ - ~(VEC LENGTH &OPTIONAL (PAD #\\ ))~ - Pad VEC, a vector, to LENGTH, using PAD.
+If VEC is already the same length, or longer, than LENGTH, return VEC
+unchanged.
+
+    (pad-start \"abc\" 3)
+    => \"abc\"
+
+If PAD is a sequence, then it is repeated before VEC to make up LENGTH.
+
+    (pad-start \"abc\" 9 \"def\")
+    => \"defdefabc\"
+
+If PAD is not a sequence, it is used to fill the remainder of VEC.
+
+    (pad-start \"abc\" 6 #x)
+    => \"xxxabc\"
+
+PAD defaults to the space character.
+
+This function is most useful for strings, but it can be used with any
+vector. Note that the vector returned has the same element type as
+VEC, so PAD must satisfy that element type.
+
+Loosely inspired by ECMA.
+
+** ~plist-keys~ - ~(PLIST)~ - Return the keys of a plist.
+
+** ~hash-table-predicate~ - ~(HASH-TABLE)~ - Return a predicate for membership in HASH-TABLE.
+The predicate returns the same two values as `gethash', but in the
+opposite order.
+
+** ~base-path-join~ - ~(BASE &REST SUFFIXES)~ - Build a pathname by appending SUFFIXES to BASE.
+For `path-join-base', the path on the left is always the *base* and
+the path on the right is always the *suffix*. This means that even if
+the right hand path is absolute, it will be treated as if it were
+relative.
+
+    (base-path-join #p\"foo/bar\" #p\"/baz\")
+    => #p\"foo/bar/baz\")
+
+Also, a bare file name as a suffix does not override but is appended
+to the accumulated file name. This includes the extension.
+
+    (base-path-join #p\"foo/bar\" \"baz\")
+    => #p\"foo/barbaz\")
+
+    (base-path-join #p\"foo/bar.x\" \"baz.y\")
+    => #p\"foo/bar.xbaz.y\")
+
+See `path-join' for a similar function with more consistent behavior.
+
+** ~inconsistent-graph-constraints~ - ~(CONDITION)~ - The constraints of an `inconsistent-graph' error.
+Cf. `toposort'.
+
+** ~do-nothing~ - ~(&REST ARGS)~ - Do nothing and return nothing.
+This function is meant as a placeholder for a function argument.
+
+From LispWorks.
+
+** ~toggle-pretty-print-hash-table~ - ~(&OPTIONAL (ON NIL EXPLICIT))~ - Toggles printing hash-tables with PRETTY-PRINT-HASH-TABLE or with the default method.
+    If ON is set explicitly, turn on literal printing (T), otherwise use the default (NIL).
+
+    Ported from RUTILS.
+
+** ~sum~ - ~(ARRAY)~ - Return the sum of all of the elements of ARRAY, a generalized array.
+Operates pairwise for numerical stability.
+
+** ~econd-failure~ -  An ECOND failed.
+
+** ~collapse-whitespace~ - ~(STRING &KEY (SPACE #\\ ) STREAM)~ - Collapse runs of whitespace in STRING.
+Each run of space, newline, and other whitespace characters is
+replaced by a single space character (or SPACE, if that is specified).
+
+** ~ccase-of~ - ~(TYPE KEYPLACE &BODY BODY)~ - Like `ecase-of', but providing a `store-value' restart to correct KEYPLACE and try again.
+
+** ~length>~ - ~(&REST SEQS)~ - Is each length-designator in SEQS longer than the next?
+A length designator may be a sequence or an integer.
+
+** ~defunit~ - ~(NAME &OPTIONAL DOCSTRING)~ - Define a unit type.
+
+A unit type is a type with only one instance.
+
+You can think of a unit type as a singleton without state.
+
+Unit types are useful for many of the same purposes as quoted symbols
+(or keywords) but, unlike a symbol, a unit type is tagged with its
+own individual type.
+
+** ~nlet~ - ~(NAME (&REST BINDINGS) &BODY BODY)~ - Within BODY, bind NAME as a function, somewhat like LABELS, but
+with the guarantee that recursive calls to NAME will not grow the
+stack.
+
+`nlet' resembles Scheme’s named let, and is used for the same purpose:
+writing loops using tail recursion. You could of course do this with
+`labels' as well, at least under some Lisp implementations, but `nlet'
+guarantees tail call elimination anywhere and everywhere.
+
+    (nlet rec ((i 1000000))
+      (if (= i 0)
+          0
+          (rec (1- i))))
+    => 0
+
+Beware: because of the way it is written (literally, a GOTO with
+arguments), `nlet' is limited: self calls must be tail calls. That is,
+you cannot use `nlet' for true recursion.
+
+The name comes from `Let Over Lambda', but this is a more careful
+implementation: the function is not bound while the initial arguments
+are being evaluated, and it is safe to close over the arguments.
+
+** ~export-only~ - ~(EXPORT/S &OPTIONAL (PACKAGE *PACKAGE*))~ - Like EXPORT, but unexport any other, existing exports.
+
+** ~mvfold~ - ~(FN SEQ &REST SEEDS)~ - Like `reduce' extended to multiple values.
+
+Calling `mvfold' with one seed is equivalent to `reduce':
+
+    (mvfold fn xs seed) ≡ (reduce fn xs :initial-value seed)
+
+However, you can also call `mvfold' with multiple seeds:
+
+    (mvfold fn xs seed1 seed2 seed3 ...)
+
+How is this useful? Consider extracting the minimum of a sequence:
+
+    (reduce #'min xs)
+
+Or the maximum:
+
+    (reduce #'max xs)
+
+But both?
+
+    (reduce (lambda (cons item)
+              (cons (min (car cons) item)
+                    (max (cdr cons) item)))
+            xs
+            :initial-value (cons (elt xs 0) (elt xs 0)))
+
+You can do this naturally with `mvfold'.
+
+    (mvfold (lambda (min max item)
+              (values (min item min)
+                      (max item max)))
+            xs (elt xs 0) (elt xs 0))
+
+In general `mvfold' provides a functional idiom for “loops with
+book-keeping” where we might otherwise have to use recursion or
+explicit iteration.
+
+Has a compiler macro that generates efficient code when the number of
+SEEDS is fixed at compile time (as it usually is).
+
+** ~eqls~ - ~(X)~ - Return a one-argument function that tests if its argument is `eql' to X.
+
+** ~runs~ - ~(SEQ &KEY (START 0) END (KEY (FUNCTION IDENTITY)) (TEST (FUNCTION EQL)) COMPARE-LAST (COUNT MOST-POSITIVE-FIXNUM))~ - Return a list of runs of similar elements in SEQ.
+The arguments START, END, and KEY are as for `reduce'.
+
+    (runs '(head tail head head tail))
+    => '((head) (tail) (head head) (tail))
+
+By defualt, the function TEST is called with the first element of the
+run as its first argument.
+
+    (runs #(10 1 5 10 1) :test #'>)
+    => (#(10 1 5) #(10))
+
+COMPARE-LAST changes this behavior to test against the previous
+element of the run:
+
+    (runs #(10 1 5 10 1) :test #'> :compare-last t)
+    (#(10 1) #(5) #(10))
+
+The COUNT argument limits how many runs are returned.
+
+    (runs '(head tail tail head head tail) :count 2)
+    => '((head) (tail tail))
+
+** ~do-splits~ - ~(((LEFT RIGHT &OPTIONAL NOT-AT-END?) (SEQ SPLIT-FN &KEY (START 0) END FROM-END) &OPTIONAL RETURN) &BODY BODY)~ - For each run of elements in SEQ that does not satisfy SPLIT-FN, call the body with LEFT bound to the start of the run and RIGHT bound to the end of the run.
+
+If `split-sequence-if' did not exist, you could define a simple version trivially with `do-splits' and `collecting':
+
+    (defun split-sequence-if (fn seq &key (start 0) end from-end)
+      (collecting
+        (do-splits ((l r) (seq fn :start start :end end :from-end from-end))
+          (collect (subseq seq l r)))))
+
+Providing NOT-AT-END? will bind it as a variable that is T if RIGHT is
+not equal to END, and null otherwise. This can be useful when, in
+processing a sequence, you want to replace existing delimiters, but do
+nothing at the end.
+
+In general `do-splits' will be found useful in situations where you
+want to iterate over subsequences in the manner of `split-sequence',
+but don't actually need to realize the sequences.
+
+** ~relative-pathname~ -  (no docs)
+
+** ~href-default~ - ~(DEFAULT TABLE &REST KEYS)~ - Like `href', with a default.
+As soon as one of KEYS fails to match, DEFAULT is returned.
+
+** ~undeq~ - ~(ITEM QUEUE)~ - Add an item to the front of QUEUE.
+For an empty queue, this does the same thing as ENQ.
+
+For a queue with elements, this adds a new element onto the front of
+queue (like pushing to an ordinary list).
+
+This is called `undeq' because it can be used to undo a `deq'.
+
+** ~callf2~ - ~(FUNCTION ARG1 PLACE &REST ARGS)~ - Like CALLF, but with the place as the second argument.
+
+** ~box~ - ~(UNBOX)~ - Box a value.
+
+** ~deq~ - ~(QUEUE)~ - Remove item from the front of the QUEUE.
+
+** ~occurs~ - ~(NODE TREE &KEY (KEY (FUNCTION IDENTITY)) (TEST (FUNCTION EQL)) (TRAVERSAL :PREORDER))~ - Is NODE present in TREE?
+
+** ~occurs-if~ - ~(TEST TREE &KEY (KEY (FUNCTION IDENTITY)) (TRAVERSAL :PREORDER))~ - Is there a node (leaf or cons) in TREE that satisfies TEST?
+
+** ~maphash-into~ - ~(HASH-TABLE FN &REST SEQS)~ - Map FN over SEQS, updating HASH-TABLE with the results. Return HASH-TABLE.
+
+FN is required to return two values, and key and a value.
+
+** ~run-hook~ - ~(NHOOKS:HOOK &REST NHOOKS::ARGS)~ - Invoke all the HOOK handlers with the default `combination'.
+
+Alternatively, use `funcall' of the hook for the same effect.
+
+** ~unoctets~ - ~(BYTES &KEY BIG-ENDIAN)~ - Concatenate BYTES, an octet vector, into an integer.
+Defaults to little-endian order.
+
+** ~unbits~ - ~(BITS &KEY BIG-ENDIAN)~ - Turn a sequence of BITS into an integer.
+Defaults to little-endian.
+
+** ~nsplice-seqf~ - ~(#:PLACE &REST KEYWORD-ARGS)~ - Modify macro for NSPLICE-seq.
+
+** ~selector~ - ~(KEYFORM FN &BODY CLAUSES)~ - Like `select', but compare using FN.
+
+Note that (unlike `case-using'), FN is not evaluated.
+
+From Zetalisp.
+
+** ~dsu-sort-new~ - ~(SEQ FN &KEY (KEY (FUNCTION IDENTITY)) STABLE)~ - Like `dsu-sort', but returning a new vector.
+
+** ~intersectionp~ - ~(LIST1 LIST2 &KEY KEY TEST TEST-NOT)~ - Return T if LIST1 and LIST2 intersect.
+Equivalent to `(and (intersection list1 list2) t)`, without
+intermediate consing.
+
+Two empty lists are not considered to intersect.
+
+** ~longer~ - ~(X Y)~ - Return the longer of X and Y.
+
+If X and Y are of equal length, return X.
+
+If X and Y are lists, this will only traverse the shorter of X and Y.
+
+** ~car+cdr~ - ~(LIST)~ - Given LIST, return its car and cdr as two values.
+
+** ~string*=~ - ~(SUBSTRING STRING &KEY (START1 0) END1 (START2 0) END2)~ - Is SUBSTRING a substring of STRING?
+
+This is similar, but not identical, to SEARCH.
+
+     (search nil \"foo\") => 0
+     (search \"nil\" \"nil\") => 0
+     (string*= nil \"foo\") => NIL
+     (string*= nil \"nil\") => T
+
+** ~recklessly-continue~ - ~(&OPTIONAL CONDITION)~ - Invokes the last bound RECKLESSLY-CONTINUE restart. Returns NIL if
+no such restart was bound or if the restart failed to transfer control.
+
+** ~partition~ - ~(PRED SEQ &KEY (START 0) END (KEY (FUNCTION IDENTITY)))~ - Partition elements of SEQ into those for which PRED returns true
+and false.
+
+Return two values, one with each sequence.
+
+Exactly equivalent to:
+     (values (remove-if-not predicate seq) (remove-if predicate seq))
+except it visits each element only once.
+
+Note that `partition` is not just `assort` with an up-or-down
+predicate. `assort` returns its groupings in the order they occur in
+the sequence; `partition` always returns the “true” elements first.
+
+    (assort '(1 2 3) :key #'evenp) => ((1 3) (2))
+    (partition #'evenp '(1 2 3)) => (2), (1 3)
+
+** ~exe~ - ~(P)~ - If P, a pathname designator, has no extension, then, on Windows
+only, add an extension of `.exe`.
+
+** ~with-subtype-dispatch~ - ~(TYPE (&REST SUBTYPES) VAR &BODY BODY)~ - Like `with-type-dispatch', but SUBTYPES must be subtypes of TYPE.
+
+Furthermore, if SUBTYPES are not exhaustive, an extra clause will be
+added to ensure that TYPE itself is handled.
+
+** ~repeat-sequence~ - ~(SEQ N)~ - Return a sequence like SEQ, with the same content, but repeated N times.
+
+    (repeat-sequence \"13\" 3)
+    => \"131313\"
+
+The length of the sequence returned will always be the length of SEQ
+times N.
+
+This means that 0 repetitions results in an empty sequence:
+
+    (repeat-sequence \"13\" 0)
+    => \"\"
+
+Conversely, N may be greater than the possible length of a sequence,
+as long as SEQ is empty.
+
+    (repeat-sequence \"\" (1+ array-dimension-limit))
+    => \"\"
+
+** ~assocar~ - ~(ITEM ALIST &REST ARGS &KEY &ALLOW-OTHER-KEYS)~ - Like (car (assoc ...))
+
+** ~qback~ - ~(QUEUE)~ - Get the last element of a queue.
+
+** ~once~ - ~(FN)~ - Return a function that runs FN only once, caching the results
+forever.
+
+** ~round-to~ - ~(NUMBER &OPTIONAL (DIVISOR 1))~ - Like `round', but return the resulting number.
+
+     (round 15 10) => 2
+     (round-to 15 10) => 20
+
+** ~export-only-always~ - ~(SYMBOLS &OPTIONAL (PACKAGE NIL))~ - Like `export-only', but also evaluated at compile time.
+
+** ~reshuffle~ - ~(SEQ &KEY (ELEMENT-TYPE (QUOTE *)))~ - Like `alexandria:shuffle', but non-destructive.
+
+Regardless of the type of SEQ, the return value is always a vector.
+
+If ELEMENT-TYPE is provided, this is the element type (modulo
+upgrading) of the vector returned.
+
+If ELEMENT-TYPE is not provided, then the element type of the vector
+returned is T, if SEQ is not a vector. If SEQ is a vector, then the
+element type of the vector returned is the same as the as the element
+type of SEQ.
+
+** ~with-type-dispatch~ - ~((&REST TYPES) VAR &BODY BODY)~ - A macro for writing fast sequence functions (among other things).
+
+In the simplest case, this macro produces one copy of BODY for each
+type in TYPES, with the appropriate declarations to induce your Lisp
+to optimize that version of BODY for the appropriate type.
+
+Say VAR is a string. With this macro, you can trivially emit optimized
+code for the different kinds of string that VAR might be. And
+then (ideally) instead of getting code that dispatches on the type of
+VAR every time you call `aref', you get code that dispatches on the
+type of VAR once, and then uses the appropriately specialized
+accessors. (But see `with-string-dispatch'.)
+
+But that's the simplest case. Using `with-type-dispatch' also provides
+*transparent portability*. It examines TYPES to deduplicate types that
+are not distinct on the current Lisp, or that are shadowed by other
+provided types. And the expansion strategy may differ from Lisp to
+Lisp: ideally, you should not have to pay for good performance on
+Lisps with type inference with pointless code bloat on other Lisps.
+
+There is an additional benefit for vector types. Around each version
+of BODY, the definition of `vref' is shadowed to expand into an
+appropriate accessor. E.g., within a version of BODY where VAR is
+known to be a `simple-string', `vref' expands into `schar'.
+
+Using `vref' instead of `aref' is obviously useful on Lisps that do
+not do type inference, but even on Lisps with type inference it can
+speed compilation times (compiling `aref' is relatively slow on SBCL).
+
+Within `with-type-dispatch', VAR should be regarded as read-only.
+
+Note that `with-type-dispatch' is intended to be used around
+relatively expensive code, particularly loops. For simpler code, the
+gains from specialized compilation may not justify the overhead of the
+initial dispatch and the increased code size.
+
+Note also that `with-type-dispatch' is relatively low level. You may
+want to use one of the other macros in the same family, such as
+`with-subtype-dispatch', `with-string-dispatch', or so forth.
+
+The design and implementation of `with-type-dispatch' is based on a
+few sources. It replaces a similar macro formerly included in
+Serapeum, `with-templated-body'. One possible expansion is based on
+the `string-dispatch' macro used internally in SBCL. But most of the
+credit should go to the paper \"Fast, Maintable, and Portable Sequence
+Functions\", by Irène Durand and Robert Strandh.
+
+** ~collapse-duplicates~ - ~(SEQ &KEY (KEY (FUNCTION IDENTITY)) (TEST (FUNCTION EQL)))~ - Remove adjacent duplicates in SEQ.
+
+Repetitions that are not adjacent are left alone.
+
+    (remove-duplicates '(1 1 2 2 1 1)) => '(1 2)
+    (collapse-duplicates  '(1 1 2 2 1 1)) => '(1 2 1)
+
+** ~expand-macro-recursively~ - ~(FORM &OPTIONAL ENV)~ - Like `macroexpand', but also expand compiler macros.
+From Swank.
+
+** ~assure~ - ~(TYPE-SPEC &BODY (FORM))~ - Macro for inline type checking.
+
+`assure' is to `the' as `check-type' is to `declare'.
+
+     (the string 1)    => undefined
+     (assure string 1) => error
+
+The value returned from the `assure' form is guaranteed to satisfy
+TYPE-SPEC. If FORM does not return a value of that type, then a
+correctable error is signaled. You can supply a value of the correct
+type with the `use-value' restart.
+
+Note that the supplied value is *not* saved into the place designated
+by FORM. (But see `assuref'.)
+
+Using `values' types is supported, with caveats:
+- The types of `&rest' arguments are enforced using `soft-list-of'.
+- Types defined with `deftype' that expand into values types may not be checked in some Lisps.
+
+From ISLISP.
+
+** ~output-stream~ -  (no docs)
+
+** ~static-binding-flush-error~ - ~(&OPTIONAL (SERAPEUM/STATIC-LET::GROUP NIL SERAPEUM/STATIC-LET::GROUPP))~ - A subtype of error related to attempts to flush static bindings
+in a potentially unsafe way.
+
+** ~date-leap-year-p~ - ~(YEAR)~ - Is YEAR a leap year in the Gregorian calendar?
+
+** ~octet-vector=~ - ~(V1 V2 &KEY (START1 0) END1 (START2 0) END2)~ - Like `string=' for octet vectors.
+
+** ~frequencies~ - ~(SEQ &REST HASH-TABLE-ARGS &KEY (KEY (FUNCTION IDENTITY)) &ALLOW-OTHER-KEYS)~ - Return a hash table with the count of each unique item in SEQ.
+As a second value, return the length of SEQ.
+
+From Clojure.
+
+** ~nth-best~ - ~(N SEQ PRED &KEY (KEY (FUNCTION IDENTITY)))~ - Return the Nth-best element of SEQ under PRED.
+
+Equivalent to
+
+    (elt (sort (copy-seq seq) pred) n)
+
+Or even
+
+    (elt (bestn (1+ n) seq pred) n)
+
+But uses a selection algorithm for better performance than either.
+
+** ~parse-leading-keywords~ - ~(BODY)~ - Given BODY, return two values: a list of the leading inline keyword
+arguments, and the rest of the body.
+
+Inline keywords are like the keyword arguments to individual cases in
+`restart-case'.
+
+** ~nsubseq~ - ~(SEQ START &OPTIONAL END)~ - Return a subsequence that may share structure with SEQ.
+
+Note that `nsubseq' gets its aposematic leading `n' not because it is
+itself destructive, but because, unlike `subseq', destructive
+operations on the subsequence returned may mutate the original.
+
+`nsubseq' also works with `setf', with the same behavior as
+`replace'.
+
+** ~gcs~ - ~(SEQS &KEY (TEST (FUNCTION EQL)))~ - The greatest common suffix of SEQS.
+
+If there is no common suffix, return NIL.
+
+** ~set-hash-table~ - ~(SET &REST HASH-TABLE-ARGS &KEY (TEST (FUNCTION EQL)) (KEY (FUNCTION IDENTITY)) (STRICT T) &ALLOW-OTHER-KEYS)~ - Return SET, a list considered as a set, as a hash table.
+This is the equivalent of Alexandria's `alist-hash-table' and
+`plist-hash-table' for a list that denotes a set.
+
+STRICT determines whether to check that the list actually is a set.
+
+The resulting hash table has the elements of SET for both its keys and
+values. That is, each element of SET is stored as if by
+     (setf (gethash (key element) table) element)
+
+** ~capped-fork2~ - ~(G H)~ - J's capped fork (dyadic).
+
+Like a dyadic fork, but F is omitted.
+
+** ~no~ - ~(X)~ - Another alias for `not' and `null'.
+
+From Arc.
+
+** ~ignoring~ - ~(TYPE &BODY BODY)~ - DEPRECATED: use `alexandria:ignore-some-conditions` instead.
+
+** ~ccase-let~ - ~((VAR EXPR) &BODY CASES)~ - Like (let ((VAR EXPR)) (ccase VAR ...)), with VAR correctable.
+
+** ~defparameter-unbound~ - ~(VAR &BODY (DOCSTRING))~ - Like `defvar-unbound', but ensures VAR is unbound when evaluated.
+
+** ~eval-and-compile~ - ~(&BODY BODY)~ - Emacs's `eval-and-compile'.
+Alias for `eval-always'.
+
+** ~octet-vector~ - ~(&REST ARGS)~ - Constructor an octet vector from ARGS.
+
+** ~tokens~ - ~(STRING &KEY (START 0) END)~ - Separate STRING into tokens.
+Tokens are runs of non-whitespace characters.
+
+    (tokens \"\\\"I'm here,\\\" Tom said presently.\")
+    => (\"\\\"I'm\" \"here,\\\"\" \"Tom\" \"said\" \"presently.\")
+
+Cf. `words'.
+
+** ~->~ - ~(FUNCTIONS (&REST ARGS) &OPTIONAL VALUES)~ - Declaim the ftype of one or multiple FUNCTIONS from ARGS to VALUES.
+
+     (-> mod-fixnum+ (fixnum fixnum) fixnum)
+     (defun mod-fixnum+ (x y) ...)
+
+     (-> (mod-float+ mod-single-float+) (float float) float)
+     (defun mod-float+ (x y) ...)
+     (defun mode-single-float+ (x y) ...)
+
+** ~cond-every~ - ~(&BODY CLAUSES)~ - Like `cond', but instead of stopping after the first clause that
+succeeds, run all the clauses that succeed.
+
+Return the value of the last successful clause.
+
+If a clause begins with `cl:otherwise', it runs only if no preceding
+form has succeeded.
+
+Note that this does *not* do the same thing as a series of `when'
+forms: `cond-every' evaluates *all* the tests *before* it evaluates
+any of the forms.
+
+From Zetalisp.
+
+** ~do-hash-table~ - ~((KEY VALUE TABLE &OPTIONAL RETURN) &BODY BODY)~ - Iterate over hash table TABLE, in no particular order.
+
+At each iteration, a key from TABLE is bound to KEY, and the value of
+that key in TABLE is bound to VALUE.
+
+** ~invalid-number-reason~ - ~(CONDITION)~ - (no docs)
+
+** ~partial~ - ~(FN &REST ARGS)~ - Partial application.
+
+Unlike `alexandria:curry', which is only inlined when you ask it to
+be, `partial' is always inlined if possible.
+
+From Clojure.
+
+** ~eif~ - ~(TEST THEN &OPTIONAL (ELSE NIL))~ - Like `cl:if', but expects two branches.
+
+If there is only one branch a warning is signaled.
+
+This macro is useful when writing explicit decision trees; it will
+warn you if you forget a branch.
+
+Short for “exhaustive if”.
+
+** ~letrec*~ - ~((&REST BINDINGS) &BODY BODY)~ - Like LETREC, but the bindings are evaluated in order.
+See Waddell et al., *Fixing Letrec* for motivation.
+
+Cf. `fbindrec*'.
+
+** ~bits~ - ~(INT &KEY BIG-ENDIAN)~ - Return a bit vector of the bits in INT.
+Defaults to little-endian.
+
+** ~copy-firstn~ - ~(LIST N)~ - Like COPY-LIST, but copies at most the first N conses of LIST. Handles cyclic
+lists gracefully.
+
+** ~static-binding-flush-error-group~ - ~(CONDITION)~ - (no docs)
+
+** ~defunion~ - ~(UNION &BODY VARIANTS)~ - Define an algebraic data type.
+
+Each expression in VARIANTS is either a symbol (in which case it
+defines a unit type, as with `defunit') or a list (in which case it
+defines a read-only structure, as with `defconstructor').
+
+UNION is defined as a type equivalent to the disjunction of all the
+member types. A class is also defined, with the same name, but with
+angle brackets around it.
+
+** ~fbindrec~ - ~(BINDINGS &BODY BODY)~ - Like `fbind', but creates recursive bindings.
+
+The consequences of referring to one binding in the expression that
+generates another are undefined.
+
+** ~hash-table-set~ - ~(TABLE &KEY (STRICT T) (TEST (FUNCTION EQL)) (KEY (FUNCTION IDENTITY)))~ - Return the set denoted by TABLE.
+Given STRICT, check that the table actually denotes a set.
+
+Without STRICT, equivalent to `hash-table-values'.
+
+** ~receive~ - ~(FORMALS EXPR &BODY BODY)~ - Stricter version of `multiple-value-bind'.
+
+Use `receive' when you want to enforce that EXPR should return a
+certain number of values, or a minimum number of values.
+
+If FORMALS is a proper list, then EXPR must return exactly as many
+values -- no more and no less -- as there are variables in FORMALS.
+
+If FORMALS is an improper list (VARS . REST), then EXPR must return at
+least as many values as there are VARS, and any further values are
+bound, as a list, to REST.
+
+Lastly, if FORMALS is a symbol, bind that symbol to all the values
+returned by EXPR, as if by `multiple-value-list'.
+
+From Scheme (SRFI-8).
+
+** ~summing~ - ~(&BODY BODY)~ - Within BODY, bind `sum' to a function that gathers numbers to sum.
+
+If the first form in BODY is a literal number, it is used instead of 0
+as the initial sum.
+
+To see the running sum, call `sum' with no arguments.
+
+Return the total.
+
+** ~queuep~ - ~(SB-KERNEL::OBJECT)~ - Test for a queue.
+
+** ~float-precision-contagion~ - ~(&REST NS)~ - Perform numeric contagion on the elements of NS.
+
+That is, if any element of NS is a float, then every number in NS will
+be returned as \"a float of the largest format among all the
+floating-point arguments to the function\".
+
+This does nothing but numeric contagion: the number of arguments
+returned is the same as the number of arguments given.
+
+** ~nsplice-seq~ - ~(SEQUENCE &KEY NEW (START 0) (END (LENGTH SEQUENCE)))~ - Removes a part of SEQUENCE between START and END and replaces it with
+contents of NEW (if provided). SEQUENCE and NEW may be destroyed in the process
+and the result is allowed to share structure with the original if SEQUENCE is a
+list.
+
+    (nsplice-seq (list 1 2 3 4 5) :new (list :a :b :c) :start 1 :end 1)
+    => (1 :A :B :C 2 3 4 5)
+
+    (nsplice-seq (list 1 2 3 4 5) :new (list :a :b :c) :start 1 :end 4)
+    => (1 :A :B :C 5)
+
+Omitting NEW removes elements from SEQUENCE:
+
+    (nsplice-seq (list 1 2 3 4 5) :start 1 :end 3)
+    => '(1 4 5)
+
+** ~drop-while~ - ~(PRED SEQ)~ - Return the largest possible suffix of SEQ for which PRED returns
+false when called on the first element.
+
+** ~defcondition~ - ~(NAME SUPERS &BODY (SLOTS &REST OPTIONS))~ - Alias for `define-condition'.
+
+Like (define-condition ...), but blissfully conforming to the same
+nomenclatural convention as every other definition form in Common
+Lisp.
+
+** ~heap-extract-all~ - ~(HEAP)~ - Destructively extract all the elements of HEAP from greatest to least.
+
+** ~splice-seqf~ - ~(#:PLACE &REST KEYWORD-ARGS)~ - Modify macro for SPLICE-SEQ.
+
+** ~time-until~ - ~(TIME)~ - Return seconds until TIME.
+
+** ~string-prefix-p~ - ~(PREFIX STRING &KEY (START1 0) END1 (START2 0) END2)~ - Like `string^=', but case-insensitive.
+
+** ~supertypep~ - ~(SUPERTYPE TYPE &OPTIONAL ENV)~ - Is SUPERTYPE a supertype of TYPE?
+That is, is TYPE a subtype of SUPERTYPE?
+
+** ~firstn~ - ~(N LIST)~ - The first N elements of LIST, as a fresh list:
+
+    (firstn 4 (iota 10))
+    => (0 1 2 4)
+
+(I do not know why this extremely useful function did not make it
+into Common Lisp, unless it was deliberately left out as an exercise
+for Maclisp users.)
+
+** ~escape~ - ~(STRING TABLE &KEY (START 0) END STREAM)~ - Write STRING to STREAM, escaping with TABLE.
+
+TABLE should be either a hash table, with characters for keys and
+strings for values, or a function that takes a character and
+returns (only) either a string or null.
+
+That is, the signature of TABLE should be:
+
+    (function (character) (or string null))
+
+where `nil' means to pass the character through unchanged.
+
+STREAM can be used to specify a stream to write to, like the first
+argument to `format'. The default behavior, with no stream specified,
+is to return a string.
+
+** ~boolean-unless~ - ~(BRANCH &BODY BODY)~ - Includes some forms based on whether a macroexpand-time branch is false. The
+first argument must be a symbol naming a branch in the lexically enclosing
+WITH-BOOLEAN form.
+
+It is an error to use this macro outside the lexical environment established by
+WITH-BOOLEAN.
+
+** ~string-replace~ - ~(OLD STRING NEW &KEY (START 0) END STREAM)~ - Like `string-replace-all', but only replace the first match.
+
+** ~parse-real-number~ - ~(STRING &KEY (ORG.MAPCAR.PARSE-NUMBER::START 0) (ORG.MAPCAR.PARSE-NUMBER::END NIL) (ORG.MAPCAR.PARSE-NUMBER::RADIX 10) ((:FLOAT-FORMAT *READ-DEFAULT-FLOAT-FORMAT*) *READ-DEFAULT-FLOAT-FORMAT*))~ - Given a string, and start, end, and radix parameters, produce a number according to the syntax definitions in the Common Lisp Hyperspec -- except for complex numbers.
+
+** ~whitespacep~ - ~(CHAR)~ - Is CHAR whitespace?
+
+Spaces, tabs, any kind of line break, page breaks, and no-break spaces
+are considered whitespace.
+
+** ~href~ - ~(TABLE &REST KEYS)~ - A concise way of doing lookups in (potentially nested) hash tables.
+
+    (href (dict :x 1) :x) => 1
+    (href (dict :x (dict :y 2)) :x :y)  => 2
+
+** ~example~ - ~(&BODY BODY)~ - Like `comment'.
+
+** ~string-count~ - ~(SUBSTRING STRING &KEY (START 0) END)~ - Count how many times SUBSTRING appears in STRING.
+
+** ~defconst~ - ~(SYMBOL INIT &OPTIONAL DOCSTRING)~ - Define a constant, lexically.
+
+`defconst' defines a constant using a strategy similar to `def', so
+you don’t have to +cage+ your constants.
+
+The constant is only redefined on re-evaluation if INIT has a
+different literal representation than the old value.
+
+A constant defined with `defconst' is guaranteed to be available as
+soon as it has been defined (for example, for use with reader macros
+later in the same file). This is not guaranteed to be portably true
+for `defconstant'.
+
+The name is from Emacs Lisp.
+
+** ~plist-values~ - ~(PLIST)~ - Return the values of a plist.
+
+** ~seq=~ - ~(&REST XS)~ - Like `equal', but recursively compare sequences element-by-element.
+
+Two elements X and Y are `seq=' if they are `equal', or if they are
+both sequences of the same length and their elements are all `seq='.
+
+** ~case-let~ - ~((VAR EXPR) &BODY CASES)~ - Like (let ((VAR EXPR)) (case VAR ...)), with VAR read-only.
+
+** ~repeat-until-stable~ - ~(FN X &KEY (TEST (QUOTE EQL)) MAX-DEPTH)~ - Takes a single-argument FN and calls (fn x), then (fn (fn x)), and so on
+until the result doesn't change according to TEST. If MAX-DEPTH is specified
+then FN will be called at most MAX-DEPTH times even if the result is still changing.
+
+Returns two values, the stable result of FN and the remainder of
+MAX-DEPTH. (If this value is 0, the result is unstable.)
+
+** ~eqs~ - ~(X)~ - Return a one-argument function that tests if its argument is `eq' to X.
+
+** ~ensure-vector~ - ~(X)~ - If X is a vector, return it.
+Otherwise, return a vector with X as its sole element.
+
+** ~assocadr~ - ~(ITEM ALIST &REST ARGS &KEY &ALLOW-OTHER-KEYS)~ - Like `assocdr' for alists of proper lists.
+
+     (assocdr 'x '((x 1))) => '(1)
+     (assocadr 'x '((x 1))) => 1
+
+** ~stable-set-difference~ - ~(LIST1 LIST2 &KEY KEY TEST TEST-NOT)~ - Like `set-difference', but preserve the order of LIST1's elements.
+
+** ~whitespace~ -  (no docs)
+
+** ~string-upcase-initials~ - ~(STRING)~ - Return STRING with the first letter of each word capitalized.
+This differs from STRING-CAPITALIZE in that the other characters in
+each word are not changed.
+
+     (string-capitalize \"an ACRONYM\") -> \"An Acronym\")
+     (string-upcase-initials \"an ACRONYM\") -> \"An ACRONYM\")
+
+From Emacs Lisp (where it is simply `upcase-initials').
+
+** ~path-basename~ - ~(PATHNAME)~ - Return the basename, that is:
+- if it's a directory, the name of the directory,
+- if it's a file, the name of the file including its type (extension).
+
+** ~front~ - ~(QUEUE)~ - The first element in QUEUE.
+
+** ~nthrest~ - ~(N LIST)~ - Alias for `nthcdr'.
+
+** ~dispatch-case-error~ - ~(&KEY TYPE SERAPEUM/DISPATCH-CASE::DATUM)~ - (no docs)
+
+** ~delq~ - ~(ITEM LIST)~ - Like (delete ... :test #'eq), but only for lists.
+
+Almost always used as (delq nil ...).
+
+** ~nconc1~ - ~(LIST ITEM)~ - Like `append1', but destructive.
+
+** ~class-name-of~ - ~(X)~ - The class name of the class of X.
+
+** ~batches~ - ~(SEQ N &KEY (START 0) END EVEN)~ - Return SEQ in batches of N elements.
+
+    (batches (iota 11) 2)
+    => ((0 1) (2 3) (4 5) (6 7) (8 9) (10))
+
+If EVEN is non-nil, then SEQ must be evenly divisible into batches of
+size N, with no leftovers.
+
+** ~intersperse~ - ~(NEW-ELT SEQ)~ - Return a sequence like SEQ, but with NEW-ELT inserted between each
+element.
+
+** ~with-standard-input-syntax~ - ~(&BODY BODY)~ - Like `with-standard-io-syntax', but only bind the variables that
+control the reader, not the printer.
+
+This may be preferable to using `with-standard-io-syntax' when loading
+data, as it will not effect how errors are printed, thus preserving
+debugging information.
+
+** ~lines~ - ~(STRING &KEY EOL-STYLE (HONOR-CRLF NIL HONOR-CRLF-P) KEEP-EOLS COUNT)~ - Return a list of the lines in STRING, stripped of any EOL characters
+and including the last nonempty line even if it has no EOL characters,
+or NIL if STRING is empty or NIL.
+
+If COUNT is provided, only the first COUNT lines are returned.
+
+EOL-STYLE can be one of the following:
+
+- NIL, the default, which means split on #\\Newline.
+- :CR, which means split on CR, i.e., #\\Return.
+- :LF, which means split on LF, i.e., #\\Linefeed.
+- :CRLF, which means split on CRLF, i.e., #\\Return followed by
+  #\\Linefeed.
+- :ASCII, which means split on any of CR, LF, and CRLF.
+- :UNICODE, which means split on any of the newlines described in
+  Section 5.8, \"Newline Guidelines\", of the Unicode Standard,
+  available at http://www.unicode.org/versions/latest/.
+  These newlines are CR, LF, CRLF, next line, vertical tab, form feed,
+  line separator, and paragraph separator.
+- A predicate that accepts one CHARACTER and returns non-NIL if the
+  CHARACTER should be split on, NIL otherwise.
+
+:CR, :LF, :CRLF, and :ASCII assume that the Common Lisp implementation
+represents CHARACTERs internally as ASCII or one of its supersets
+(e.g., extended ASCII), and :UNICODE assumes that it represents them
+internally as Unicode (which is also a superset of ASCII).
+Additionally, all of the EOL-STYLEs just mentioned assume that #\\Newline
+is either #\\Return or #\\Linefeed (which can be reasonably expected).
+
+If HONOR-CRLF is supplied, it overrides EOL-STYLE's interpretation of
+CRLF except if EOL-STYLE is NIL or :CRLF, in which case HONOR-CRLF has
+no effect.
+(The :CRLF, :ASCII and :UNICODE EOL-STYLEs honor CRLF by default; the
+rest do not.)
+
+If KEEP-EOLS is non-NIL, LINES does not strip the EOL characters from
+the lines.
+
+Note that Common Lisp implementations may convert some or all of CR, LF,
+and CRLF to #\\Newline when reading from file streams, which causes
+LINES to split the contents of files differently across implementations.
+:CR, :LF, and :CRLF are suitable only when STRING's lines certainly end
+with the corresponding EOL character, but if STRING originates from a
+file stream, LINES splits nothing unless the corresponding EOL character
+is the same as #\\Newline, in which case LINES behaves as if EOL-STYLE
+were NIL (and indeed NIL is preferable to :CR, :LF, and :CRLF, though
+not to :ASCII and :UNICODE).
+
+:UNICODE and :ASCII are the preferred EOL-STYLEs, the former to be
+maximally portable and correct, and the latter when Unicode is inapt.
+With either EOL-STYLE, LINES splits the entire contents of files
+correctly only when the Common Lisp implementation converts only CR,
+only LF, or all of CR, LF, and CRLF, to #\\Newline (and when it
+converts only CR or only LF, #\\Newline must the same as the EOL
+character in question).
+Again with either EOL-STYLE, LINES splits the lines of files, read with
+READ-LINE, correctly only when the implementation converts only LF or
+all of CR, LF, and CRLF to #\\Newline (which must be #\\Linefeed).
+(Note the lack of the only-CR case when reading files line by line.)
+However, any incorrect behavior with :ASCII and :UNICODE is limited to
+LINES returning too many or too few empty lines.
+The former -- which is uncorrectable -- can occur when CR and LF are
+converted, but not CRLF, and the latter -- which can be corrected by
+supplying HONOR-CRLF as NIL -- when CR and CRLF are converted (to
+#\\Return), but not LF, or when LF and CRLF are converted (to
+#\\Linefeed), but not CR.
+
+For example, to split lines on LF and CRLF (eschewing the recommended
+:ASCII and :UNICODE) when the Common Lisp implementation converts only
+LF to #\\Newline (which must be #\\Linefeed), which is the same
+behavior as Rust's std::io::BufRead.lines
+(https://doc.rust-lang.org/std/io/trait.BufRead.html#method.lines) and
+Go's bufio.ScanLines (https://golang.org/pkg/bufio/#ScanLines):
+
+    #.(ecase #\\Newline (#\\Linefeed))
+    (let ((string (coerce '(#\\a #\\Return
+                            #\\b #\\Linefeed
+                            #\\c #\\Return #\\Linefeed
+                            #\\d)
+                          'string)))
+      (serapeum:lines string :eol-style :lf :honor-crlf t))
+    => (\"a^Mb\" \"c\" \"d\")
+    ;; where ^M is #\\Return.
+
+(EOL-STYLE cannot be NIL here because otherwise HONOR-CRLF would have
+no effect.)
+
+To split lines in the same way as Python's str.splitlines
+(https://docs.python.org/3/library/stdtypes.html#str.splitlines) when
+the Common Lisp implementation converts only CR, only LF, or all of CR,
+LF, and CRLF, to #\\Newline (as previously described), but also keeping
+the EOL characters in order to know what they were:
+
+    #.(ecase #\\Newline ((#\\Return #\\Linefeed)))
+    ;; Omit file separator from the example because its textual
+    ;; representation (^\\) can confuse documentation browsers.
+    (let ((string (coerce '(#\\a #.(code-char #x001D)
+                            #\\b #.(code-char #x001E)
+                            #\\c)
+                          'string)))
+      (serapeum:lines
+       string
+       :eol-style (lambda (c)
+                    (serapeum:in
+                     c #\\Return #\\Linefeed
+                     #.(code-char #x000B)   ; #\\Vt (vertical tab)
+                     #\\Page                 ; Form feed
+                     #.(code-char #x001C)   ; #\\Fs (file separator)
+                     #.(code-char #x001D)   ; #\\Gs (group separator)
+                     #.(code-char #x001E)   ; #\\Rs (record separator)
+                     #.(code-char #x0085)   ; Next line
+                     #.(code-char #x2028)   ; #\\Line_Separator
+                     #.(code-char #x2029))) ; #\\Paragraph_Separator
+       :honor-crlf t
+       :keep-eols t))
+    => (\"a^]\" \"b^^\" \"c\")
+    ;; where ^] is group separator and ^^ is record separator.
+
+To omit empty lines (thus uniformizing LINES's behavior across Common
+Lisp implementations):
+
+    #.(ecase #\\Newline ((#\\Return #\\Linefeed)))
+    (let ((string (coerce '(#\\a #\\b #\\c
+                            #\\Return #\\Return #\\Linefeed #\\Linefeed
+                            #\\z)
+                          'string)))
+      (delete-if #'uiop:emptyp (serapeum:lines string :eol-style :unicode)))
+    => (\"abc\" \"z\")
+
+To additionally omit lines consisting only of whitespace:
+
+    #.(ecase #\\Newline ((#\\Return #\\Linefeed)))
+    (let ((string (coerce '(#\\a #\\b #\\c
+                            #\\Return #\\Return #\\Linefeed #\\Linefeed
+                            #\\Space #\\Linefeed
+                            #\\Tab #\\Linefeed
+                            #\\z)
+                          'string)))
+      (delete-if #'uiop:emptyp
+                 (mapcar #'serapeum:trim-whitespace
+                         (serapeum:lines string :eol-style :unicode))))
+    => (\"abc\" \"z\")
+
+** ~same-case-p~ - ~(STRING)~ - Every character with case in STRING has the same case.
+Return `:upper' or `:lower' as appropriate.
+
+** ~fbindrec*~ - ~(BINDINGS &BODY BODY)~ - Like `fbindrec`, but the function defined in each binding can be
+used in successive bindings.
+
+** ~splice-seq~ - ~(SEQUENCE &KEY NEW (START 0) (END (LENGTH SEQUENCE)))~ - Removes a part of SEQUENCE between START and END and replaces it with
+contents of NEW (if provided). Does not modify SEQUENCE or NEW, but the result
+is allowed to share structure with the original if SEQUENCE is a list.
+
+    (splice-seq '(1 2 3 4 5) :new '(:a :b :c) :start 1 :end 1)
+    => (1 :A :B :C 2 3 4 5)
+
+    (splice-seq '(1 2 3 4 5) :new '(:a :b :c) :start 1 :end 4)
+    => (1 :A :B :C 5)
+
+Omitting NEW removes elements from SEQUENCE:
+
+    (splice-seq '(1 2 3 4 5) :start 1 :end 3)
+    => '(1 4 5)
+
+** ~map-tree~ - ~(FUN TREE &KEY (TAG NIL TAGP) (TRAVERSAL :PREORDER))~ - Walk FUN over TREE and build a tree from the results.
+
+The new tree may share structure with the old tree.
+
+     (eq tree (map-tree #'identity tree)) => T
+
+FUN can skip the current subtree with (throw TAG SUBTREE), in which
+case SUBTREE will be used as the value of the subtree.
+
+TRAVERSE can be one of `:preorder', `:postorder', or `:inorder'. The
+default is `:preorder'.
+
+** ~ctypecase-of~ - ~(TYPE KEYPLACE &BODY BODY)~ - Like `etypecase-of', but providing a `store-value' restart to correct KEYPLACE and try again.
+
+** ~define-do-macro~ - ~(NAME BINDS &BODY BODY)~ - Define an iteration macro like `dolist'.
+
+Writing a macro like `dolist' is more complicated than it looks. For
+consistency with the rest of CL, you have to do all of the following:
+
+- The entire loop must be surrounded with an implicit `nil' block.
+- The body of the loop must be an implicit `tagbody'.
+- There must be an optional `return' form which, if given, supplies
+  the values to return from the loop.
+- While this return form is being evaluated, the iteration variables
+  must be bound to `nil'.
+
+Say you wanted to define a `do-hash' macro that iterates over hash
+tables. A full implementation would look like this:
+
+     (defmacro do-hash ((key value hash-table &optional return) &body body)
+       (multiple-value-bind (body decls) (parse-body body)
+         `(block nil
+            (maphash (lambda (,key ,value)
+                       ,@decls
+                       (tagbody
+                          ,@body))
+                     ,hash-table)
+            ,(when return
+               `(let (,key ,value)
+                  ,return)))))
+
+Using `define-do-macro' takes care of all of this for you.
+
+     (define-do-macro do-hash ((key value hash-table &optional return) &body body)
+       `(maphash (lambda (,key ,value)
+                   ,@body)
+                 ,hash-table))
+
+** ~hash-table-test-p~ - ~(TEST)~ - Is TEST a valid hash table test?
+
+** ~take-until~ - ~(PRED SEQ)~ - Like `take-while' with the complement of PRED.
+
+** ~file-pathname~ -  (no docs)
+
+** ~time-since~ - ~(TIME)~ - Return seconds since TIME.
+
+** ~string-suffix-p~ - ~(SUFFIX STRING &KEY (START1 0) END1 (START2 0) END2)~ - Like `string$=', but case-insensitive.
+
+** ~dispatch-caseql-let~ - ~((&REST SERAPEUM/DISPATCH-CASE::BINDINGS) &BODY SERAPEUM/DISPATCH-CASE::CLAUSES)~ - Like `dispatch-case-let', but using the clause syntax of `dispatch-caseql'.
+
+** ~boolean-if~ - ~(BRANCH THEN &OPTIONAL ELSE)~ - Chooses between the forms to include based on whether a macroexpand-time
+branch is true. The first argument must be a symbol naming a branch in the
+lexically enclosing WITH-BOOLEAN form.
+
+It is an error to use this macro outside the lexical environment established by
+WITH-BOOLEAN.
+
+** ~dynamic-closure~ - ~(SYMBOLS FN)~ - Create a dynamic closure.
+
+Some ancient Lisps had closures without lexical binding. Instead, you
+could \"close over\" pieces of the current dynamic environment. When
+the resulting closure was called, the symbols closed over would be
+bound to their storage at the time the closure was created. These
+bindings would persist through subsequent invocations and could be
+mutated. The result was something between a closure and a
+continuation.
+
+This particular piece of Lisp history is worth reviving, I think, if
+only for use with threads. For example, to start a thread and
+propagate the current value of `*standard-output*':
+
+     (bt:make-thread (dynamic-closure '(*standard-output*) (lambda ...)))
+     = (let ((temp *standard-output*))
+         (bt:make-thread
+          (lambda ...
+            (let ((*standard-output* temp))
+              ...))))
+
+** ~opf~ - ~(SERAPEUM/OP::PLACE SERAPEUM/OP::EXPR)~ - Like `(callf PLACE (op EXPR))'.
+From GOO.
+
+** ~read-eval-prefix~ - ~(OBJECT STREAM)~ - A helper for making objects readable.
+
+The obvious way to give an object a readable representation is to use
+the sharp-dot reader macro. However, methods are supposed to consult
+the values of `*print-readably*' and `*read-eval*' before doing so.
+This function takes care of that for you.
+
+If `*print-readably*' is false, return an empty string.
+
+If `*print-readably*' is true, and `*read-eval*' is also true, return
+the string \"#.\".
+
+If `*print-readably*' is true, but `*read-eval*' is not true, signal
+an error.
+
+** ~without-recursion~ - ~((&KEY) &BODY BODY)~ - If BODY calls itself, at any depth, signal a (continuable) error of
+type `recursion-forbidden'.
+
+** ~defsubst~ - ~(NAME PARAMS &BODY BODY)~ - Define an inline function.
+
+     (defsubst fn ...)
+     ≡ (declaim (inline fn))
+       (defun fn ...)
+
+The advantage of a separate defining form for inline functions is that
+you can't forget to declaim the function inline before defining it –
+without which it may not actually end up being inlined.
+
+From Emacs and other ancient Lisps.
+
+** ~static-load-time-value~ - ~(FORM &OPTIONAL (READ-ONLY-P NIL))~ - Like `load-time-value', but signals an error if it cannot preserve identity.
+
+On close reading of the standard, in a function that is evaluated but
+not compiled, it is permissible for implementations to repeatedly
+execute a `load-time-value' form, and in fact some implementations do
+this (including, at the time of writing, ABCL, CLISP, Allegro and
+LispWorks).
+
+When `static-load-time-value' is compiled, it behaves exactly like
+`load-time-value'. Otherwise it conducts a run-time check to ensure
+that `load-time-value' preserves identity.
+
+** ~drop-until~ - ~(PRED SEQ)~ - Like `drop-while' with the complement of PRED.
+
+** ~filterf~ - ~(#:PLACE PRED &REST ARGS)~ - Modify-macro for FILTER.
+The place designed by the first argument is set to the result of
+calling FILTER with PRED, the place, and ARGS.
+
+** ~invalid-number~ -  (no docs)
+
+** ~case-of~ - ~(TYPE X &BODY CLAUSES)~ - Like `case' but may, and must, have an `otherwise' clause.
+
+** ~ensure~ - ~(PLACE &BODY NEWVAL)~ - Essentially (or place (setf place newval)).
+
+PLACE is treated as unbound if it returns `nil', signals
+`unbound-slot', or signals `unbound-variable'.
+
+Note that ENSURE is `setf'-able, so you can do things like
+     (incf (ensure x 0))
+
+Cf. `ensure2'.
+
+** ~fork~ - ~(G F H)~ - Monadic fork.
+
+The monadic fork of f, g, and h is defined as
+
+   (f g h) y <-> (f y) g (h y)
+
+The usual example of a monadic fork is defining the mean. Assuming a
+`sum' function defined as
+
+   (defun sum (xs)
+    (reduce #'+ xs))
+
+you can write a (numerically unstable) `mean' using `fork'.
+
+    (fork #'/ #'sum #'length)
+    (funcall * '(1.0 2.0 3.0 4.0))
+    => 2.5
+
+From J.
+
+** ~finc~ - ~(#:REF0 &OPTIONAL (DELTA 1))~ - Like `incf', but returns the old value instead of the new.
+
+An alternative to using -1 as the starting value of a counter, which
+can prevent optimization.
+
+** ~hook~ - ~(F G)~ - Monadic hook.
+From J.
+
+The hook of f is defined as f(y,g(y)).
+
+For example, you can use a hook to test whether a number is an
+integer, by asking whether it is equal to its own floor.
+
+    (hook #'= #'floor)
+    (funcall * 2.0)
+    => T
+
+AKA Schoenfinkel's S combinator.
+
+** ~defstruct-read-only~ - ~(NAME-AND-OPTS &BODY SLOTS)~ - Easily define a defstruct with no mutable slots.
+
+The syntax of `defstruct-read-only' is as close as possible to that of
+`defstruct'. Given an existing structure definition, you can usually
+make it immutable simply by switching out `defstruct' for
+`defstruct-read-only'.
+
+There are only a few syntactic differences:
+
+1. To prevent accidentally inheriting mutable slots, and preserve its
+   own usefulness as a marker of the programmer's intent,
+   `defstruct-read-only' only allows inheritance from other classes
+   defined using `defstruct-read-only'.
+
+2. The `:type' option may not be used.
+
+3. The `:copier' option is disabled, because it would be useless.
+
+4. Slot definitions can use slot options without having to provide an
+   initform. In this case, any attempt to make an instance of the
+   struct without providing a value for that slot will signal an
+   error.
+
+    (my-slot :type string)
+    ≡ (my-slot (required-argument 'my-slot) :read-only t :type string)
+
+The idea here is simply that an unbound slot in an immutable data
+structure does not make sense.
+
+A read-only struct is always externalizable; it has an implicit
+definition for `make-load-form'.
+
+On Lisps that support it, the structure is also marked as \"pure\":
+that is, instances may be moved into read-only memory.
+
+`defstruct-read-only' is designed to stay as close to the syntax of
+`defstruct' as possible. The idea is to make it easy to flag data as
+immutable, whether in your own code or in code you are refactoring. In
+new code, however, you may sometimes prefer `defconstructor', which is
+designed to facilitate working with immutable data.
+
+** ~unique-name-list~ -  (no docs)
+
+** ~cdr-safe~ - ~(X)~ - The cdr of X, or nil if X is not a cons.
+From Emacs Lisp.
+
+** ~class-name-safe~ - ~(X)~ - The class name of the class of X.
+If X is a class, the name of the class itself.
+
+** ~destructuring-ccase-of~ - ~(TYPE KEYPLACE &BODY BODY)~ - Like `destructuring-case-of', but providing a `store-value' restart
+to collect KEYPLACE and try again.
+
+** ~block-compile~ - ~((&KEY SERAPEUM/INTERNAL-DEFINITIONS::ENTRY-POINTS (BLOCK-COMPILE T)) &BODY SERAPEUM/INTERNAL-DEFINITIONS::BODY)~ - Shorthand for block compilation with `local*'.
+
+Only the functions in ENTRY-POINTS will have global definitions. All
+other functions in BODY will be compiled as purely local functions,
+and all of their calls to one another will be compiled as local calls.
+This includes calls to the entry points, and even self-calls from
+within the entry points.
+
+Note that `declaim' forms occuring inside of BODY will be translated
+into local `declare' forms.
+
+If you pass `:block-compile nil', this macro is equivalent to progn.
+This may be useful during development.
+
+** ~make-hash-table-function~ - ~(&REST ARGS &KEY &ALLOW-OTHER-KEYS)~ - Call `hash-table-function' on a fresh hash table.
+ARGS can be args to `hash-table-function' or args to
+`make-hash-table', as they are disjoint.
+
+** ~defalias~ - ~(ALIAS &BODY (DEF &OPTIONAL DOCSTRING))~ - Define a value as a top-level function.
+
+     (defalias string-gensym (compose #'gensym #'string))
+
+Like (setf (fdefinition ALIAS) DEF), but with a place to put
+documentation and some niceties to placate the compiler.
+
+Note that a function defined with `defalias' is declared `notinline'.
+This is a matter of semantics: before we can assign to the function,
+we must make it assignable (which is what `notinline' means).
+
+Name from Emacs Lisp.
+
+** ~parse-number~ - ~(STRING &KEY (ORG.MAPCAR.PARSE-NUMBER::START 0) (ORG.MAPCAR.PARSE-NUMBER::END NIL) (ORG.MAPCAR.PARSE-NUMBER::RADIX 10) ((:FLOAT-FORMAT *READ-DEFAULT-FLOAT-FORMAT*) *READ-DEFAULT-FLOAT-FORMAT*))~ - Given a string, and start, end, and radix parameters, produce a number according to the syntax definitions in the Common Lisp Hyperspec.
+
+** ~ensure-box~ - ~(X)~ - Return X if boxed, otherwise a box containing X.
+
+** ~parse-positive-real-number~ - ~(STRING &KEY (ORG.MAPCAR.PARSE-NUMBER::START 0) (ORG.MAPCAR.PARSE-NUMBER::END NIL) (ORG.MAPCAR.PARSE-NUMBER::RADIX 10) ((:FLOAT-FORMAT *READ-DEFAULT-FLOAT-FORMAT*) *READ-DEFAULT-FLOAT-FORMAT*))~ - Given a string, and start, end, and radix parameters, produce a number according to the syntax definitions in the Common Lisp Hyperspec -- except for complex numbers and negative numbers.
+
+** ~nth-arg~ - ~(N)~ - Return a function that returns only its NTH argument, ignoring all others.
+
+If you've ever caught yourself trying to do something like
+
+    (mapcar #'second xs ys)
+
+then `nth-arg' is what you need.
+
+If `hash-table-keys' were not already defined by Alexandria, you could
+define it as:
+
+    (defun hash-table-keys (table)
+      (maphash-return (nth-arg 0) table))
+
+** ~destructuring-case-of~ - ~(TYPE EXPR &BODY BODY)~ - Like `destructuring-ecase-of', but an `otherwise' clause must also be supplied.
+
+Note that the otherwise clauses must also be a list:
+
+    ((otherwise &rest args) ...)
+
+** ~same~ - ~(KEY-FN SEQ &KEY (TEST (FUNCTION EQL)) (START 0) END)~ - Return true if KEY-FN returns the same value for any/all members of LIST.
+
+** ~and-let*~ - ~((&REST CLAUSES) &BODY BODY)~ - Scheme's guarded LET* (SRFI-2).
+
+Each clause should have one of the following forms:
+
+- `identifier', in which case IDENTIFIER's value is tested.
+
+- `(expression)', in which case the value of EXPRESSION is tested.
+
+- `(identifier expression)' in which case EXPRESSION is evaluated,
+    and, if its value is not false, IDENTIFIER is bound to that value
+    for the remainder of the clauses and the optional body.
+
+Note that, of course, the semantics are slightly different in Common
+Lisp than in Scheme, because our AND short-circuits on null, not
+false.
+
+Also, this version makes the bindings immutable.
+
+** ~unbox~ - ~(SB-KERNEL:INSTANCE)~ - The value in the box X.
+
+** ~powerset~ - ~(SET)~ - Return the powerset of SET.
+Uses a non-recursive algorithm.
+
+** ~format-file-size-human-readable~ - ~(STREAM FILE-SIZE &KEY FLAVOR (SPACE (EQL FLAVOR :SI)) (SUFFIX (IF (EQL FLAVOR :IEC) \"B\" \"\")))~ - Write FILE-SIZE, a file size in bytes, to STREAM, in human-readable form.
+
+STREAM is interpreted as by `format'.
+
+If FLAVOR is nil, kilobytes are 1024 bytes and SI prefixes are used.
+
+If FLAVOR is `:si', kilobytes are 1000 bytes and SI prefixes are used.
+
+If FLAVOR is `:iec', kilobytes are 1024 bytes and IEC prefixes (Ki,
+Mi, etc.) are used.
+
+If SPACE is non-nil, include a space between the number and the
+prefix. (Defaults to T if FLAVOR is `:si'.)
+
+SUFFIX is the suffix to use; defaults to B if FLAVOR is `:iec',
+otherwise empty.
+
+** ~fnil~ - ~:UNKNOWN~ - Return a function that ORs its arguments with DEFAULTS.
+
+If the first argument is nil, then the first default in DEFAULTS is
+used instead; if the second argument is nil, then the second default
+in DEFAULTS is used instead; and so on until we run out of DEFAULTS.
+
+The minimum arity is equal to the length of DEFAULTS.
+
+This has a compiler macro for reasonable efficiency.
+
+From Clojure.
+
+** ~grow~ - ~(N BY)~ - Increase N by a factor.
+
+** ~run-hook-until-failure~ - ~(HOOK &REST ARGS)~ - Like `run-hook-with-args', but quit once a function returns nil.
+
+** ~file-size-human-readable~ - ~(FILE &KEY FLAVOR SPACE SUFFIX STREAM)~ - Format the size of FILE (in octets) using `format-file-size-human-readable'.
+The size of file is found by `trivial-file-size:file-size-in-octets'.
+
+Inspired by the function of the same name in Emacs.
+
+** ~eval-if-constant~ - ~(FORM &OPTIONAL ENV)~ - Try to reduce FORM to a constant, using ENV.
+If FORM cannot be reduced, return it unaltered.
+
+Also return a second value, T if the form could be reduced to a
+constant, or nil otherwise. (Note that the second value may be T if
+FORM was already a constant; think of it as a \"green light\" to treat
+the value as a constant.)
+
+This is equivalent to testing if FORM is constant, then evaluating it,
+except that FORM is macro-expanded in ENV (taking compiler macros into
+account) before doing the test.
+
+Note that this function may treat a form as constant which would not
+be recognized as such by `constantp', because we also expand compiler
+macros.
+
+** ~unsplice~ - ~(FORM)~ - If FORM is non-nil, wrap it in a list.
+
+This is useful with ,@ in macros, and with `mapcan'.
+
+E.g., instead of writing:
+
+    `(.... ,@(when flag '((code))))
+
+You can write:
+
+    `(.... ,@(unsplice (when flag '(code))))
+
+It may be especially helpful when splicing in variables. Instead of
+writing:
+
+    `(.... ,@(and docstring `(,docstring)))
+
+You can simply write:
+
+   `(.... ,@(unsplice docstring))
+
+From Lparallel.
+
+** ~with-hook-restart~ - ~(&BODY BODY)~ - (no docs)
+
+** ~mapcar-into~ - ~(FN LIST)~ - Like (map-into list fn list).
+
+From PAIP.
+
+** ~sequencep~ - ~(X)~ - Is X a sequence?
+
+** ~with-string-dispatch~ - ~((&REST TYPES) VAR &BODY BODY)~ - Like `with-subtype-dispatch' with an overall type of `string'.
+
+** ~octets~ - ~(N &KEY BIG-ENDIAN)~ - Return N, an integer, as an octet vector.
+Defaults to little-endian order.
+
+** ~no-applicable-method-error~ -  The type of the error signaled by `no-applicable-method' on this
+Lisp. Note this may not be unique.
+
+** ~static-binding-flush-error-all-groups-p~ - ~(CONDITION)~ - (no docs)
+
+** ~etypecase-of~ - ~(TYPE X &BODY BODY)~ - Like `etypecase' but, at compile time, warn unless each clause in
+BODY is a subtype of TYPE, and the clauses in BODY form an exhaustive
+partition of TYPE.
+
+** ~destructuring-ecase-of~ - ~(TYPE EXPR &BODY BODY)~ - Like `destructuring-ecase', from Alexandria, but with exhaustivness
+checking.
+
+TYPE is a designator for a type, which should be defined as `(member
+...)'. At compile time, the macro checks that, taken together, the
+symbol at the head of each of the destructuring lists in BODY form an
+exhaustive partition of TYPE, and warns if it is not so.
+
+** ~mvfoldr~ - ~(FN SEQ &REST SEEDS)~ - Like `(reduce FN SEQ :from-end t)' extended to multiple
+values. Cf. `mvfold'.
+
+** ~write-file-into-stream~ - ~(PATHNAME OUTPUT &KEY (IF-DOES-NOT-EXIST :ERROR) (EXTERNAL-FORMAT :DEFAULT))~ - Write the contents of FILE into STREAM.
+
+** ~queue~ - ~(&REST INITIAL-CONTENTS)~ - Build a new queue with INITIAL-CONTENTS.
+
+** ~prependf~ - ~(#:PLACE &REST LISTS)~ - Modify-macro for prepend. Prepends LISTS to the PLACE designated by the first argument.
+
+** ~string-gensym~ - ~(X)~ - Equivalent to (gensym (string x)).
+
+Generally preferable to calling GENSYM with a string, because it
+respects the current read table.
+
+The alternative to writing `(mapcar (compose #'gensym #'string) ...)'
+in every other macro.
+
+** ~char-case~ - ~(KEYFORM &BODY CLAUSES)~ - Like `case', but specifically for characters.
+Expands into `tree-case'.
+
+As an extension to the generalized `case' syntax, the keys of a clause
+can be specified as a literal string.
+
+    (defun vowel? (c)
+      (char-case c
+        (\"aeiouy\" t)))
+
+Signals an error if KEYFORM does not evaluate to a character.
+
+** ~pop-assoc~ - ~(KEY ALIST &REST ARGS)~ - Like `assoc' but, if there was a match, delete it from ALIST.
+
+From Newlisp.
+
+** ~with-thunk~ - ~((VAR &REST ARGS) &BODY BODY)~ - A macro-writing macro for the `call-with-' style.
+
+In the `call-with-' style of writing macros, the macro is simply a
+syntactic convenience that wraps its body in a thunk and a call to the
+function that does the actual work.
+
+    (defmacro with-foo (&body body)
+      `(call-with-foo (lambda () ,@body)))
+
+The `call-with-' style has many advantages. Functions are easier to
+write than macros; you can change the behavior of a function without
+having to recompile all its callers; functions can be traced, appear
+in backtraces, etc.
+
+But meanwhile, all those thunks are being allocated on the heap. Can
+we avoid this? Yes, but at a high cost in boilerplate: the closure has
+to be given a name (using `flet') so it can be declared
+`dynamic-extent'.
+
+    (defmacro with-foo (&body body)
+      (with-gensyms (thunk)
+        `(flet ((,thunk () ,@body))
+           (declare (dynamic-extent #',thunk))
+           (call-with-foo #',thunk))))
+
+`with-thunk' avoids the boilerplate:
+
+    (defmacro with-foo (&body body)
+      (with-thunk (body)
+        `(call-with-foo ,body)))
+
+It is also possible to construct a \"thunk\" with arguments.
+
+    (with-thunk (body foo)
+      `(call-with-foo ,body))
+    ≡ `(flet ((,thunk (,foo)
+          ,@body))
+        (declare (dynamic-extent #',thunk))
+        (call-with-foo #',thunk))
+
+Someday this may have a better name.
+
+** ~drop-suffix~ - ~(SUFFIX SEQ &KEY (TEST (FUNCTION EQL)))~ - If SEQ ends with SUFFIX, remove it.
+
+** ~dict~ - ~(&REST KEYS-AND-VALUES)~ - A concise constructor for hash tables.
+
+    (gethash :c (dict :a 1 :b 2 :c 3)) => 3, T
+
+By default, return an 'equal hash table containing each successive
+pair of keys and values from KEYS-AND-VALUES.
+
+If the number of KEYS-AND-VALUES is odd, then the first argument is
+understood as the test.
+
+     (gethash \"string\" (dict \"string\" t)) => t
+     (gethash \"string\" (dict 'eq \"string\" t)) => nil
+
+Note that `dict' can also be used for destructuring (with Trivia).
+
+    (match (dict :x 1)
+      ((dict :x x) x))
+    => 1
+
+** ~package-names~ - ~(PACKAGE)~ - Return a list of all the names of PACKAGE: its name and its nicknames.
+
+** ~ellipsize~ - ~(STRING N &KEY (ELLIPSIS \"...\"))~ - If STRING is longer than N, truncate it and append ELLIPSIS.
+
+Note that the resulting string is longer than N by the length of
+ELLIPSIS, so if N is very small the string may come out longer than it
+started.
+
+     (ellipsize \"abc\" 2)
+     => \"ab...\"
+
+From Arc.
+
+** ~chomp~ - ~(STRING &OPTIONAL (SUFFIXES (QUOTE (\"
+\" \"
+\" \"\")) SUFFIXES-SUPPLIED-P))~ - If STRING ends in one of SUFFIXES, remove that suffix.
+
+SUFFIXES defaults to a Lisp newline, a literal line feed, a literal
+carriage return, or a literal carriage return followed by a literal
+line feed.
+
+Takes care that the longest suffix is always removed first.
+
+** ~with-boolean~ - ~((&REST BRANCHES) &BODY BODY)~ - Establishes a lexical environment in which it is possible to use
+macroexpand-time branching. Within the lexical scope of
+`with-boolean', it is possible to use `boolean-if', `boolean-when',
+and `boolean-unless' to conditionalize whether some forms are included
+at compilation time. (You may also use `:if', `:when', or `:unless'
+for brevity.)
+
+The first argument must be a list of symbols which name variables. This macro
+will expand into a series of conditionals
+
+** ~keep~ - ~(ITEM SEQ &REST ARGS &KEY (TEST (FUNCTION EQL)) FROM-END KEY COUNT &ALLOW-OTHER-KEYS)~ - Almost, but not quite, an alias for `remove` with `:test-not` instead of `:test`.
+
+The difference is the handling of COUNT. For keep, COUNT is the number of items to keep, not remove.
+
+     (remove 'x '(x y x y x y) :count 2)
+     => '(y y x y)
+
+     (keep 'x '(x y x y x y) :count 2)
+     => '(x x)
+
+`keep' becomes useful with the KEY argument:
+
+     (keep 'x ((x 1) (y 2) (x 3)) :key #'car)
+     => '((x 1) (x 3))
+
+** ~partition-declarations~ - ~(XS DECLARATIONS &OPTIONAL ENV)~ - Split DECLARATIONS into those that do and do not apply to XS.
+Return two values, one with each set.
+
+Both sets of declarations are returned in a form that can be spliced
+directly into Lisp code:
+
+     (locally ,@(partition-declarations vars decls) ...)
+
+** ~nstring-invert-case~ - ~(STRING)~ - Destructive version of `string-invert-case'.
+
+** ~nix~ - ~(&REST PLACES)~ - Set PLACES to nil and return the old value(s) of PLACES.
+
+If there is more than one PLACE, return their old values as multiple values.
+
+This may be more efficient than (shiftf place nil), because it only
+sets PLACE when it is not already null.
+
+** ~copy-queue~ - ~(QUEUE)~ - Copy QUEUE as another queue.
+
+** ~trim-whitespace~ - ~(STRING)~ - STRING without whitespace at ends.
+
+** ~si-prefix~ - ~(N &KEY (BASE 1000))~ - Given a number, return the prefix of the nearest SI unit.
+
+Three values are returned: the long form, the short form, and the
+multiplying factor.
+
+    (si-prefix 1001) => \"kilo\", \"k\", 1000d0
+
+BASE can be 1000, 10, 1024, or 2. 1000 is the default, and prefixes
+start at kilo and milli. Base 10 is mostly the same, except the
+prefixes centi, deci, deca and hecto are also used. Base 1024 uses the
+same prefixes as 1000, but with 1024 as the base, as in vulgar file
+sizes. Base 2 uses the IEC binary prefixes.
+
+** ~of-length~ - ~(LENGTH)~ - Return a predicate that returns T when called on a sequence of
+length LENGTH.
+
+    (funcall (of-length 3) '(1 2 3)) => t
+    (funcall (of-length 1) '(1 2 3)) => nil
+
+** ~mvlet*~ - ~((&REST BINDINGS) &BODY BODY)~ - Expand a series of nested `multiple-value-bind' forms.
+
+`mvlet*' is similar in intent to Scheme’s `let-values', but with a
+different and less parenthesis-intensive syntax. Each binding is a
+list of
+
+    (var var*... expr)
+
+A simple example should suffice to show both the implementation and
+the motivation:
+
+    (defun uptime (seconds)
+      (mvlet* ((minutes seconds (truncate seconds 60))
+               (hours minutes (truncate minutes 60))
+               (days hours (truncate hours 24)))
+        (declare ((integer 0 *) days hours minutes seconds))
+        (fmt \"~d day~:p, ~d hour~:p, ~d minute~:p, ~d second~:p\"
+             days hours minutes seconds)))
+
+Note that declarations work just like `let*'.
+
+** ~ensure-prefix~ - ~(PREFIX SEQ &KEY (TEST (FUNCTION EQL)))~ - Return a sequence like SEQ, but starting with PREFIX.
+If SEQ already starts with PREFIX, return SEQ.
+
+** ~expect-single-form~ - ~(EXP)~ - Sanity-check EXP, a macro expansion, assuming it is supposed to be
+  a single form suitable for inserting intact.
+
+** ~string-join~ - ~(STRINGS SEPARATOR &KEY STREAM END)~ - Join strings in STRINGS, separated by SEPARATOR.
+
+SEPARATOR can be any string designator.
+
+If STREAM is provided, write to STREAM rather than returning a string.
+
+If END is provided, then insert SEPARATOR after the last string, as
+well as between strings.
+
+Equivalent to `(mapconcat #'string STRINGS SEPARATOR)'.
+
+** ~reuse-cons~ - ~(X Y X-Y)~ - If X and Y are the car and cdr of X-Y, return X-Y.
+
+Otherwise, return a fresh cons of X and Y.
+
+** ~eval-always~ - ~(&BODY BODY)~ - Shorthand for
+        (eval-when (:compile-toplevel :load-toplevel :execute) ...)
+
+** ~queue-empty-p~ - ~(QUEUE)~ - Is QUEUE empty?
+
+** ~dictq~ - ~(&REST KEYS-AND-VALUES)~ - A literal hash table.
+Like `dict', but the keys and values are implicitly quoted, and the
+hash table is inlined as a literal object.
+
+** ~*hook*~ -  The hook currently being run.
+
+** ~deltas~ - ~(SEQ &OPTIONAL (FN (FUNCTION -)))~ - Return the successive differences in SEQ.
+
+     (deltas '(4 9 -5 1 2))
+     => '(4 5 -14 6 1)
+
+Note that the first element of SEQ is also the first element of the
+return value.
+
+By default, the delta is the difference, but you can specify another
+function as a second argument:
+
+    (deltas '(2 4 2 6) #'/)
+    => '(2 2 1/2 3)
+
+From Q.
+
+** ~~>~ - ~(NEEDLE &REST HOLES)~ - Threading macro from Clojure (by way of Racket).
+
+Thread NEEDLE through HOLES, where each hole is either a
+symbol (equivalent to `(hole needle)`) or a list (equivalent to `(hole
+needle args...)`).
+
+As an extension, an underscore in the argument list is replaced with
+the needle, so you can pass the needle as an argument other than the
+first.
+
+** ~split-sequence-if~ - ~(SPLIT-SEQUENCE::PREDICATE SEQUENCE &KEY (SPLIT-SEQUENCE::START 0) (SPLIT-SEQUENCE::END NIL) (SPLIT-SEQUENCE::FROM-END NIL) (COUNT NIL) (SPLIT-SEQUENCE::REMOVE-EMPTY-SUBSEQS NIL) (SPLIT-SEQUENCE::KEY (FUNCTION IDENTITY)))~ - Return a list of subsequences in seq delimited by items satisfying
+predicate.
+If :remove-empty-subseqs is NIL, empty subsequences will be included
+in the result; otherwise they will be discarded.  All other keywords
+work analogously to those for CL:SUBSTITUTE-IF.  In particular, the
+behaviour of :from-end is possibly different from other versions of
+this function; :from-end values of NIL and T are equivalent unless
+:count is supplied. :count limits the number of subseqs in the main
+resulting list. The second return value is an index suitable as an
+argument to CL:SUBSEQ into the sequence indicating where processing
+stopped.
+
+** ~juxt~ - ~(&REST FNS)~ - Clojure's `juxt'.
+
+Return a function which returns a list where each element is the
+result of applying one of FNS to the arguments.
+
+It’s actually quite simple, but easier to demonstrate than to explain.
+The classic example is to use `juxt` to implement `partition`:
+
+    (defalias partition* (juxt #'filter #'remove-if))
+    (partition* #'evenp '(1 2 3 4 5 6 7 8 9 10))
+    => '((2 4 6 8 10) (1 3 5 7 9))
+
+The general idea is that `juxt` takes things apart.
+
+** ~concat~ - ~(&REST STRINGS)~ - Abbreviation for (concatenate 'string ...).
+
+From Emacs Lisp.
+
+** ~hook2~ - ~(F G)~ - Dyadic hook.
+
+The usual (only?) example of a dyadic hook is an `hour' function that
+takes an hour and a count of minutes and returns a fractional count of
+hours.
+
+    (hook2 #'+ (partial (flip #'/) 60))
+    (funcall * 3.0 15.0)
+    => 3.25
+
+From J.
+
+** ~dispatch-caseql~ - ~((&REST SERAPEUM/DISPATCH-CASE::EXPRS-AND-TYPES) &BODY SERAPEUM/DISPATCH-CASE::CLAUSES)~ - Like `dispatch-case', but types in clauses are implicitly wrapped in `eql'.
+The syntax of `dispatch-caseql' is tohus closer to `case' than to
+`typecase'.
+
+** ~tree-ecase~ - ~(KEYFORM &BODY CLAUSES)~ - Like `tree-case', but signals an error if KEYFORM does not match
+any of the provided cases.
+
+** ~qprepend~ - ~(LIST QUEUE)~ - Insert ITEMS at the beginning of QUEUE.
+
+** ~qconc~ - ~(QUEUE LIST)~ - Destructively concatenate LIST onto the end of QUEUE.
+Return the queue.
+
+** ~shape~ - ~(ARRAY)~ - Return the shape of ARRAY, a generalized array.
+For a true array this is equivalent to `array-dimensions'.
+
+** ~nub~ - ~(SEQ &REST ARGS &KEY START END KEY (TEST (FUNCTION EQUAL)))~ - Remove duplicates from SEQ, starting from the end.
+That means, for each duplicate, the first occurrence will be the kept, and subsequent occurrences will be discarded.
+
+TEST defaults to `equal'.
+
+From Haskell.
+
+** ~input-stream~ -  (no docs)
+
+** ~defmethods~ - ~(CLASS (SELF . SLOTS) &BODY BODY)~ - Concisely define methods that specialize on the same class.
+
+You can already use `defgeneric' to define an arbitrary number of
+methods on a single generic function without having to repeat the name
+of the function:
+
+    (defgeneric fn (x)
+      (:method ((x string)) ...)
+      (:method ((x number)) ...))
+
+Which is equivalent to:
+
+    (defgeneric fn (x))
+
+    (defmethod fn ((x string))
+      ...)
+
+    (defmethod fn ((x number))
+      ...)
+
+Similarly, you can use `defmethods' to define methods that specialize
+on the same class, and access the same slots, without having to
+repeat the names of the class or the slots:
+
+    (defmethods my-class (self x y)
+      (:method initialize-instance :after (self &key)
+        ...)
+      (:method print-object (self stream)
+        ...)
+      (:method some-method ((x string) self)
+        ...))
+
+Which is equivalent to:
+
+    (defmethod initialize-instance :after ((self my-class) &key)
+      (with-slots (x y) self
+        ...))
+
+    (defmethod print-object ((self my-class) stream)
+      (with-slots (x y) self
+        ...))
+
+    (defmethod some-method ((x string) (self my-class))
+      (with-slots (y) self              ;!
+        ...))
+
+Note in particular that `self' can appear in any position, and that
+you can freely specialize the other arguments.
+
+Just as in `with-slots', slots can be renamed:
+
+    (defmethods my-class (self (abscissa x) (ordinate y))
+      ...)
+
+You can also use `defmethods' in place of `with-accessors', by using a
+function-quote:
+
+    (defmethods my-class (self (x #'my-class-x)
+                               (y #'my-class-y))
+      ...)
+
+(The difference from using `with-slots' is the scope of the slot
+bindings: they are established *outside* of the method definition,
+which means argument bindings shadow slot bindings:
+
+    (some-method \"foo\" (make 'my-class :x \"bar\"))
+    => \"foo\"
+
+Since slot bindings are lexically outside the argument bindings, this
+is surely correct, even if it makes `defmethods' slightly harder to
+explain in terms of simpler constructs.)
+
+Is `defmethods' trivial? Yes, in terms of its implementation. This
+docstring is far longer than the code it documents. But you may find
+it does a lot to keep heavily object-oriented code readable and
+organized, without any loss of power.
+
+Note that `defmethods' may also be useful when converting state
+machines written using `labels' into an object-oriented style.
+
+This construct is very loosely inspired by impl blocks in Rust.
+
+** ~comment~ - ~(&BODY BODY)~ - A macro that ignores its body and does nothing. Useful for
+comments-by-example.
+
+Also, as noted in EXTENSIONS.LISP of 1992, \"This may seem like a
+silly macro, but used inside of other macros or code generation
+facilities it is very useful - you can see comments in the (one-time)
+macro expansion!\"
+
+** ~hash-table-function~ - ~(HASH-TABLE &KEY READ-ONLY STRICT (KEY-TYPE (QUOTE T)) (VALUE-TYPE (QUOTE T)) STRICT-TYPES)~ - Return a function for accessing HASH-TABLE.
+
+Calling the function with a single argument is equivalent to `gethash'
+against a copy of HASH-TABLE at the time HASH-TABLE-FUNCTION was
+called.
+
+    (def x (make-hash-table))
+
+    (funcall (hash-table-function x) y)
+    ≡ (gethash y x)
+
+If READ-ONLY is nil, then calling the function with two arguments is
+equivalent to `(setf (gethash ...))' against HASH-TABLE.
+
+If STRICT is non-nil, then the function signals an error if it is
+called with a key that is not present in HASH-TABLE. This applies to
+setting keys, as well as looking them up.
+
+The function is able to restrict what types are permitted as keys and
+values. If KEY-TYPE is specified, an error will be signaled if an
+attempt is made to get or set a key that does not satisfy KEY-TYPE. If
+VALUE-TYPE is specified, an error will be signaled if an attempt is
+made to set a value that does not satisfy VALUE-TYPE. However, the
+hash table provided is *not* checked to ensure that the existing
+pairings KEY-TYPE and VALUE-TYPE -- not unless STRICT-TYPES is also
+specified.
+
+** ~halves~ - ~(SEQ &OPTIONAL SPLIT)~ - Return, as two values, the first and second halves of SEQ.
+SPLIT designates where to split SEQ; it defaults to half the length,
+but can be specified.
+
+If SPLIT is not provided, the length is halved using `ceiling' rather
+than `truncate'. This is on the theory that, if SEQ is a
+single-element list, it should be returned unchanged.
+
+If SPLIT is negative, then the split is determined by counting |split|
+elements from the right (or, equivalently, length+split elements from
+the left). Note that providing a negative argument to a list works
+similarly to `butlast' (a single traversal).
+
+** ~vect~ - ~(&REST INITIAL-CONTENTS)~ - Succinct constructor for adjustable vectors with fill pointers.
+
+    (vect 1 2 3)
+    ≡ (make-array 3
+            :adjustable t
+            :fill-pointer 3
+            :initial-contents (list 1 2 3))
+
+The fill pointer is placed after the last element in INITIAL-CONTENTS.
+
+As a constructor this also has a matching definition as a Trivia
+pattern for destructing.
+
+** ~find-class-safe~ - ~(X &OPTIONAL ENV)~ - The class designated by X.
+If X is a class, it designates itself.
+
+** ~parse-method-args~ -  (no docs)
+
+** ~split-sequence-if-not~ - ~(SPLIT-SEQUENCE::PREDICATE SEQUENCE &KEY (SPLIT-SEQUENCE::START 0) (SPLIT-SEQUENCE::END NIL) (SPLIT-SEQUENCE::FROM-END NIL) (COUNT NIL) (SPLIT-SEQUENCE::REMOVE-EMPTY-SUBSEQS NIL) (SPLIT-SEQUENCE::KEY (FUNCTION IDENTITY)))~ - Return a list of subsequences in seq delimited by items satisfying
+(CL:COMPLEMENT predicate).
+If :remove-empty-subseqs is NIL, empty subsequences will be included
+in the result; otherwise they will be discarded.  All other keywords
+work analogously to those for CL:SUBSTITUTE-IF-NOT.  In particular,
+the behaviour of :from-end is possibly different from other versions
+of this function; :from-end values of NIL and T are equivalent unless
+:count is supplied. :count limits the number of subseqs in the main
+resulting list. The second return value is an index suitable as an
+argument to CL:SUBSEQ into the sequence indicating where processing
+stopped.
+
+** ~package-exports~ - ~(&OPTIONAL (PACKAGE *PACKAGE*))~ - Return a list of the symbols exported by PACKAGE.
+
+** ~make~ - ~(CLASS &REST INITARGS &KEY &ALLOW-OTHER-KEYS)~ - Shorthand for `make-instance'.
+Unlike `make-instance', this is not a generic function, so it can do
+more compile-time argument checking.
+
+Also unlike `make-instance', `make' is defined to always return a
+single value. It also declares its return type (as `standard-object',
+or also `structure-object' if the implementation allows
+`make-instance' on structures). This may allow the compiler to warn
+you if you (e.g.) try to treat the return value as a list or number.
+
+After Eulisp.
+
+** ~with-two-arg-test~ - ~((TEST) &BODY BODY)~ - Specialize BODY on the most common two-arg test functions.
+
+** ~fbind~ - ~(BINDINGS &BODY BODY)~ - Binds values in the function namespace.
+
+That is,
+     (fbind ((fn (lambda () ...))))
+     ≡ (flet ((fn () ...))),
+
+except that a bare symbol in BINDINGS is rewritten as (symbol
+symbol).
+
+** ~variadic->unary~ - ~(FN)~ - Return a function that takes a single argument, a list, and
+applies FN to it.
+
+Practically equivalent to `(curry #'apply FN arguments...)'.
+
+** ~if-not-let~ - ~(BINDINGS &BODY (THEN-FORM &OPTIONAL ELSE-FORM))~ - Creates new variable bindings, and conditionally executes either
+THEN-FORM or ELSE-FORM. ELSE-FORM defaults to NIL.
+BINDINGS must be either single binding of the form:
+ (variable initial-form)
+or a list of bindings of the form:
+ ((variable-1 initial-form-1)
+  (variable-2 initial-form-2)
+  ...
+  (variable-n initial-form-n))
+All initial-forms are executed sequentially in the specified order. Then all
+the variables are bound to the corresponding values.
+If one of the variables was bound to NIL, the THEN-FORM is executed with the
+bindings in effect, otherwise the ELSE-FORM is executed with the bindings in
+effect.
+Adapted from Alexandria if-let.
+
+** ~string-replace-all~ - ~(OLD STRING NEW &KEY (START 0) END STREAM COUNT)~ - Do search-and-replace for constant strings.
+
+Note that START and END only affect where the replacements are made:
+the part of the string before START, and the part after END, are
+always included verbatim.
+
+     (string-replace-all \"old\" \"The old old way\" \"new\"
+                         :start 3 :end 6)
+     => \"The new old way\"
+
+COUNT can be used to limit the maximum number of occurrences to
+replace. If COUNT is not specified, every occurrence of OLD between
+START and END is replaced with NEW.
+
+    (string-replace-all \"foo\" \"foo foo foo\" \"quux\")
+    => \"quux quux quux\"
+
+    (string-replace-all \"foo\" \"foo foo foo\" \"quux\" :count 2)
+    => \"quux quux foo\"
+
+STREAM can be used to specify a stream to write to. It is resolved
+like the first argument to `format'.
+
+** ~static-let*~ - ~((&REST SERAPEUM/STATIC-LET::BINDINGS) &BODY SERAPEUM/STATIC-LET::BODY)~ - Like `let*', except the variables are only initialized once and
+retain their values between different invocations of `body'.
+
+Every static binding is similar to a `let' binding, except it can have
+additional keyword arguments:
+
+- `type' Denotes the type of the variable.
+- `once' If true, then binding initialization and mutation will be
+         thread-safe.
+- `flush' If true, this binding will be flushable. Defaults to true.
+- `in' Denotes the static binding group in which the binding will be
+       placed for flushing. Defaults to the value of `*package'.
+- `read-only' If true, then the binding cannot be mutated with `setf'.
+
+Static bindings can be flushed via `flush-static-binding-group' and
+`flush-all-static-binding-groups'; the latter is automatically pushed
+into `uiop:*dump-image-hooks*' by Serapeum.
+
+An unflushable static binding will carry its value over into dumped
+Lisp binaries.
+
+** ~undisplace-array~ - ~(ARRAY)~ - Recursively get the fundamental array that ARRAY is displaced to.
+
+Return the fundamental array, and the start and end positions into it.
+
+Borrowed from Erik Naggum.
+
+** ~econd-let~ - ~(SYMBOL &BODY CLAUSES)~ - Like `cond-let' for `econd'.
+
+** ~single~ - ~(SEQ)~ - Is SEQ a sequence of one element?
+
+** ~fbind*~ - ~(BINDINGS &BODY BODY)~ - Like `fbind', but creates bindings sequentially.
+
+** ~defconstructor~ - ~(TYPE-NAME &BODY SLOTS)~ - A variant of `defstruct' for modeling immutable data.
+
+The structure defined by `defconstructor' has only one constructor,
+which takes its arguments as required arguments (a BOA constructor).
+Thus, `defconstructor' is only appropriate for data structures that
+require no initialization.
+
+The printed representation of an instance resembles its constructor:
+
+    (person \"Common Lisp\" 33)
+    => (PERSON \"Common Lisp\" 33)
+
+While the constructor is BOA, the copier takes keyword arguments,
+allowing you to override the values of a selection of the slots of the
+structure being copied, while retaining the values of the others.
+
+    (defconstructor person
+      (name string)
+      (age (integer 0 1000)))
+
+    (defun birthday (person)
+      (copy-person person :age (1+ (person-age person))))
+
+    (birthday (person \"Common Lisp\" 33))
+    => (PERSON \"Common Lisp\" 34)
+
+Obviously the copier becomes more useful the more slots the type has.
+
+When `*print-readably*' is true, the printed representation is
+readable:
+
+    (person \"Common Lisp\" 33)
+    => #.(PERSON \"Common Lisp\" 33)
+
+(Why override how a structure is normally printed? Structure types
+are not necessarily readable unless they have a default (`make-X')
+constructor. Since the type defined by `defconstructor' has only one
+constructor, we have to take over to make sure it re-readable.)
+
+Besides being re-readable, the type is also externalizable, with a
+method for `make-load-form':
+
+    (make-load-form (person \"Common Lisp\" 33))
+    => (PERSON \"Common Lisp\" 33)
+
+Users of Trivia get an extra benefit: defining a type with
+`defconstructor' also defines a symmetrical pattern for destructuring
+that type.
+
+    (trivia:match (person \"Common Lisp\" 33)
+      ((person name age)
+       (list name age)))
+    => (\"Common Lisp\" 33)
+
+Note that the arguments to the pattern are optional:
+
+    (trivia:match (person \"Common Lisp\" 33)
+      ((person name) name))
+    => \"Common Lisp\"
+
+If you don't use Trivia, you can still do destructuring with
+`deconstruct', which returns the slots of a constructor as multiple
+values:
+
+    (deconstruct (person \"Common Lisp\" 33))
+    => \"Common Lisp\", 33
+
+Note also that no predicate is defined for the type, so to test for
+the type you must either use `typep' or pattern matching as above.
+
+While it is possible to inherit from a type defined with
+`defconstructor' (this is Lisp, I can't stop you), it's a bad idea. In
+particular, on Lisps which support it, a type defined with
+`defconstructor' is declared to be frozen (sealed), so your new
+subtype may not be recognized in type tests that have already been
+compiled.
+
+Because `defconstructor' is implemented on top of
+`defstruct-read-only', it shares the limitations of
+`defstruct-read-only'. In particular it cannot use inheritance.
+
+The design of `defconstructor' is mostly inspired by Scala's [case
+classes](https://docs.scala-lang.org/tour/case-classes.html), with
+some implementation tricks from `cl-algebraic-data-type'.
+
+** ~qpreconc~ - ~(LIST QUEUE)~ - Destructively splice LIST at the beginning of QUEUE.
+
+** ~with-collectors~ - ~((&REST COLLECTORS) &BODY BODY)~ - Like `with-collector', with multiple collectors.
+Returns the final value of each collector as multiple values.
+
+     (with-collectors (x y z)
+       (x 1)
+       (y 2)
+       (z 3))
+     => '(1) '(2) '(3)
+
+** ~with-vector-dispatch~ - ~((&REST TYPES) VAR &BODY BODY)~ - Like `with-subtype-dispatch' with an overall type of `vector'.
+
+** ~shortest~ - ~(SEQS)~ - Return the shortest seq in SEQS.
+
+If there are lists in SEQS, then the total number of conses traversed
+will never exceed n*m, where n is the number of lists in SEQS and m
+is the length of the shortest list.
+
+** ~op~ - ~(&BODY SERAPEUM/OP::BODY)~ - GOO's simple macro for positional lambdas.
+
+An OP is like a lambda without an argument list. Within the body of the OP
+form, an underscore introduces a new argument.
+
+     (reduce (op (set-intersection _ _ :test #'equal))
+             sets)
+
+You can refer back to each argument by number, starting with _1.
+
+     (funcall (op (+ _ _1)) 2) => 4
+
+You can also use positional arguments directly:
+
+     (reduce (op (funcall _2 _1)) ...)
+
+Argument lists can be sparse:
+
+     (apply (op (+ _1 _3 _5)) '(1 2 3 4 5)) => 9
+
+Note that OP with a single argument is equivalent to CONSTANTLY:
+
+     (funcall (op 1)) => 1
+
+and that OP with a single placeholder is equivalent to IDENTITY:
+
+     (funcall (op _) 1) => 1
+
+OP can also be used to define variadic functions by using _* as the
+placeholder. It is not necessary to use APPLY.
+
+     (apply (op (+ _*)) '(1 2 3 4)) => 10
+
+OP is intended for simple functions -- one-liners. Parameters are
+extracted according to a depth-first walk of BODY. Macro expansion
+may, or may not, be done depending on the implementation; it should
+not be relied on. Lexical bindings may, or may not, shadow
+placeholders -- again, it depends on the implementation. (This means,
+among other things, that nested use of `op' is not a good idea.)
+Because of the impossibility of a truly portable code walker, `op'
+will never be a true replacement for `lambda'. But even if it were
+possible to do better, `op' would still only be suited for one-liners.
+If you need more than a one-liner, then you should be giving your
+parameters names.
+
+(One thing you *can* count on is the ability to use `op' with
+quasiquotes. If using placeholders inside quasiquotes does not work on
+your Lisp implementation, that's a bug, not a limitation.)
+
+** ~string-token-p~ - ~(TOKEN STRING &KEY (START1 0) END1 (START2 0) END2)~ - Like `string~=', but case-insensitive.
+
+** ~deconstruct~ - ~(X)~ - If X is a type defined with `defconstructor', return its slots as
+multiple values.
+
+** ~string-case~ - ~(STRINGFORM &BODY CLAUSES)~ - Efficient `case'-like macro with string keys.
+
+Note that string matching is always case-sensitive.
+
+This uses Paul Khuong's `string-case' macro internally.
+
+** ~in~ - ~(X &REST ITEMS)~ - Is X equal to any of ITEMS?
+
+`(in x xs...)` is always equivalent to `(and (member x xs :test equal) t)`,
+but `in` can sometimes compile to more efficient code when the
+candidate matches are constant.
+
+From Arc.
+
+** ~def~ - ~(VAR &BODY (&OPTIONAL VAL DOCUMENTATION))~ - The famous \"deflex\".
+
+Define a top level (global) lexical VAR with initial value VAL,
+which is assigned unconditionally as with DEFPARAMETER. If a DOC
+string is provided, it is attached to both the name |VAR| and the name
+*STORAGE-FOR-DEFLEX-VAR-|VAR|* as a documentation string of kind
+'VARIABLE. The new VAR will have lexical scope and thus may be
+shadowed by LET bindings without affecting its dynamic (global) value.
+
+The original `deflex' is due to Rob Warnock.
+
+This version of `deflex' differs from the original in the following ways:
+
+- It is possible for VAL to close over VAR.
+- On implementations that support it (SBCL, CCL, and LispWorks, at the
+moment) this version creates a backing variable that is \"global\" or
+\"static\", so there is not just a change in semantics, but also a
+gain in efficiency.
+- If VAR is a list that starts with `values`, each element is treated as
+a separate variable and initialized as if by `(setf (values VAR...)
+VAL)`.
+
+** ~bestn~ - ~(N SEQ PRED &KEY (KEY (FUNCTION IDENTITY)) MEMO)~ - Partial sorting.
+Equivalent to (take N (sort SEQ PRED)), but much faster, at least
+for small values of N.
+
+With MEMO, use a decorate-sort-undecorate transform to ensure KEY is
+only ever called once per element.
+
+The name is from Arc.
+
+** ~with-read-only-vars~ - ~((&REST VARS) &BODY BODY)~ - Make VARS read-only within BODY.
+
+That is, within BODY, each var in VARS is bound as a symbol macro,
+which expands into a macro whose setf expander, in turn, is defined to
+signal a warning at compile time, and an error at run time.
+
+Depending on your Lisp implementation this may or may not do anything,
+and may or may not have an effect when used on special variables.
+
+** ~~>>~ - ~(NEEDLE &REST HOLES)~ - Like `~>' but, by default, thread NEEDLE as the last argument
+instead of the first.
+
+** ~get-unix-time~ - ~NIL~ - The current time as a count of seconds from the Unix epoch.
+
+** ~subclass-union~ -  Return a disjunction of all the direct subtypes of CLASS.
+This can be useful for exhaustiveness checking over the direct
+subtypes of a class.
+
+This should not be used for classes meant to be subclassed by library
+users.
+
+** ~dsu-sort~ - ~(SEQ FN &KEY (KEY (FUNCTION IDENTITY)) STABLE)~ - Decorate-sort-undecorate using KEY.
+Useful when KEY is an expensive function (e.g. database access).
+
+** ~remove-hook~ - ~(HOOK FN)~ - Remove FN from the symbol value of HOOK.
+
+** ~nth-best!~ - ~(N SEQ PRED &KEY (KEY (FUNCTION IDENTITY)))~ - Destructive version of `nth-best'.
+Note that this function requires that SEQ be a vector.
+
+** ~synchronized~ - ~((&OPTIONAL (OBJECT NIL)) &BODY BODY)~ - Run BODY holding a unique lock associated with OBJECT.
+If no OBJECT is provided, run BODY as an anonymous critical section.
+
+If BODY begins with a literal string, attach the string to the lock
+object created (as the argument to `bt:make-recursive-lock').
+
+** ~values-vector~ - ~(VEC)~ - Return the elements of VEC, a vector, as multiple values.
+This is to vectors what `values-list' is to lists.
+
+** ~ctypecase-let~ - ~((VAR EXPR) &BODY CASES)~ - Like (let ((VAR EXPR)) (ctypecase VAR ...)), with VAR correctable.
+
+** ~letrec~ - ~((&REST BINDINGS) &BODY BODY)~ - Recursive LET.
+The idea is that functions created in BINDINGS can close over one
+another, and themselves.
+
+Note that `letrec' only binds variables: it can define recursive
+functions, but can't bind them as functions. (But see `fbindrec'.)
+
+** ~expect-form-list~ - ~(EXP)~ - Sanity-check EXP, a macro expansion, assuming it is supposed to be
+  a series of forms suitable for splicing into a progn (implicit or
+  explicit.)
+
+** ~fmt~ - ~(CONTROL-STRING &REST ARGS)~ - A cousin of `format` expressly for fast formatting of strings.
+
+Like (format nil ...), binding `*print-pretty*' to `nil', which in
+some Lisps means a significant increase in speed.
+
+Has a compiler macro with `formatter'.
+
+** ~pad-end~ - ~(VEC LENGTH &OPTIONAL (PAD #\\ ))~ - Pad VEC, a vector, to LENGTH, using PAD.
+Like `pad-start', but padding is addded to the end, rather than the
+beginning.
+
+** ~growf~ - ~(#:PLACE N)~ - Grow the value in a place by a factor.
+
+** ~*boolean-bypass*~ -  Bypasses macroexpand-time branching of WITH-BOOLEAN. The bypass inhibits all
+macroexpand-time branching and instead defers all checks in expanded code to
+runtime in the following manner:
+
+- WITH-BOOLEAN -> PROGN
+- BOOLEAN-IF -> IF
+- BOOLEAN-WHEN -> WHEN
+- BOOLEAN-UNLESS -> UNLESS
+
+** ~equals~ - ~(X)~ - Return a one-argument function that tests if its argument is `equal' to X.
+** ~word-wrap~ - ~(STRING &KEY (COLUMN 80) STREAM)~ - Return a word-wrapped version of STRING that breaks at COLUMN.
+
+Note that this is not a general-purpose word-wrapping routine like you
+would find in a text editor: in particular, any existing whitespace is
+removed.
+
+** ~package-name-keyword~ - ~(PACKAGE)~ - Return the name of PACKAGE as a keyword.
+
+** ~bcond~ - ~(&BODY CLAUSES)~ - Scheme's extended COND.
+
+This is exactly like COND, except for clauses having the form
+
+     (test :=> recipient)
+
+In that case, if TEST evaluates to a non-nil result, then RECIPIENT, a
+function, is called with that result, and the result of RECIPIENT is
+return as the value of the `cond`.
+
+As an extension, a clause like this:
+
+     (test :=> var ...)
+
+Can be used as a shorthand for
+
+     (test :=> (lambda (var) ...))
+
+The name `bcond' for a “binding cond” goes back at least to the days
+of the Lisp Machines. I do not know who was first to use it, but the
+oldest examples I have found are by Michael Parker and Scott L.
+Burson.
+
+** ~defvar-unbound~ - ~(VAR &BODY (DOCSTRING))~ - Define VAR as if by `defvar' with no init form, and set DOCSTRING
+as its documentation.
+
+I believe the name comes from Edi Weitz.
+
+** ~string-ecase~ - ~(STRINGFORM &BODY CLAUSES)~ - Efficient `ecase'-like macro with string keys.
+
+Note that string matching is always case-sensitive.
+
+Cf. `string-case'.
+
+** ~take~ - ~(N SEQ)~ - Return, at most, the first N elements of SEQ, as a *new* sequence
+of the same type as SEQ.
+
+If N is longer than SEQ, SEQ is simply copied.
+
+If N is negative, then |N| elements are taken (in their original
+order) from the end of SEQ.
+
+** ~proper-supertype-p~ - ~(SUPERTYPE TYPE &OPTIONAL ENV)~ - Is SUPERTYPE a proper supertype of TYPE?
+
+That is, is it true that every value of TYPE is also of type
+SUPERTYPE, but not every value of SUPERTYPE is of type TYPE?
+
+** ~eq*~ - ~(&REST XS)~ - Variadic version of `eq'.
+
+With no arguments, return T.
+
+With one argument, return T.
+
+With two arguments, same as `eq'.
+
+With three or more arguments, return T only if all of XS are
+equivalent under `eq'.
+
+Has a compiler macro, so there is no loss of efficiency relative to
+writing out the tests by hand.
+
+** ~shrink~ - ~(N BY)~ - Decrease N by a factor.
+
+** ~eql*~ - ~(&REST XS)~ - Variadic version of `eql'.
+
+With no arguments, return T.
+
+With one argument, return T.
+
+With two arguments, same as `eql'.
+
+With three or more arguments, return T only if all of XS are
+equivalent under `eql'.
+
+Has a compiler macro, so there is no loss of efficiency relative to
+writing out the tests by hand.
+
+** ~define-train~ - ~(NAME ARGS &BODY BODY)~ - Define a higher-order function and its compiler macro at once.
+
+When defining a higher-order function it is often a good idea to
+write a compiler macro so compilers can inline the resulting lambda
+form.
+
+For the special case of a fixed-arity function that only takes other
+functions as arguments, you can use `define-train' to define the
+function and the compiler macro in one go. The catch is that you have
+to write the single definition as a macro.
+
+E.g., if `complement' did not exist, you could define it like so:
+
+    (define-train complement (fn)
+      `(lambda (&rest args)
+         (not (apply ,fn args))))
+
+Besides providing an implicit compiler macro, `define-train' also
+inserts the proper declarations to ensure the compiler recognizes the
+function arguments as functions, avoiding runtime type checks.
+
+The term \"train\" is from J.
+
+** ~unix-to-universal~ - ~(TIME)~ - Convert a Unix time to a universal time.
+
+** ~partitions~ - ~(PREDS SEQ &KEY (START 0) END (KEY (FUNCTION IDENTITY)))~ - Generalized version of PARTITION.
+
+PREDS is a list of predicates. For each predicate, `partitions'
+returns a filtered copy of SEQ. As a second value, it returns an extra
+sequence of the items that do not match any predicate.
+
+Items are assigned to the first predicate they match.
+
+** ~distinct~ - ~(&KEY (KEY (FUNCTION IDENTITY)) (TEST (QUOTE EQUAL)) (SYNCHRONIZED NIL))~ - Return a closure returning only values it has not seen before.
+
+    (defalias test (distinct))
+    (test 'foo) => foo, t
+    (test 'foo) => nil, nil
+
+The second value is T when the value is distinct.
+
+TEST must be a valid test for a hash table.
+
+This has many uses, for example:
+
+    (count-if (distinct) seq)
+    ≡ (length (remove-duplicates seq))
+
+If SYNCHRONIZED is non-nil, then `distinct' can safely be used from
+multiple threads. Otherwise it is not thread-safe.
+
+Note the closure returned by `distinct' changes how it tracks unique
+items based on the number of items it is tracking, so it is suitable
+for all sizes of set.
+
+** ~walk-tree~ - ~(FUN TREE &KEY (TAG NIL TAGP) (TRAVERSAL :PREORDER))~ - Call FUN in turn over each atom and cons of TREE.
+
+FUN can skip the current subtree with (throw TAG nil).
+
+** ~nest~ - ~(&REST THINGS)~ - Like ~>>, but backward.
+
+This is useful when layering `with-x' macros where the order is not
+important, and extra indentation would be misleading.
+
+For example:
+
+    (nest
+     (with-open-file (in file1 :direction input))
+     (with-open-file (in file2 :direction output))
+     ...)
+
+Is equivalent to:
+
+    (with-open-file (in file1 :direction input)
+      (with-open-file (in file2 :direction output)
+        ...))
+
+(But see `with-open-files').
+
+If the outer macro has no arguments, you may omit the parentheses.
+
+    (nest
+      with-standard-io-syntax
+      ...)
+    ≡ (with-standard-io-syntax
+        ...)
+
+From UIOP, based on a suggestion by Marco Baringer.
+
+** ~length<=~ - ~(&REST SEQS)~ - Is each length-designator in SEQS as long or shorter than the next?
+A length designator may be a sequence or an integer.
+
+** ~resolve-executable~ - ~(P)~ - Look for an executable using the PATH environment variable.
+P is a pathname designator.
+
+On Windows only, if P does not have an extension, it assumed to end in
+`.exe`.
+
+Note that this function does not check the current directory (even on
+Windows) and it does not care if P is already an absolute pathname: it
+only cares about its name and type.
+
+** ~unique-name~ - ~(X)~ - Alias for `string-gensym'.
+
+** ~define-values~ - ~(VALUES &BODY (EXPR))~ - Like `def', but for multiple values.
+Each variable in VALUES is given a global, lexical binding, as with
+`def', then set all at once, as with `multiple-value-setq'.
+
+** ~interval~ - ~(&KEY (SECONDS 0) (MINUTES 0) (HOURS 0) (DAYS 0) (WEEKS 0) (MONTHS 0) (YEARS 0) (MONTH-DAYS 28) (YEAR-DAYS 365))~ - A verbose but readable way of specifying intervals in seconds.
+
+Intended as a more readable alternative to idioms
+like (let ((day-in-seconds #.(* 24 60 60))) ...)
+
+Has a compiler macro.
+
+** ~stable-sort-new~ - ~(SEQ PRED &KEY (KEY (FUNCTION IDENTITY)) (ELEMENT-TYPE (QUOTE *)))~ - Like `sort-new', but sort as if by `stable-sort' instead of `sort'.
+
+** ~tuple~ -  A proper list where each element has the same type as the corresponding element in TYPES.
+
+    (typep '(1 :x #c) '(tuple integer keyword character)) => T
+
+As a shortcut, a quoted form among TYPES is expanded to an `eql' type specifier.
+    (tuple 'function symbol)
+    ≡ (tuple (eql function) symbol)
+
+Literal keywords, numbers, and characters are also treated as `eql' type specifiers.
+    (tuple :name 1 #a symbol)
+    ≡ (tuple (eql :name) (eql 1) (eql #a) symbol)
+
+** ~wild-pathname~ -  A pathname with wild components.
+
+** ~toposort~ - ~(CONSTRAINTS &KEY (TEST (FUNCTION EQL)) (TIE-BREAKER (FUNCTION DEFAULT-TIE-BREAKER)) FROM-END UNORDERED-TO-END)~ - Turn CONSTRAINTS into a predicate for use with SORT.
+
+Each constraint should be two-element list, where the first element of
+the list should come before the second element of the list.
+
+    (def dem-bones '((toe foot)
+                     (foot heel)
+                     (heel ankle)
+                     (ankle shin)
+                     (shin knee)
+                     (knee back)
+                     (back shoulder)
+                     (shoulder neck)
+                     (neck head)))
+    (sort (reshuffle (mapcar #'car dem-bones))
+          (toposort dem-bones))
+    => (TOE FOOT HEEL ANKLE SHIN KNEE BACK SHOULDER NECK)
+
+If the graph is inconsistent, signals an error of type
+`inconsistent-graph`:
+
+    (toposort '((chicken egg) (egg chicken)))
+    => Inconsistent graph: ((CHICKEN EGG) (EGG CHICKEN))
+
+TEST, FROM-END, and UNORDERED-TO-END are passed through to
+`ordering'.
+
+** ~only-elt~ - ~(SEQ)~ - Return the only element of SEQ.
+If SEQ is empty, or contains more than one element, signal an error.
+
+** ~absolute-pathname~ -  (no docs)
+
+** ~soft-alist-of~ -  A soft constraint for the elements of an alist.
+
+Equivalent to `(soft-list-of (cons KEY-TYPE VALUE-TYPE))`.
+
+** ~ensure2~ - ~(PLACE &BODY NEWVAL)~ - Like `ensure', but specifically for accessors that return a second
+value like `gethash'.
+
+** ~equalp*~ - ~(&REST XS)~ - Variadic version of `equalp'.
+
+With no arguments, return T.
+
+With one argument, return T.
+
+With two arguments, same as `equalp'.
+
+With three or more arguments, return T only if all of XS are
+equivalent under `equalp'.
+
+Has a compiler macro, so there is no loss of efficiency relative to
+writing out the tests by hand.
+
+** ~trampoline~ - ~(FN &REST ARGS)~ - Use the trampoline technique to simulate mutually recursive functions.
+
+Call FN with supplied ARGS, if any.
+
+If FN returns a functions, call that function with no arguments.
+Repeat until the return value is not a function, and finally return
+that non-function value.
+
+Note that, to return a function as a final value, you must wrap it in
+some data structure and unpack it.
+
+Most likely to be useful for Lisp implementations that do not provide
+tail call elimination.
+
+From Clojure.
+
+** ~human-size-formatter~ - ~(SIZE &KEY (FLAVOR :SI) (SPACE (EQL FLAVOR :SI)))~ - Auxiliary function for formatting quantities human-readably.
+Returns two values: a format control and a list of arguments.
+
+This can be used to integrate the human-readable printing of
+quantities into larger format control strings using the recursive
+processing format directive (~?):
+
+    (multiple-value-bind (control args)
+        (human-size-formatter size)
+      (format t \"~?\" control args))
+
+** ~flush-all-static-binding-groups~ - ~NIL~ - Flush all static binding values in ALL binding groups and
+restore them to their uninitialized state, forcing any initforms
+for these static bindings to be reevaluated whenever control
+next reaches the respective `static-let'/`static-let*'.  Returns the
+number of live bindings flushed that way.
+
+This operation is unsafe to perform while any other threads are
+trying to access these bindings; proper synchronization is left
+to the user. In addition, this operation will clear ALL values,
+including these which were not bound by the programmer. This can
+lead to unintended behavior, hence, a continuable error is signaled
+unless Lisp is running single-threaded.
+
+This function is useful e.g. when deploying Lisp binaries in order
+to not include static binding values in the resulting Lisp image.
+
+Note that a static binding that was created as `:flushablep nil'
+will not be affected by this operation.
+
+** ~case-using~ - ~(PRED KEYFORM &BODY CLAUSES)~ - ISLISP's case-using.
+
+     (case-using #'eql x ...)
+     ≡ (case x ...).
+
+Note that, no matter the predicate, the keys are not evaluated. (But see `selector'.)
+
+The PRED form is evaluated.
+
+This version supports both single-item clauses (x ...) and
+multiple-item clauses ((x y) ...), as well as (t ...) or (otherwise
+...) for the default clause.
+
+** ~make-heap~ - ~(&KEY (SIZE 100) (ELEMENT-TYPE T) (KEY (FUNCTION IDENTITY)) (TEST (FUNCTION >=)) &AUX (VECTOR (MAKE-ARRAY SIZE :ADJUSTABLE T :FILL-POINTER 0 :ELEMENT-TYPE ELEMENT-TYPE)))~ - (no docs)
+
+** ~collecting~ - ~(&BODY BODY)~ - Like `with-collector', with the collector bound to the result of
+interning `collect' in the current package.
+
+** ~delete-from-hash-table~ - ~(TABLE &REST KEYS)~ - Return TABLE with KEYS removed (as with `remhash').
+Cf. `delete-from-plist' in Alexandria.
+
+** ~nor~ - ~(&REST FORMS)~ - Equivalent to (not (or ...)).
+
+From Arc.
+
+** ~unparse-ordinary-lambda-list~ - ~(&OPTIONAL REQUIRED OPTIONAL REST KEYWORDS AOK? AUX KEY?)~ - Put together an ordinary lambda list from its constituent parts.
+
+This is the inverse of `alexandria:parse-ordinary-lambda-list'.
+
+    lambda-list
+    ≡ (multiple-value-call #'unparse-ordinary-lambda-list
+        (parse-ordinary-lambda-list lambda-list)
+
+** ~random-in-range~ - ~(LOW HIGH)~ - Random number in the range [low,high).
+
+LOW and HIGH are automatically swapped if HIGH is less than LOW.
+
+Note that the value of LOW+HIGH may be greater than the range that can
+be represented as a number in CL. E.g., you can generate a random double float with
+
+    (random-in-range most-negative-double-float most-positive-double-float)
+
+even though (+ most-negative-double-float most-positive-double-float)
+would cause a floating-point overflow.
+
+From Zetalisp.
+
+** ~length>=~ - ~(&REST SEQS)~ - Is each length-designator in SEQS longer or as long as the next?
+A length designator may be a sequence or an integer.
+
+** ~string~=~ - ~(TOKEN STRING &KEY (START1 0) END1 (START2 0) END2)~ - Does TOKEN occur in STRING as a token?
+
+Equivalent to
+     (find TOKEN (tokens STRING) :test #'string=),
+but without consing.
+
+** ~ecase-let~ - ~((VAR EXPR) &BODY CASES)~ - Like (let ((VAR EXPR)) (ecase VAR ...)), with VAR read-only.
+
+** ~qlist~ - ~(QUEUE)~ - A list of the items in QUEUE.
+Does not cons.
+
+** ~reshape~ - ~(SHAPE ARRAY &KEY (SERAPEUM/GENERALIZED-ARRAYS::ELEMENT-TYPE T) (SERAPEUM/GENERALIZED-ARRAYS::DISPLACE T))~ - Return an array that has the same items as ARRAY, a generalized
+array, but whose shape is SHAPE.
+
+If the resulting array is smaller than ARRAY, then discard the excess
+items.
+
+If the resulting array is larger than ARRAY, fill it with the items of
+ARRAY cyclically.
+
+ELEMENT-TYPE specifies an element type to use for the resulting array
+if one cannot be inferred from the array itself.
+
+** ~efface~ - ~(ITEM LIST)~ - Destructively remove only the first occurence of ITEM in LIST.
+
+From Lisp 1.5.
+
+** ~qappend~ - ~(QUEUE LIST)~ - Append the elements of LIST onto the end of QUEUE.
+Return the queue.
+
+** ~slice~ - ~(SEQ START &OPTIONAL (END (LENGTH SEQ)))~ - Like `subseq', but allows negative bounds to specify offsets.
+Both START and END accept negative bounds.
+
+     (slice \"string\" -3 -1) => \"in\"
+
+A call to `slice' where the first argument is positive and the second argument is negative is equivalent to chaining two calls to `drop':
+
+    (drop 3 (drop -1 \"string\")) = \"in\"
+    (slice \"string\" 3 -1)       = \"in\"
+
+If the bounds cross in the middle, the result is an empty string:
+
+    (slice \"x\" 1 -1) => \"\"
+
+Note that `slice' implicitly clamps bounds, even when they are not negative:
+
+    (slice \"x\" 0 100) => \"x\"
+
+Setf of `slice' is like setf of `ldb': afterwards, the place being set
+holds a new sequence which is not EQ to the old.
+
+** ~longest~ - ~(SEQS)~ - Return the longest seq in SEQS.
+
+If there are lists in SEQS, then the total number of conses traversed
+will never exceed n*m, where n is the number of lists in SEQS and m
+is the length of the next-to-longest list (unless the longest list is
+not unique!).
+
+** ~extrema~ - ~(SEQ PRED &KEY (KEY (FUNCTION IDENTITY)) (START 0) END)~ - Like EXTREMUM, but returns both the minimum and the maximum (as two
+values).
+
+     (extremum (iota 10) #'>) => 9
+     (extrema (iota 10) #'>) => 9, 0
+
+** ~unary->variadic~ - ~(FN)~ - Return a function that takes any number of arguments and calls FN
+on them as a list.
+
+Wraps a function that expects a single argument, a list, so it can be
+used variadically.
+
+** ~string^=~ - ~(PREFIX STRING &KEY (START1 0) END1 (START2 0) END2)~ - Is PREFIX a prefix of STRING?
+
+** ~split-sequence~ - ~(SPLIT-SEQUENCE::DELIMITER SEQUENCE &KEY (SPLIT-SEQUENCE::START 0) (SPLIT-SEQUENCE::END NIL) (SPLIT-SEQUENCE::FROM-END NIL) (COUNT NIL) (SPLIT-SEQUENCE::REMOVE-EMPTY-SUBSEQS NIL) (SPLIT-SEQUENCE::TEST (FUNCTION EQL) SPLIT-SEQUENCE::TEST-P) (SPLIT-SEQUENCE::TEST-NOT NIL SPLIT-SEQUENCE::TEST-NOT-P) (SPLIT-SEQUENCE::KEY (FUNCTION IDENTITY)))~ - Return a list of subsequences in seq delimited by delimiter.
+If :remove-empty-subseqs is NIL, empty subsequences will be included
+in the result; otherwise they will be discarded.  All other keywords
+work analogously to those for CL:SUBSTITUTE.  In particular, the
+behaviour of :from-end is possibly different from other versions of
+this function; :from-end values of NIL and T are equivalent unless
+:count is supplied. :count limits the number of subseqs in the main
+resulting list. The second return value is an index suitable as an
+argument to CL:SUBSEQ into the sequence indicating where processing
+stopped.
+
+** ~filter-map~ - ~(FN LIST &REST LISTS)~ - Map FN over (LIST . LISTS) like `mapcar', but omit empty results.
+
+     (filter-map fn ...)
+     ≅ (remove nil (mapcar fn ...))
+
+** ~directory-pathname~ -  (no docs)
+
+** ~equal*~ - ~(&REST XS)~ - Variadic version of `equal'.
+
+With no arguments, return T.
+
+With one argument, return T.
+
+With two arguments, same as `equal'.
+
+With three or more arguments, return T only if all of XS are
+equivalent under `equal'.
+
+Has a compiler macro, so there is no loss of efficiency relative to
+writing out the tests by hand.
+
+** ~sort-new~ - ~(SEQ PRED &KEY (KEY (FUNCTION IDENTITY)) (ELEMENT-TYPE (QUOTE *)))~ - Return a sorted vector of the elements of SEQ.
+
+You can think of this as a non-destructive version of `sort', except
+that it always returns a vector. (If you're going to copy a sequence
+for the express purpose of sorting it, you might as well copy it into
+a form that can be sorted efficiently.)
+
+ELEMENT-TYPE is interpreted as for `reshuffle'.
+
+** ~lret*~ - ~((&REST BINDINGS) &BODY BODY)~ - Cf. `lret'.
+
+** ~dispatch-case-let~ - ~((&REST SERAPEUM/DISPATCH-CASE::BINDINGS) &BODY SERAPEUM/DISPATCH-CASE::CLAUSES)~ - Like `dispatch-case', but establish new bindings for each expression.
+
+For example,
+
+    (dispatch-case-let (((x string) (expr1))
+                        ((y string) (expr2)))
+      ...)
+
+is equivalent to
+
+    (let ((x (expr1))
+          (y (expr2)))
+      (dispatch-case ((x string)
+                      (y string))
+        ...))
+
+It may be helpful to think of this as a cross between
+`defmethod' (where the (variable type) notation is used in the lambda
+list) and `let' (which has an obvious macro-expansion in terms of
+`lambda').
+
+** ~defloop~ - ~(NAME ARGS &BODY BODY)~ - Define a function, ensuring proper tail recursion.
+This is entirely equivalent to `defun' over `nlet'.
+
+** ~car-safe~ - ~(X)~ - The car of X, or nil if X is not a cons.
+
+This is different from Alexandria’s `ensure-car`, which returns the atom.
+
+    (ensure-car '(1 . 2)) => 1
+    (car-safe '(1 . 2)) => 1
+    (ensure-car 1) => 1
+    (car-safe 1) => nil
+
+From Emacs Lisp.
+
+** ~topmost-object-class~ -  (no docs)
+
+** ~hash-fold~ - ~(FN INIT HASH-TABLE)~ - Reduce TABLE by calling FN with three values: a key from the hash
+table, its value, and the return value of the last call to FN. On the
+first call, INIT is supplied in place of the previous value.
+
+From Guile.
+
+** ~heap-extract~ - ~(HEAP I)~ - Destructively extract the element in heap at index I, counting from
+the greatest element.
+
+** ~prepend~ - ~(&REST LISTS)~ - Construct and return a list by concatenating LISTS in reverse order.
+
+    (prepend list-1 list-2)
+    ≡ (append list-2 list-1)
+
+** ~null-if-empty~ - ~(XS)~ - Return nil if XS is empty, XS otherwise.
+If XS was empty the second value is nil; otherwise t.
+
+This function also accepts multidimensional arrays. Arrays are
+considered empty if their total size (from `array-total-size`) is
+zero.
+
+Hash tables are considered empty if their count is 0.
+
+** ~prod~ - ~(ARRAY)~ - Return the product of all of the elements of ARRAY, a generalized array.
+Operates pairwise for numerical stability.
+
+** ~file=~ - ~(FILE1 FILE2 &KEY (BUFFER-SIZE 4096))~ - Compare FILE1 and FILE2 octet by octet, (possibly) using buffers
+of BUFFER-SIZE.
+
+** ~push-end~ - ~(ITEM PLACE)~ - Destructively push ITEM to the end of PLACE.
+Like `push', but affects the last item rather than the first.
+
+You may want to use `enq' on a `queue' instead.
+
+From LispWorks.
+
+** ~array-index-row-major~ - ~(ARRAY ROW-MAJOR-INDEX)~ - The inverse of ARRAY-ROW-MAJOR-INDEX.
+
+Given an array and a row-major index, return a list of subscripts.
+
+     (apply #'aref (array-index-row-major i))
+     ≡ (array-row-major-aref i)
+
+** ~format-human-size~ - ~(STREAM SIZE &KEY (FLAVOR :SI) (SPACE (EQL FLAVOR :SI)))~ - Write SIZE to STREAM, in human-readable form.
+
+STREAM is interpreted as by `format'.
+
+If FLAVOR is `:si' (the default) the base is 1000 and SI prefixes are used.
+
+If FLAVOR is `:file', the base is 1024 and SI prefixes are used.
+
+If FLAVOR is `:iec', the base is 1024 bytes and IEC prefixes (Ki, Mi,
+etc.) are used.
+
+If SPACE is non-nil, include a space between the number and the
+prefix. (Defaults to T if FLAVOR is `:si'.)
+
+** ~capped-fork~ - ~(G H)~ - J's capped fork (monadic).
+
+Like a monadic fork, but F is omitted.
+
+Effectively the composition of G and H.
+
+** ~+merge-tail-calls+~ -  Try to ensure that tail calls will be merged.
+
+If you just want portable self-calls, for writing loops using
+recursion, use `nlet' or `defloop' instead.
+
+This may not work at all on some Lisps.
+
+** ~with-string~ - ~((VAR &OPTIONAL STREAM &KEY (ELEMENT-TYPE NIL)) &BODY BODY)~ - Bind VAR to the character stream designated by STREAM.
+
+STREAM is resolved like the DESTINATION argument to `format': it can
+be any of t (for `*standard-output*'), nil (for a string stream), a
+string with a fill pointer, or a stream to be used directly.
+
+When possible, it is a good idea for functions that build strings to
+take a stream to write to, so callers can avoid consing a string just
+to write it to a stream. This macro makes it easy to write such
+functions.
+
+    (defun format-x (x &key stream)
+      (with-string (s stream)
+        ...))
+
+** ~maphash-new~ - ~(FN HASH-TABLE &REST HASH-TABLE-ARGS &KEY &ALLOW-OTHER-KEYS)~ - Like MAPHASH, but builds and returns a new hash table.
+
+FN is a function of two arguments, like the function argument to
+`maphash'. It is required, however, to return two values, a new key
+and a new value.
+
+If `copy-hash-table' did not exist, you could define it as:
+
+    (maphash-new #'values hash-table)
+
+Note it is not necessarily the case that the new hash table will have
+the same number of entries as the old hash table, since FN might
+evaluate to the same key more than once.
+
+By default, the new hash table has the same hash table
+properties (test, size) as HASH-TABLE, but these can be overridden
+with HASH-TABLE-ARGS.
+
+** ~match-of~ - ~(UNION EXPR &BODY CLAUSES)~ - Do pattern matching on an algebraic data type.
+
+UNION should be an algebraic data type.
+
+Each clause in CLAUSES has a pattern as its first element.
+
+If the pattern is a symbol, it matches a unit type.
+
+If the pattern is a list, it matches a constructor.
+
+If the pattern is an underscore, it introduces a default or
+fallthrough clause.
+
+If the pattern is a list that starts with `or', it is a disjunction of
+other patterns.
+
+** ~prune-if~ - ~(TEST TREE &KEY (KEY (FUNCTION IDENTITY)))~ - Remove any atoms satisfying TEST from TREE.
+
+Pruning is defined \"modulo flatten\": you should get the same result
+from pruning, and then flattening, that you would get from flattening,
+and then filtering.
+
+Also note that pruning is not defined for trees containing improper
+lists.
+
+** ~count-cpus~ - ~(&KEY (DEFAULT 2) ONLINE (MEMOIZE T))~ - Try very hard to return a meaningful count of CPUs.
+If ONLINE is non-nil, try to return only the active CPUs.
+
+The second value is T if the number of processors could be queried,
+`nil' otherwise.
+
+If MEMOIZE is non-nil (default), then memoize the result. Calling with
+MEMOIZE nil clears any memoized results.
+
+** ~absolute-directory-pathname~ -  (no docs)
+
+** ~pretty-print-hash-table~ - ~(HT &OPTIONAL (STREAM *STANDARD-OUTPUT*))~ - Pretty print the hash-table HT to STREAM.
+
+```
+(pretty-print-hash-table (dict :a 1 :b 2 :c 3))
+;; =>
+(dict
+  :A 1
+  :B 2
+  :C 3
+ )
+```
+
+If you want to always pretty print hash tables, you can set this in your init file:
+
+``` lisp
+(toggle-pretty-print-hash-table)
+```
+
+  Ported from RUTILS.
+
+** ~swaphash~ - ~(KEY VALUE HASH-TABLE)~ - Set KEY and VALUE in HASH-TABLE, returning the old values of KEY.
+
+This is only a shorthand. It is not in itself thread-safe.
+
+From Zetalisp.
+
+** ~add-hook~ - ~(HOOK FN &KEY APPEND)~ - Add FN to the value of HOOK.
+
+** ~static-binding-active-error~ - ~(SERAPEUM/STATIC-LET::GROUP &OPTIONAL SERAPEUM/STATIC-LET::ALL-GROUPS-P)~ - A subtype of error related to attempts to flush static bindings
+which are currently active.
+
+** ~define-case-macro~ - ~(NAME MACRO-ARGS PARAMS &BODY MACRO-BODY)~ - Define a macro like `case'.
+
+A case-like macro is one that supports the following syntax:
+
+- A list of keys is treated as matching any key in the list.
+- An empty list matches nothing.
+- The atoms T or `otherwise' introduce a default clause.
+- There can only be one default clause.
+- The default clause must come last.
+- Any atom besides the empty list, T, or `otherwise' matches itself.
+
+As a consequence of the above, to match against the empty list, T, or
+`otherwise', they must be wrapped in a list.
+
+    (case x
+      ((nil) \"Matched nil.\")
+      ((t) \"Matched t.\")
+      ((otherwise) \"Matched `otherwise'.\")
+      (otherwise \"Didn't match anything.\"))
+
+A macro defined using `define-case-macro' can ignore all of the above.
+It receives three arguments: the expression, already protected against
+multiple evaluation; a normalized list of clauses; and, optionally, a
+default clause.
+
+The clauses are normalized as a list of `(key . body)', where each key
+is an atom. (That includes nil, T, and `otherwise'.) Nonetheless, each
+body passed to the macro will only appear once in the expansion; there
+will be no duplicated code.
+
+The body of the default clause is passed separately,
+bound to the value of the `:default' keyword in PARAMS.
+
+    (define-case-macro my-case (expr &body clauses)
+        (:default default)
+      ....)
+
+Note that in this case, `default' will be bound to the clause's body
+-- a list of forms -- and not to the whole clause. The key of the
+default clause is discarded.
+
+If no binding is specified for the default clause, then no default
+clause is allowed.
+
+One thing you do still have to consider is the handling of duplicated
+keys. The macro defined by `define-case-macro' will reject case sets
+that contains duplicate keys under `eql', but depending on the
+semantics of your macro, you may need to check for duplicates under a
+looser definition of equality.
+
+As a final example, if the `case' macro did not already exist, you
+could define it almost trivially using `define-case-macro':
+
+    (define-case-macro my-case (expr &body clause)
+        (:default default)
+      `(cond
+         ,@(loop for (key . body) in clauses
+                 collect `((eql ,expr ,key) ,@body))
+         (t ,@body)))
+
+** ~bisect-left~ - ~(VEC ITEM PRED &KEY KEY (START 0) (END (LENGTH VEC)))~ - Return the index in VEC to insert ITEM and keep VEC sorted.
+
+If a value equivalent to ITEM already exists in VEC, then the index
+returned is to the left of that existing item.
+
+** ~memq~ - ~:UNKNOWN~ - Like (member ITEM LIST :test #'eq).
+Should only be used for symbols.
+
+** ~rassocar~ - ~(ITEM ALIST &REST ARGS &KEY &ALLOW-OTHER-KEYS)~ - Like (car (rassoc ...))
+
+** ~dict*~ - ~(DICT &REST ARGS)~ - Merge new bindings into DICT.
+Roughly equivalent to `(merge-tables DICT (dict args...))'.
+
+** ~with-item-key-function~ - ~((KEY &OPTIONAL (KEY-FORM KEY)) &BODY BODY)~ - For each of the most common key functions used in sequences, emit a
+copy of BODY with KEY bound to a local macro that calls KEY-FORM.
+
+If current optimization declarations favor space over speed, or
+compilation speed over runtime speed, then BODY is only emitted once.
+
+** ~null-if-zero~ - ~(X)~ - If X is a nonzero number, return it, otherwise return nil.
+The second value is T if X was nonzero.
+
+** ~typecase-let~ - ~((VAR EXPR) &BODY CASES)~ - Like (let ((VAR EXPR)) (typecase VAR ...)), with VAR read-only.
+
+** ~write-stream-into-file~ - ~(STREAM PATHNAME &KEY (IF-EXISTS :ERROR) IF-DOES-NOT-EXIST)~ - Read STREAM and write the contents into PATHNAME.
+
+STREAM will be closed afterwards, so wrap it with
+`make-concatenated-stream' if you want it left open.
+
+** ~inconsistent-graph~ -  A graph that cannot be consistently sorted.
+** ~eif-let~ - ~(BINDS &BODY (THEN &OPTIONAL (ELSE NIL)))~ - Like `alexandria:if-let', but expects two branches.
+Compare `eif'.
+
+** ~merge-tables~ - ~(&REST TABLES)~ - Merge TABLES, working from left to right.
+The resulting hash table has the same parameters as the first table.
+
+If no tables are given, an new, empty hash table is returned.
+
+If a single table is given, a copy of it is returned.
+
+If the same key is present in two tables, the value from the rightmost
+table is used.
+
+All of the tables being merged must have the same value for
+`hash-table-test'.
+
+Clojure's `merge'.
